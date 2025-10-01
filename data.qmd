@@ -42,4 +42,93 @@ knitr::opts_chunk$set(margin1    = TRUE,
                       fig.width  = eps * 7) # default is 7
 ```
 
+## Global parameters
+
+The path to the data folder on the local computer:
+
+```{r}
+root <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
+data_folder <- paste0(root, "GitHub/choisy/08RS/")
+``` 
+
+
+## Packages
+
+```{r}
+required <- c("readxl", "purrr", "dplyr")
+```
+
+```{r message = FALSE}
+library(dplyr)
+```
+
+
+## Loading the CRF data
+
+A function that reads all the tabs of an excel file in the data folder:
+
+```{r}
+read_excel_file <- function(file) {
+  file <- paste0(data_folder, file)
+  sheets_names <- readxl::excel_sheets(file)
+  sheets_names |>
+    purrr::map(~ readxl::read_excel(file, .x)) |> 
+    setNames(sheets_names)
+}
+```
+
+Reading the `CTU08RS_Data.xlsx` data file:
+
+```{r}
+CRF <- read_excel_file("6-11-2024-CTU08RS_Data.xlsx")
+```
+
+The names of the data frames in Saras' code and in the new data file:
+
+```{r}
+# CliRes        Saras           Definition
+# ------------------------------------------------------------------
+# ENROL         data_EN         enrollment
+# HIST          data_HIST       history at enrollment
+# CONHIST       CONHIST         contact history at enrollment
+# EXAM          data_EX         symptoms and signs at enrollment
+# LAB           data_LAB        lab results at admission
+# NEU           data_NEU        neurological exam
+# DAILY         data_Daily      daily review
+# MED           data_MED        medications
+# DEVSOCSED     data_DEV        development and socio-economic data
+# DISC          data_DISC       discharge summary
+# FUP           data_FUP        first follow-up day 7-10
+# FUP_II        data_FUP6m      first follow-up month 6
+# FUP_III       data_FUP18m     first follow-up month 18
+# NEURO         data_NEURO      neurological assessment
+# ABC           data_MABC       movement ABC-2
+```
+
+Reformatting the data
+
+```{r}
+CRF2 <- CRF
+
+CRF2$ENROL <- CRF2$ENROL |> 
+  select(ParNo, DateEnrol, Gender, DateBirth) |> 
+  mutate(across(Gender, ~ c("male", "female")[.x]),
+         across(starts_with("Date"), as.Date))
+
+CRF2$ENROL
+```
+
+## Loading the Bayley data
+
+```{r}
+Bayley <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
+```
+
+```{r}
+names(Bayley)
+```
+
+```{r}
+Bayley$
+```
 
