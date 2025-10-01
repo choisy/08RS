@@ -84,6 +84,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link active" data-scroll-target="#global-parameters"><span class="header-section-number">1</span> Global parameters</a></li>
   <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages"><span class="header-section-number">2</span> Packages</a></li>
   <li><a href="#loading-the-crf-data" id="toc-loading-the-crf-data" class="nav-link" data-scroll-target="#loading-the-crf-data"><span class="header-section-number">3</span> Loading the CRF data</a></li>
+  <li><a href="#loading-the-bayley-data" id="toc-loading-the-bayley-data" class="nav-link" data-scroll-target="#loading-the-bayley-data"><span class="header-section-number">4</span> Loading the Bayley data</a></li>
   </ul>
 </nav>
 </div>
@@ -118,9 +119,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="packages" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="packages"><span class="header-section-number">2</span> Packages</h2>
+<p>Required packages:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>required <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"readxl"</span>, <span class="st">"purrr"</span>, <span class="st">"dplyr"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Loading packages:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -186,6 +189,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  9 03-009 2013-09-09 female 2012-12-10
 10 03-010 2013-09-19 male   2010-12-07
 # ℹ 527 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="loading-the-bayley-data" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="loading-the-bayley-data"><span class="header-section-number">4</span> Loading the Bayley data</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>Bayley <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"12-9-2025-Bayley_v3_P1_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(Bayley)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "ENROL"    "ASSESS"   "CS"       "RC"       "EC"       "FM"       "GM"      
+[8] "BOI"      "Category"</code></pre>
 </div>
 </div>
 </section>

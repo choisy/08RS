@@ -42,6 +42,7 @@ knitr::opts_chunk$set(margin1    = TRUE,
                       fig.width  = eps * 7) # default is 7
 ```
 
+
 ## Global parameters
 
 The path to the data folder on the local computer:
@@ -54,9 +55,13 @@ data_folder <- paste0(root, "GitHub/choisy/08RS/")
 
 ## Packages
 
+Required packages:
+
 ```{r}
 required <- c("readxl", "purrr", "dplyr")
 ```
+
+Loading packages:
 
 ```{r message = FALSE}
 library(dplyr)
@@ -118,6 +123,7 @@ CRF2$ENROL <- CRF2$ENROL |>
 CRF2$ENROL
 ```
 
+
 ## Loading the Bayley data
 
 ```{r}
@@ -128,7 +134,4 @@ Bayley <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
 names(Bayley)
 ```
 
-```{r}
-Bayley$
-```
 
