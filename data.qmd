@@ -1,5 +1,5 @@
 ---
-title: "08RS"
+title: "08RS data"
 number-sections: true
 format:
   html:
@@ -13,7 +13,7 @@ editor_options:
 ---
 
 ```{r include = FALSE, eval = FALSE}
-knitr::purl("analysis.qmd", "tmp.R", documentation = FALSE)
+knitr::purl("data.qmd", "tmp.R", documentation = FALSE)
 source("tmp.R")
 file.remove("tmp.R")
 
