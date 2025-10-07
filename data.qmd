@@ -113,14 +113,116 @@ The names of the data frames in Saras' code and in the new data file:
 Reformatting the data
 
 ```{r}
-CRF2 <- CRF
+CRF2 <- CRF[c("ENROL", "HIST", "EXAM", "DEVSOCSED", "DISC", "FUP", "FUP_II", "FUP_III",
+              "ABC")]
 
 CRF2$ENROL <- CRF2$ENROL |> 
   select(ParNo, DateEnrol, Gender, DateBirth) |> 
   mutate(across(Gender, ~ c("male", "female")[.x]),
          across(starts_with("Date"), as.Date))
 
-CRF2$ENROL
+CRF2$HIST <- CRF2$HIST |> 
+  select(ParNo, DateIllness, DateAdmHTD, DateAdmHTD, DateAdmHosp) |> 
+  mutate(across(starts_with("Date"), as.Date))
+
+CRF2$EXAM <- CRF2$EXAM |> 
+  select(ParNo, headCircumference)
+
+CRF2$DEVSOCSED <- CRF2$DEVSOCSED |> 
+  select(ParNo, MomEdu, Toilet, Refrigerator, AirConditioner, Motorbike, Water) |> 
+  mutate(across(c("Refrigerator", "AirConditioner"), ~ .x < 2))
+
+CRF2$DISC <- CRF2$DISC |> 
+  select(ParNo, DateDisc, GradeHFMD, DateHFMD, TreatSepsis, PCR, EV71, Outcome,
+         Seizure, Hypertonicity, LimbPara, CNP, DiapWeak, Trache, Nasotube,
+         BehaveChange) |> 
+  mutate(across(starts_with("Date"), as.Date)) |> 
+  mutate(across(c("TreatSepsis", "EV71"), ~ .x < 2))
+
+CRF2$FUP <- CRF2$FUP |> 
+  select(ParNo, Trache) |> 
+  mutate(across("Trache", ~ .x < 2))
+
+CRF2$FUP_II <- CRF2$FUP_II |> 
+  select(ParNo, Trache) |> 
+  mutate(across("Trache", ~ .x < 2))
+
+CRF2$FUP_III <- CRF2$FUP_III |> 
+  select(ParNo, Trache) |> 
+  mutate(across("Trache", ~ .x < 2))
+
+CRF2$ABC <- CRF2$ABC |> 
+  select(ParNo, Gender, DateBirth, MD1, MD2, MD3, AC1, AC2, BAL1, BAL2, BAL3) |> 
+  mutate(across(Gender, ~ c("male", "female")[.x]),
+         across(starts_with("Date"), as.Date))
+```
+
+```{r}
+tmp <- CRF2 |>
+  map(~ .x$ParNo) |> 
+  map(unique)
+
+map_int(tmp, length)
+
+map(tmp[-1], setdiff, y = tmp[[1]])
+```
+
+
+```{r}
+crf <- list(devsocsed = list(MomEdu = c("Never been to school",
+                                        "Attended some primary school",
+                                        "Completed primary school (5th gr)",
+                                        "Completed lower secondary school (9th gr)",
+                                        "Completed higher secondary school (12th gr)",
+                                        "Completed university/college degree",
+                                        "Completed postgraduate degree"),
+                             Toilet = c("Own flush toilet",
+                                        "Shared flush toilet",
+                                        "Traditional pit toilet",
+                                        "Ventilation improved pit toilet",
+                                        "No facility/bush/field",
+                                        "None of above"),
+                             Water  = c("Private tap",
+                                        "Public standpipe",
+                                        "Bottled water",
+                                        "Well in own residence",
+                                        "Public well",
+                                        "Rain water",
+                                        "Spring",
+                                        "River/lake/pond", NA,
+                                        "None of the above")),
+            disc = list(GradeHFMD   = c("grade 1",
+                                        "grade 2a",
+                                        "grade 2b(1)",
+                                        "grade 2b(2)",
+                                        "grade 3",
+                                        "grade 4",
+                                        "Not Applicable"),
+                        PCR         = c("EV positive",
+                                        "EV negative",
+                                        "Not done"),
+                        Outcome     = c("Full recovery without complication",
+                                        "Incomplete recovery",
+                                        "Transferred to another hospital",
+                                        "Taken home without approval",
+                                        "Death",
+                                        "Discharged to die")),
+            ABC = setNames(map(1:8, ~ c(D = "Done",
+                                        F = "Failure",
+                                        I = "Inappropriate",
+                                        R = "Refusal")),
+                           c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3")))
+```
+
+
+## Temporary
+
+```{r}
+saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
+names_saras <- names(saras)
+tmp <- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)
+tmp <- tmp[map_dbl(tmp, length) > 0]
+unique(unlist(map(tmp, names)))
 ```
 
 
