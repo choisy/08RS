@@ -167,6 +167,17 @@ map_int(tmp, length)
 map(tmp[-1], setdiff, y = tmp[[1]])
 ```
 
+Patient `03-354` is present only in the `ABC` dataset:
+
+```{r}
+map_lgl(tmp, is.element, el = "03-354")
+```
+
+```{r}
+
+```
+
+
 
 ```{r}
 crf <- list(devsocsed = list(MomEdu = c("Never been to school",
