@@ -58,13 +58,25 @@ data_folder <- paste0(root, "GitHub/choisy/08RS/")
 Required packages:
 
 ```{r}
-required <- c("readxl", "purrr", "dplyr")
+required <- c("readxl", "purrr", "dplyr", "magrittr")
 ```
 
 Loading packages:
 
 ```{r message = FALSE}
 library(dplyr)
+library(purrr)
+```
+
+
+## Saras' CSV file
+
+```{r}
+saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
+names_saras <- names(saras)
+#tmp <- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)
+#tmp <- tmp[map_dbl(tmp, length) > 0]
+#unique(unlist(map(tmp, names)))
 ```
 
 
@@ -110,74 +122,7 @@ The names of the data frames in Saras' code and in the new data file:
 # ABC           data_MABC       movement ABC-2
 ```
 
-Reformatting the data
-
-```{r}
-CRF2 <- CRF[c("ENROL", "HIST", "EXAM", "DEVSOCSED", "DISC", "FUP", "FUP_II", "FUP_III",
-              "ABC")]
-
-CRF2$ENROL <- CRF2$ENROL |> 
-  select(ParNo, DateEnrol, Gender, DateBirth) |> 
-  mutate(across(Gender, ~ c("male", "female")[.x]),
-         across(starts_with("Date"), as.Date))
-
-CRF2$HIST <- CRF2$HIST |> 
-  select(ParNo, DateIllness, DateAdmHTD, DateAdmHTD, DateAdmHosp) |> 
-  mutate(across(starts_with("Date"), as.Date))
-
-CRF2$EXAM <- CRF2$EXAM |> 
-  select(ParNo, headCircumference)
-
-CRF2$DEVSOCSED <- CRF2$DEVSOCSED |> 
-  select(ParNo, MomEdu, Toilet, Refrigerator, AirConditioner, Motorbike, Water) |> 
-  mutate(across(c("Refrigerator", "AirConditioner"), ~ .x < 2))
-
-CRF2$DISC <- CRF2$DISC |> 
-  select(ParNo, DateDisc, GradeHFMD, DateHFMD, TreatSepsis, PCR, EV71, Outcome,
-         Seizure, Hypertonicity, LimbPara, CNP, DiapWeak, Trache, Nasotube,
-         BehaveChange) |> 
-  mutate(across(starts_with("Date"), as.Date)) |> 
-  mutate(across(c("TreatSepsis", "EV71"), ~ .x < 2))
-
-CRF2$FUP <- CRF2$FUP |> 
-  select(ParNo, Trache) |> 
-  mutate(across("Trache", ~ .x < 2))
-
-CRF2$FUP_II <- CRF2$FUP_II |> 
-  select(ParNo, Trache) |> 
-  mutate(across("Trache", ~ .x < 2))
-
-CRF2$FUP_III <- CRF2$FUP_III |> 
-  select(ParNo, Trache) |> 
-  mutate(across("Trache", ~ .x < 2))
-
-CRF2$ABC <- CRF2$ABC |> 
-  select(ParNo, Gender, DateBirth, MD1, MD2, MD3, AC1, AC2, BAL1, BAL2, BAL3) |> 
-  mutate(across(Gender, ~ c("male", "female")[.x]),
-         across(starts_with("Date"), as.Date))
-```
-
-```{r}
-tmp <- CRF2 |>
-  map(~ .x$ParNo) |> 
-  map(unique)
-
-map_int(tmp, length)
-
-map(tmp[-1], setdiff, y = tmp[[1]])
-```
-
-Patient `03-354` is present only in the `ABC` dataset:
-
-```{r}
-map_lgl(tmp, is.element, el = "03-354")
-```
-
-```{r}
-
-```
-
-
+The dictionary:
 
 ```{r}
 crf <- list(devsocsed = list(MomEdu = c("Never been to school",
@@ -225,17 +170,112 @@ crf <- list(devsocsed = list(MomEdu = c("Never been to school",
                            c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3")))
 ```
 
-
-## Temporary
+Selection of variables from the CRF:
 
 ```{r}
-saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
-names_saras <- names(saras)
-tmp <- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)
-tmp <- tmp[map_dbl(tmp, length) > 0]
-unique(unlist(map(tmp, names)))
+selection <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth"),
+                  HIST      = c("ParNo", "DateIllness", "DateAdmHTD", "DateAdmHTD",
+                                "DateAdmHosp", "HFMDToday", "HFMDAdmitted"),
+                  EXAM      = c("ParNo", "headCircumference", "height", "weigh"),
+                  DEVSOCSED = c("ParNo", "MomEdu", "Toilet", "Refrigerator",
+                                "AirConditioner", "Motorbike", "Water"),
+                  DISC      = c("ParNo", "DateDisc", "GradeHFMD", "DateHFMD",
+                                "TreatSepsis", "PCR",
+                                "EV71", "Outcome", "Seizure", "Hypertonicity",
+                                "LimbPara", "CNP", "DiapWeak",
+                                "Trache", "Nasotube", "BehaveChange"),
+                  ABC       = c("ParNo", "DateTested", "MD1", "MD2", "MD3", "AC1",
+                                "AC2", "BAL1", "BAL2", "BAL3"))
 ```
 
+Of note, in `ABC` (Movement Assessment Battery for Children, second edition)), `MD`
+stands for manual dexterity, `AC` stands for aiming and catching and `BAL` stands for
+balance.
+
+Extracting variables of tabs:
+
+```{r}
+get_vars <- function(sel, x) {
+  x |> 
+    magrittr::extract(names(sel)) |>
+    map2(sel, ~ select(.x, !!!.y))
+}
+```
+
+recoding 1:
+
+```{r}
+recoding1 <- function(x) {
+  x |>
+    mutate(across(Gender, ~ c("male", "female")[.x]),
+           across(starts_with("Date"), as.Date),
+           across(c("Refrigerator", "AirConditioner", "TreatSepsis", "EV71"), ~ .x < 2))
+}
+```
+
+recoding 2:
+
+```{r}
+recoding2 <- function(x) {
+  x |>
+    mutate(across(c("HFMDToday", "HFMDAdmitted", "GradeHFMD"), ~ crf$disc$GradeHFMD[.x]),
+           across(MomEdu, ~ crf$devsocsed$MomEdu[.x]),
+           across(Toilet, ~ crf$devsocsed$Toilet[.x]),
+           across(Motorbike, ~ crf$devsocsed$Motorbike[.x]),
+           across(Water, ~ crf$devsocsed$Water[.x]),
+           across(PCR, ~ crf$disc$PCR[.x]),
+           across(Outcome, ~ crf$disc$Outcome[.x]))
+  
+#  CRF2$ABC |> 
+#    mutate(across(starts_with(c("M", "A", "B")), ~ crf$ABC$MD1[.x]))
+}
+```
+
+Selecting and recoding the variables from the CRF:
+
+```{r}
+CRF2 <- selection |> 
+  head(-1) |> # putting ABC aside for now because of multiple assessments
+  get_vars(CRF) |> 
+  reduce(left_join, by = "ParNo") |> 
+  recoding1() |> 
+  recoding2()
+```
+
+Questions:
+
+* what HFMD grad do we use? The maximum one? The one at enrollment?
+* Patient `03-354` is present only in the `ABC` dataset. What do we do?
+* Can we explain why we have this (i.e. the multiple assessments of the M-ABC):
+
+```{r}
+table(table(CRF$ABC$ParNo))
+```
+
+Comparing CRF with Saras' data:
+
+```{r}
+unique(unlist(map(CRF2, names)))
+setdiff(names(saras), unique(unlist(map(CRF2, names))))
+```
+
+Checking that same variable across different tabs of the CRF excel file are identical:
+
+```{r eval = FALSE}
+merged <- reduce(CRF2, left_join, by = "ParNo")
+
+identical(merged$DateBirth.x, merged$DateBirth.y)
+select(merged, DateBirth.x, DateBirth.y)
+
+identical(merged$Gender.x, merged$Gender.y)
+select(merged, Gender.x, Gender.y)
+
+select(merged, Trache.x, Trache.x.x, Trache.y, Trache.y.y) |> 
+  na.exclude() |> 
+  with(identical(Trache.y.y, Trache.y))
+
+table(table(merged$ParNo))
+```
 
 ## Loading the Bayley data
 
@@ -246,5 +286,6 @@ Bayley <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
 ```{r}
 names(Bayley)
 ```
+
 
 
