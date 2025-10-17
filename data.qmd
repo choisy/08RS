@@ -61,7 +61,14 @@ Required packages:
 required <- c("readxl", "purrr", "dplyr", "magrittr")
 ```
 
-Loading packages:
+Installing those that are not installed yet:
+
+```{r}
+to_install <- required[! required %in% installed.packages()[,"Package"]]
+if (length(to_install)) install.packages(to_install)
+```
+
+Loading some packages for interactive use:
 
 ```{r message = FALSE}
 library(dplyr)
@@ -69,38 +76,62 @@ library(purrr)
 ```
 
 
-## Saras' CSV file
+## Functions
+
+A tuning of the `readxl::read_excel()` function:
 
 ```{r}
-saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
-names_saras <- names(saras)
-#tmp <- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)
-#tmp <- tmp[map_dbl(tmp, length) > 0]
-#unique(unlist(map(tmp, names)))
+read_excel2 <- function(file, ...) readxl::read_excel(paste0(data_folder, file), ...)
 ```
 
-
-## Loading the CRF data
-
-A function that reads all the tabs of an excel file in the data folder:
+A function that reads all the tabs of an excel file in the data folder `data_folder`
+defined above:
 
 ```{r}
 read_excel_file <- function(file) {
-  file <- paste0(data_folder, file)
-  sheets_names <- readxl::excel_sheets(file)
+#  file <- paste0(data_folder, file)
+#  sheets_names <- readxl::excel_sheets(file)
+  sheets_names <- readxl::excel_sheets(paste0(data_folder, file))
   sheets_names |>
-    purrr::map(~ readxl::read_excel(file, .x)) |> 
+#    map(~ readxl::read_excel(file, .x)) |> 
+    map(~ read_excel2(file, .x)) |> 
     setNames(sheets_names)
 }
 ```
 
-Reading the `CTU08RS_Data.xlsx` data file:
+A function that extracts some variables of some slots of a list `x` of data frames:
+
+```{r}
+get_vars <- function(sel, x) {
+  x |> 
+    magrittr::extract(names(sel)) |>
+    map2(sel, ~ select(.x, !!!.y))
+}
+```
+
+The variables in questions are defined in the named list `sel` of character vectors.
+The names of this list should be among the names of `x` and the character vectors of
+each slots should be among the names of the columns of the data frames in the
+corresponding slots. A function that renames a column of a data frame:
+
+```{r}
+rename2 <- function(df, newname, oldname) {
+  df_names <- names(df)
+  df_names[which(df_names == oldname)] <- newname
+  setNames(df, df_names)
+}
+```
+
+
+## CRF data
+
+Loading the data from CliRes:
 
 ```{r}
 CRF <- read_excel_file("6-11-2024-CTU08RS_Data.xlsx")
 ```
 
-The names of the data frames in Saras' code and in the new data file:
+The names of the data frames in CliRes and in Saras' code, with definitions:
 
 ```{r}
 # CliRes        Saras           Definition
@@ -122,52 +153,53 @@ The names of the data frames in Saras' code and in the new data file:
 # ABC           data_MABC       movement ABC-2
 ```
 
-The dictionary:
+The CRF dictionary:
 
 ```{r}
-crf <- list(devsocsed = list(MomEdu = c("Never been to school",
-                                        "Attended some primary school",
-                                        "Completed primary school (5th gr)",
-                                        "Completed lower secondary school (9th gr)",
-                                        "Completed higher secondary school (12th gr)",
-                                        "Completed university/college degree",
-                                        "Completed postgraduate degree"),
-                             Toilet = c("Own flush toilet",
-                                        "Shared flush toilet",
-                                        "Traditional pit toilet",
-                                        "Ventilation improved pit toilet",
-                                        "No facility/bush/field",
-                                        "None of above"),
-                             Water  = c("Private tap",
-                                        "Public standpipe",
-                                        "Bottled water",
-                                        "Well in own residence",
-                                        "Public well",
-                                        "Rain water",
-                                        "Spring",
-                                        "River/lake/pond", NA,
-                                        "None of the above")),
-            disc = list(GradeHFMD   = c("grade 1",
-                                        "grade 2a",
-                                        "grade 2b(1)",
-                                        "grade 2b(2)",
-                                        "grade 3",
-                                        "grade 4",
-                                        "Not Applicable"),
-                        PCR         = c("EV positive",
-                                        "EV negative",
-                                        "Not done"),
-                        Outcome     = c("Full recovery without complication",
-                                        "Incomplete recovery",
-                                        "Transferred to another hospital",
-                                        "Taken home without approval",
-                                        "Death",
-                                        "Discharged to die")),
-            ABC = setNames(map(1:8, ~ c(D = "Done",
-                                        F = "Failure",
-                                        I = "Inappropriate",
-                                        R = "Refusal")),
-                           c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3")))
+CRF_dict <- list(
+  devsocsed = list(MomEdu = c("Never been to school",
+                              "Attended some primary school",
+                              "Completed primary school (5th gr)",
+                              "Completed lower secondary school (9th gr)",
+                              "Completed higher secondary school (12th gr)",
+                              "Completed university/college degree",
+                              "Completed postgraduate degree"),
+                   Toilet = c("Own flush toilet",
+                              "Shared flush toilet",
+                              "Traditional pit toilet",
+                              "Ventilation improved pit toilet",
+                              "No facility/bush/field",
+                              "None of above"),
+                   Water  = c("Private tap",
+                              "Public standpipe",
+                              "Bottled water",
+                              "Well in own residence",
+                              "Public well",
+                              "Rain water",
+                              "Spring",
+                              "River/lake/pond", NA,
+                              "None of the above")),
+  disc = list(GradeHFMD   = c("grade 1",
+                              "grade 2a",
+                              "grade 2b(1)",
+                              "grade 2b(2)",
+                              "grade 3",
+                              "grade 4",
+                              "Not Applicable"),
+              PCR         = c("EV positive",
+                              "EV negative",
+                              "Not done"),
+              Outcome     = c("Full recovery without complication",
+                              "Incomplete recovery",
+                              "Transferred to another hospital",
+                              "Taken home without approval",
+                              "Death",
+                              "Discharged to die")),
+  ABC = setNames(map(1:8, ~ c(D = "Done",
+                              F = "Failure",
+                              I = "Inappropriate",
+                              R = "Refusal")),
+                 c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3")))
 ```
 
 Selection of variables from the CRF:
@@ -188,43 +220,36 @@ selection <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth"),
                                 "AC2", "BAL1", "BAL2", "BAL3"))
 ```
 
-Of note, in `ABC` (Movement Assessment Battery for Children, second edition)), `MD`
-stands for manual dexterity, `AC` stands for aiming and catching and `BAL` stands for
-balance.
+**NOTE:** in `ABC` (Movement Assessment Battery for Children, second edition)),
 
-Extracting variables of tabs:
+* `MD` stands for manual dexterity,
+* `AC` stands for aiming and catching and
+* `BAL` stands for balance.
 
-```{r}
-get_vars <- function(sel, x) {
-  x |> 
-    magrittr::extract(names(sel)) |>
-    map2(sel, ~ select(.x, !!!.y))
-}
-```
-
-recoding 1:
+First recoding of variables:
 
 ```{r}
 recoding1 <- function(x) {
   x |>
     mutate(across(Gender, ~ c("male", "female")[.x]),
            across(starts_with("Date"), as.Date),
-           across(c("Refrigerator", "AirConditioner", "TreatSepsis", "EV71"), ~ .x < 2))
+           across(c("Refrigerator", "AirConditioner",
+                    "Motorbike", "TreatSepsis", "EV71"), ~ .x < 2))
 }
 ```
 
-recoding 2:
+Second recoding of variables:
 
 ```{r}
 recoding2 <- function(x) {
   x |>
-    mutate(across(c("HFMDToday", "HFMDAdmitted", "GradeHFMD"), ~ crf$disc$GradeHFMD[.x]),
-           across(MomEdu, ~ crf$devsocsed$MomEdu[.x]),
-           across(Toilet, ~ crf$devsocsed$Toilet[.x]),
-           across(Motorbike, ~ crf$devsocsed$Motorbike[.x]),
-           across(Water, ~ crf$devsocsed$Water[.x]),
-           across(PCR, ~ crf$disc$PCR[.x]),
-           across(Outcome, ~ crf$disc$Outcome[.x]))
+    mutate(across(c("HFMDToday", "HFMDAdmitted", "GradeHFMD"),
+                  ~ CRF_dict$disc$GradeHFMD[.x]),
+           across(MomEdu, ~ CRF_dict$devsocsed$MomEdu[.x]),
+           across(Toilet, ~ CRF_dict$devsocsed$Toilet[.x]),
+           across(Water, ~ CRF_dict$devsocsed$Water[.x]),
+           across(PCR, ~ CRF_dict$disc$PCR[.x]),
+           across(Outcome, ~ CRF_dict$disc$Outcome[.x]))
   
 #  CRF2$ABC |> 
 #    mutate(across(starts_with(c("M", "A", "B")), ~ crf$ABC$MD1[.x]))
@@ -242,9 +267,10 @@ CRF2 <- selection |>
   recoding2()
 ```
 
-Questions:
+**Questions:**
 
-* what HFMD grad do we use? The maximum one? The one at enrollment?
+* is `CRF$HIST$HFMDToday` equivalent to `AdmissionGrade` is Saras'?
+* what HFMD grade do we use? The maximum one? The one at enrollment?
 * Patient `03-354` is present only in the `ABC` dataset. What do we do?
 * Can we explain why we have this (i.e. the multiple assessments of the M-ABC):
 
@@ -252,11 +278,73 @@ Questions:
 table(table(CRF$ABC$ParNo))
 ```
 
+
+## Bayley data
+
+Loading the data from CliRes:
+
+```{r}
+Bayley <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
+```
+
+The tabs that we are interested in are the following:
+
+* **CS:** cognitive scale
+* **RC:** receptive communication (language scale)
+* **EC:** expressive communication (language scale)
+* **FM:** fine motor (motor scale)
+* **GM:** gross motor (motor scale)
+
+```{r}
+Bayley_tabs <- c("CS", "RC", "EC", "FM", "GM")
+```
+
+Let's generate the data frame from these tabs:
+
+```{r}
+common_variables1 <- c("PARNO", "EVENT", "DATETESTED")
+common_variables2 <- c(common_variables1, "SCALESCORE")
+
+Bayley2 <- Bayley_tabs |> 
+  map(~ c(common_variables2, .x)) |> 
+  setNames(Bayley_tabs) |> 
+  get_vars(Bayley) |> 
+  map2(paste0("SCALESCORE_", Bayley_tabs), rename2, "SCALESCORE") |> 
+  map2(paste0("DATETESTED_", Bayley_tabs), rename2, "DATETESTED") |> 
+  reduce(left_join, by = c("PARNO", "EVENT")) |> 
+  mutate(across(starts_with("DATE"), as.Date)) |> 
+  rename(ParNo = PARNO) |> 
+  mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_")))
+```
+
+
+## PCR data
+
+```{r message = FALSE}
+PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
+  read_excel2("08RS") |> 
+  select(ID, `OUCRU RESULT`) |> 
+  na.exclude()
+```
+
+
+## Saras' CSV file
+
+```{r}
+saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
+names_saras <- names(saras)
+#tmp <- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)
+#tmp <- tmp[map_dbl(tmp, length) > 0]
+#unique(unlist(map(tmp, names)))
+```
+
+
 Comparing CRF with Saras' data:
 
 ```{r}
-unique(unlist(map(CRF2, names)))
-setdiff(names(saras), unique(unlist(map(CRF2, names))))
+unique(names(CRF2))
+setdiff(names(saras), unique(names(CRF2)))
+saras[, setdiff(names(saras), unique(names(CRF2)))]
 ```
 
 Checking that same variable across different tabs of the CRF excel file are identical:
@@ -277,15 +365,6 @@ select(merged, Trache.x, Trache.x.x, Trache.y, Trache.y.y) |>
 table(table(merged$ParNo))
 ```
 
-## Loading the Bayley data
-
-```{r}
-Bayley <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
-```
-
-```{r}
-names(Bayley)
-```
 
 
 
