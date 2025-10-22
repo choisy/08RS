@@ -58,7 +58,7 @@ data_folder <- paste0(root, "GitHub/choisy/08RS/")
 Required packages:
 
 ```{r}
-required <- c("readxl", "purrr", "dplyr", "magrittr")
+required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr")
 ```
 
 Installing those that are not installed yet:
@@ -73,6 +73,7 @@ Loading some packages for interactive use:
 ```{r message = FALSE}
 library(dplyr)
 library(purrr)
+library(stringr)
 ```
 
 
@@ -89,13 +90,18 @@ defined above:
 
 ```{r}
 read_excel_file <- function(file) {
-#  file <- paste0(data_folder, file)
-#  sheets_names <- readxl::excel_sheets(file)
   sheets_names <- readxl::excel_sheets(paste0(data_folder, file))
   sheets_names |>
-#    map(~ readxl::read_excel(file, .x)) |> 
     map(~ read_excel2(file, .x)) |> 
     setNames(sheets_names)
+}
+```
+
+A function that remove some slots of a list, by names:
+
+```{r}
+remove_slots <- function(lst, slt) {
+  lst[setdiff(names(lst), slt)]
 }
 ```
 
@@ -186,20 +192,12 @@ CRF_dict <- list(
                               "grade 3",
                               "grade 4",
                               "Not Applicable"),
-              PCR         = c("EV positive",
-                              "EV negative",
-                              "Not done"),
               Outcome     = c("Full recovery without complication",
                               "Incomplete recovery",
                               "Transferred to another hospital",
                               "Taken home without approval",
                               "Death",
-                              "Discharged to die")),
-  ABC = setNames(map(1:8, ~ c(D = "Done",
-                              F = "Failure",
-                              I = "Inappropriate",
-                              R = "Refusal")),
-                 c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3")))
+                              "Discharged to die")))
 ```
 
 Selection of variables from the CRF:
@@ -211,20 +209,32 @@ selection <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth"),
                   EXAM      = c("ParNo", "headCircumference", "height", "weigh"),
                   DEVSOCSED = c("ParNo", "MomEdu", "Toilet", "Refrigerator",
                                 "AirConditioner", "Motorbike", "Water"),
-                  DISC      = c("ParNo", "DateDisc", "GradeHFMD", "DateHFMD",
-                                "TreatSepsis", "PCR",
-                                "EV71", "Outcome", "Seizure", "Hypertonicity",
-                                "LimbPara", "CNP", "DiapWeak",
-                                "Trache", "Nasotube", "BehaveChange"),
-                  ABC       = c("ParNo", "DateTested", "MD1", "MD2", "MD3", "AC1",
-                                "AC2", "BAL1", "BAL2", "BAL3"))
+                  DISC      = c("ParNo", "DateDisc", "GradeHFMD", "TreatSepsis",
+                                "Outcome", "Seizure", "Hypertonicity", "LimbPara",
+                                "CNP", "DiapWeak", "Trache", "Nasotube",
+                                "BehaveChange"))
 ```
 
-**NOTE:** in `ABC` (Movement Assessment Battery for Children, second edition)),
 
-* `MD` stands for manual dexterity,
-* `AC` stands for aiming and catching and
-* `BAL` stands for balance.
+## PCR data
+
+```{r message = FALSE}
+PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
+  read_excel2("08RS") |> 
+  select(ID, `OUCRU RESULT`) |> 
+  mutate(across(ID, as.numeric)) |> 
+  na.exclude()
+```
+
+
+## Children data
+
+The case and control groups:
+
+```{r}
+groups <- c(rep("HFMD", 299), rep("control", 200),
+            rep("HFMD", 200), rep("control", 299))
+```
 
 First recoding of variables:
 
@@ -234,7 +244,7 @@ recoding1 <- function(x) {
     mutate(across(Gender, ~ c("male", "female")[.x]),
            across(starts_with("Date"), as.Date),
            across(c("Refrigerator", "AirConditioner",
-                    "Motorbike", "TreatSepsis", "EV71"), ~ .x < 2))
+                    "Motorbike", "TreatSepsis"), ~ .x < 2))
 }
 ```
 
@@ -243,40 +253,50 @@ Second recoding of variables:
 ```{r}
 recoding2 <- function(x) {
   x |>
-    mutate(across(c("HFMDToday", "HFMDAdmitted", "GradeHFMD"),
-                  ~ CRF_dict$disc$GradeHFMD[.x]),
+    mutate(across(HFMD, ~ CRF_dict$disc$GradeHFMD[.x]),
            across(MomEdu, ~ CRF_dict$devsocsed$MomEdu[.x]),
            across(Toilet, ~ CRF_dict$devsocsed$Toilet[.x]),
            across(Water, ~ CRF_dict$devsocsed$Water[.x]),
-           across(PCR, ~ CRF_dict$disc$PCR[.x]),
            across(Outcome, ~ CRF_dict$disc$Outcome[.x]))
-  
-#  CRF2$ABC |> 
-#    mutate(across(starts_with(c("M", "A", "B")), ~ crf$ABC$MD1[.x]))
 }
 ```
 
-Selecting and recoding the variables from the CRF:
+Selecting, recoding the variables from the CRF, and assigning to case or control:
 
 ```{r}
-CRF2 <- selection |> 
-  head(-1) |> # putting ABC aside for now because of multiple assessments
+children <- selection |> 
+  remove_slots("ABC") |> 
   get_vars(CRF) |> 
   reduce(left_join, by = "ParNo") |> 
+  rowwise() |> 
+  mutate(HFMD = max(across(c(HFMDToday, HFMDAdmitted, GradeHFMD)))) |> #takes max grade
+  ungroup() |> 
   recoding1() |> 
-  recoding2()
+  recoding2() |>
+  mutate(ID    = as.numeric(str_remove(ParNo, "^.*-")),
+         group = groups[ID]) |> 
+  left_join(PCR, "ID") |> 
+  rename(PCR = `OUCRU RESULT`) |> 
+  select(-HFMDToday, -HFMDAdmitted, -GradeHFMD, -ID) |> 
+  select(ParNo, Gender, DateBirth, DateIllness, DateAdmHosp,
+         DateAdmHTD, DateEnrol, DateDisc, everything()) |> 
+  arrange(ParNo)
 ```
 
-**Questions:**
 
-* is `CRF$HIST$HFMDToday` equivalent to `AdmissionGrade` is Saras'?
-* what HFMD grade do we use? The maximum one? The one at enrollment?
-* Patient `03-354` is present only in the `ABC` dataset. What do we do?
-* Can we explain why we have this (i.e. the multiple assessments of the M-ABC):
+## M-ABC data
 
 ```{r}
-table(table(CRF$ABC$ParNo))
+ABC <- CRF$ABC |> 
+  select(ParNo, DateTested, ends_with("ISS")) |> 
+  mutate(across(starts_with("Date"), as.Date)) |> 
+  arrange(ParNo, DateTested)
 ```
+
+Of note, here
+* `MD` stands for manual dexterity,
+* `AC` stands for aiming and catching and
+* `BAL` stands for balance.
 
 
 ## Bayley data
@@ -284,7 +304,7 @@ table(table(CRF$ABC$ParNo))
 Loading the data from CliRes:
 
 ```{r}
-Bayley <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
+Bayley0 <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
 ```
 
 The tabs that we are interested in are the following:
@@ -302,29 +322,18 @@ Bayley_tabs <- c("CS", "RC", "EC", "FM", "GM")
 Let's generate the data frame from these tabs:
 
 ```{r}
-common_variables1 <- c("PARNO", "EVENT", "DATETESTED")
+common_variables1 <- c("PARNO", "DATETESTED")
 common_variables2 <- c(common_variables1, "SCALESCORE")
 
-Bayley2 <- Bayley_tabs |> 
+Bayley<- Bayley_tabs |> 
   map(~ c(common_variables2, .x)) |> 
   setNames(Bayley_tabs) |> 
-  get_vars(Bayley) |> 
+  get_vars(Bayley0) |> 
   map2(paste0("SCALESCORE_", Bayley_tabs), rename2, "SCALESCORE") |> 
-  map2(paste0("DATETESTED_", Bayley_tabs), rename2, "DATETESTED") |> 
-  reduce(left_join, by = c("PARNO", "EVENT")) |> 
+  reduce(left_join, by = c("PARNO", "DATETESTED")) |> 
   mutate(across(starts_with("DATE"), as.Date)) |> 
   rename(ParNo = PARNO) |> 
   mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_")))
-```
-
-
-## PCR data
-
-```{r message = FALSE}
-PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
-  read_excel2("08RS") |> 
-  select(ID, `OUCRU RESULT`) |> 
-  na.exclude()
 ```
 
 
@@ -332,39 +341,28 @@ PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
 
 ```{r}
 saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
-names_saras <- names(saras)
-#tmp <- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)
-#tmp <- tmp[map_dbl(tmp, length) > 0]
-#unique(unlist(map(tmp, names)))
 ```
-
-
-Comparing CRF with Saras' data:
 
 ```{r}
-unique(names(CRF2))
-setdiff(names(saras), unique(names(CRF2)))
-saras[, setdiff(names(saras), unique(names(CRF2)))]
+select(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)
 ```
 
-Checking that same variable across different tabs of the CRF excel file are identical:
-
-```{r eval = FALSE}
-merged <- reduce(CRF2, left_join, by = "ParNo")
-
-identical(merged$DateBirth.x, merged$DateBirth.y)
-select(merged, DateBirth.x, DateBirth.y)
-
-identical(merged$Gender.x, merged$Gender.y)
-select(merged, Gender.x, Gender.y)
-
-select(merged, Trache.x, Trache.x.x, Trache.y, Trache.y.y) |> 
-  na.exclude() |> 
-  with(identical(Trache.y.y, Trache.y))
-
-table(table(merged$ParNo))
+```{r}
+table(saras$waste)
 ```
 
 
+# Generating the time points
 
+```{r}
+children |> 
+  select(ParNo, DateEnrol, DateDisc) |> 
+  left_join(ABC, "ParNo")
+```
+
+```{r}
+children |> 
+  select(ParNo, DateEnrol, DateDisc) |> 
+  left_join(Bayley, "ParNo")
+```
 

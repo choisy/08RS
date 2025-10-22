@@ -81,13 +81,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link active" data-scroll-target="#global-parameters"><span class="header-section-number">1</span> Global parameters</a></li>
-  <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages"><span class="header-section-number">2</span> Packages</a></li>
-  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions"><span class="header-section-number">3</span> Functions</a></li>
-  <li><a href="#crf-data" id="toc-crf-data" class="nav-link" data-scroll-target="#crf-data"><span class="header-section-number">4</span> CRF data</a></li>
-  <li><a href="#bayley-data" id="toc-bayley-data" class="nav-link" data-scroll-target="#bayley-data"><span class="header-section-number">5</span> Bayley data</a></li>
-  <li><a href="#pcr-data" id="toc-pcr-data" class="nav-link" data-scroll-target="#pcr-data"><span class="header-section-number">6</span> PCR data</a></li>
-  <li><a href="#saras-csv-file" id="toc-saras-csv-file" class="nav-link" data-scroll-target="#saras-csv-file"><span class="header-section-number">7</span> Saras’ CSV file</a></li>
+  <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link active" data-scroll-target="#global-parameters"><span class="header-section-number">0.1</span> Global parameters</a></li>
+  <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages"><span class="header-section-number">0.2</span> Packages</a></li>
+  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions"><span class="header-section-number">0.3</span> Functions</a></li>
+  <li><a href="#crf-data" id="toc-crf-data" class="nav-link" data-scroll-target="#crf-data"><span class="header-section-number">0.4</span> CRF data</a></li>
+  <li><a href="#pcr-data" id="toc-pcr-data" class="nav-link" data-scroll-target="#pcr-data"><span class="header-section-number">0.5</span> PCR data</a></li>
+  <li><a href="#children-data" id="toc-children-data" class="nav-link" data-scroll-target="#children-data"><span class="header-section-number">0.6</span> Children data</a></li>
+  <li><a href="#m-abc-data" id="toc-m-abc-data" class="nav-link" data-scroll-target="#m-abc-data"><span class="header-section-number">0.7</span> M-ABC data</a></li>
+  <li><a href="#bayley-data" id="toc-bayley-data" class="nav-link" data-scroll-target="#bayley-data"><span class="header-section-number">0.8</span> Bayley data</a></li>
+  <li><a href="#saras-csv-file" id="toc-saras-csv-file" class="nav-link" data-scroll-target="#saras-csv-file"><span class="header-section-number">0.9</span> Saras’ CSV file</a></li>
+  <li><a href="#generating-the-time-points" id="toc-generating-the-time-points" class="nav-link" data-scroll-target="#generating-the-time-points"><span class="header-section-number">1</span> Generating the time points</a></li>
   </ul>
 </nav>
 </div>
@@ -112,19 +115,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="global-parameters" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="global-parameters"><span class="header-section-number">1</span> Global parameters</h2>
+<section id="global-parameters" class="level2" data-number="0.1">
+<h2 data-number="0.1" class="anchored" data-anchor-id="global-parameters"><span class="header-section-number">0.1</span> Global parameters</h2>
 <p>The path to the data folder on the local computer:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>root <span class="ot">&lt;-</span> <span class="st">"~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data_folder <span class="ot">&lt;-</span> <span class="fu">paste0</span>(root, <span class="st">"GitHub/choisy/08RS/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="packages" class="level2" data-number="2">
-<h2 data-number="2" class="anchored" data-anchor-id="packages"><span class="header-section-number">2</span> Packages</h2>
+<section id="packages" class="level2" data-number="0.2">
+<h2 data-number="0.2" class="anchored" data-anchor-id="packages"><span class="header-section-number">0.2</span> Packages</h2>
 <p>Required packages:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>required <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"readxl"</span>, <span class="st">"purrr"</span>, <span class="st">"dplyr"</span>, <span class="st">"magrittr"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>required <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"readxl"</span>, <span class="st">"purrr"</span>, <span class="st">"dplyr"</span>, <span class="st">"magrittr"</span>, <span class="st">"tidyr"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Installing those that are not installed yet:</p>
 <div class="cell" data-layout-align="center">
@@ -134,11 +137,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Loading some packages for interactive use:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="functions" class="level2" data-number="3">
-<h2 data-number="3" class="anchored" data-anchor-id="functions"><span class="header-section-number">3</span> Functions</h2>
+<section id="functions" class="level2" data-number="0.3">
+<h2 data-number="0.3" class="anchored" data-anchor-id="functions"><span class="header-section-number">0.3</span> Functions</h2>
 <p>A tuning of the <code>readxl::read_excel()</code> function:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>read_excel2 <span class="ot">&lt;-</span> <span class="cf">function</span>(file, ...) readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="fu">paste0</span>(data_folder, file), ...)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -146,183 +150,188 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A function that reads all the tabs of an excel file in the data folder <code>data_folder</code> defined above:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>read_excel_file <span class="ot">&lt;-</span> <span class="cf">function</span>(file) {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#  file &lt;- paste0(data_folder, file)</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#  sheets_names &lt;- readxl::excel_sheets(file)</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  sheets_names <span class="ot">&lt;-</span> readxl<span class="sc">::</span><span class="fu">excel_sheets</span>(<span class="fu">paste0</span>(data_folder, file))</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  sheets_names <span class="sc">|&gt;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#    map(~ readxl::read_excel(file, .x)) |&gt; </span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">read_excel2</span>(file, .x)) <span class="sc">|&gt;</span> </span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">setNames</span>(sheets_names)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  sheets_names <span class="ot">&lt;-</span> readxl<span class="sc">::</span><span class="fu">excel_sheets</span>(<span class="fu">paste0</span>(data_folder, file))</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  sheets_names <span class="sc">|&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">read_excel2</span>(file, .x)) <span class="sc">|&gt;</span> </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">setNames</span>(sheets_names)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A function that remove some slots of a list, by names:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>remove_slots <span class="ot">&lt;-</span> <span class="cf">function</span>(lst, slt) {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  lst[<span class="fu">setdiff</span>(<span class="fu">names</span>(lst), slt)]</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>A function that extracts some variables of some slots of a list <code>x</code> of data frames:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>get_vars <span class="ot">&lt;-</span> <span class="cf">function</span>(sel, x) {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span> </span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    magrittr<span class="sc">::</span><span class="fu">extract</span>(<span class="fu">names</span>(sel)) <span class="sc">|&gt;</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map2</span>(sel, <span class="sc">~</span> <span class="fu">select</span>(.x, <span class="sc">!!!</span>.y))</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>get_vars <span class="ot">&lt;-</span> <span class="cf">function</span>(sel, x) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span> </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    magrittr<span class="sc">::</span><span class="fu">extract</span>(<span class="fu">names</span>(sel)) <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map2</span>(sel, <span class="sc">~</span> <span class="fu">select</span>(.x, <span class="sc">!!!</span>.y))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The variables in questions are defined in the named list <code>sel</code> of character vectors. The names of this list should be among the names of <code>x</code> and the character vectors of each slots should be among the names of the columns of the data frames in the corresponding slots. A function that renames a column of a data frame:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>rename2 <span class="ot">&lt;-</span> <span class="cf">function</span>(df, newname, oldname) {</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  df_names <span class="ot">&lt;-</span> <span class="fu">names</span>(df)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  df_names[<span class="fu">which</span>(df_names <span class="sc">==</span> oldname)] <span class="ot">&lt;-</span> newname</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(df, df_names)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>rename2 <span class="ot">&lt;-</span> <span class="cf">function</span>(df, newname, oldname) {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  df_names <span class="ot">&lt;-</span> <span class="fu">names</span>(df)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  df_names[<span class="fu">which</span>(df_names <span class="sc">==</span> oldname)] <span class="ot">&lt;-</span> newname</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(df, df_names)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="crf-data" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="crf-data"><span class="header-section-number">4</span> CRF data</h2>
+<section id="crf-data" class="level2" data-number="0.4">
+<h2 data-number="0.4" class="anchored" data-anchor-id="crf-data"><span class="header-section-number">0.4</span> CRF data</h2>
 <p>Loading the data from CliRes:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>CRF <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"6-11-2024-CTU08RS_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>CRF <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"6-11-2024-CTU08RS_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The names of the data frames in CliRes and in Saras’ code, with definitions:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CliRes        Saras           Definition</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------------------------------</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ENROL         data_EN         enrollment</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># HIST          data_HIST       history at enrollment</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># CONHIST       CONHIST         contact history at enrollment</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># EXAM          data_EX         symptoms and signs at enrollment</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># LAB           data_LAB        lab results at admission</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># NEU           data_NEU        neurological exam</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co"># DAILY         data_Daily      daily review</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co"># MED           data_MED        medications</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># DEVSOCSED     data_DEV        development and socio-economic data</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># DISC          data_DISC       discharge summary</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co"># FUP           data_FUP        first follow-up day 7-10</span></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co"># FUP_II        data_FUP6m      first follow-up month 6</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># FUP_III       data_FUP18m     first follow-up month 18</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># NEURO         data_NEURO      neurological assessment</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ABC           data_MABC       movement ABC-2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CliRes        Saras           Definition</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ------------------------------------------------------------------</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ENROL         data_EN         enrollment</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># HIST          data_HIST       history at enrollment</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># CONHIST       CONHIST         contact history at enrollment</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co"># EXAM          data_EX         symptoms and signs at enrollment</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># LAB           data_LAB        lab results at admission</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># NEU           data_NEU        neurological exam</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co"># DAILY         data_Daily      daily review</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co"># MED           data_MED        medications</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co"># DEVSOCSED     data_DEV        development and socio-economic data</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co"># DISC          data_DISC       discharge summary</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co"># FUP           data_FUP        first follow-up day 7-10</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># FUP_II        data_FUP6m      first follow-up month 6</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co"># FUP_III       data_FUP18m     first follow-up month 18</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co"># NEURO         data_NEURO      neurological assessment</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ABC           data_MABC       movement ABC-2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The CRF dictionary:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>CRF_dict <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">devsocsed =</span> <span class="fu">list</span>(<span class="at">MomEdu =</span> <span class="fu">c</span>(<span class="st">"Never been to school"</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Attended some primary school"</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed primary school (5th gr)"</span>,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed lower secondary school (9th gr)"</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed higher secondary school (12th gr)"</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed university/college degree"</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed postgraduate degree"</span>),</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">Toilet =</span> <span class="fu">c</span>(<span class="st">"Own flush toilet"</span>,</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Shared flush toilet"</span>,</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Traditional pit toilet"</span>,</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Ventilation improved pit toilet"</span>,</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"No facility/bush/field"</span>,</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"None of above"</span>),</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                   <span class="at">Water  =</span> <span class="fu">c</span>(<span class="st">"Private tap"</span>,</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Public standpipe"</span>,</span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Bottled water"</span>,</span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Well in own residence"</span>,</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Public well"</span>,</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Rain water"</span>,</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Spring"</span>,</span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"River/lake/pond"</span>, <span class="cn">NA</span>,</span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"None of the above"</span>)),</span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">disc =</span> <span class="fu">list</span>(<span class="at">GradeHFMD   =</span> <span class="fu">c</span>(<span class="st">"grade 1"</span>,</span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 2a"</span>,</span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 2b(1)"</span>,</span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 2b(2)"</span>,</span>
-<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 3"</span>,</span>
-<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 4"</span>,</span>
-<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Not Applicable"</span>),</span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>              <span class="at">PCR         =</span> <span class="fu">c</span>(<span class="st">"EV positive"</span>,</span>
-<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"EV negative"</span>,</span>
-<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Not done"</span>),</span>
-<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>              <span class="at">Outcome     =</span> <span class="fu">c</span>(<span class="st">"Full recovery without complication"</span>,</span>
-<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Incomplete recovery"</span>,</span>
-<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Transferred to another hospital"</span>,</span>
-<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Taken home without approval"</span>,</span>
-<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Death"</span>,</span>
-<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Discharged to die"</span>)),</span>
-<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">ABC =</span> <span class="fu">setNames</span>(<span class="fu">map</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>, <span class="sc">~</span> <span class="fu">c</span>(<span class="at">D =</span> <span class="st">"Done"</span>,</span>
-<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>                              <span class="at">F =</span> <span class="st">"Failure"</span>,</span>
-<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>                              <span class="at">I =</span> <span class="st">"Inappropriate"</span>,</span>
-<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>                              <span class="at">R =</span> <span class="st">"Refusal"</span>)),</span>
-<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">c</span>(<span class="st">"MD1"</span>, <span class="st">"MD2"</span>, <span class="st">"MD3"</span>, <span class="st">"AC1"</span>, <span class="st">"AC2"</span>, <span class="st">"BAL1"</span>, <span class="st">"BAL2"</span>, <span class="st">"BAL3"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>CRF_dict <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">devsocsed =</span> <span class="fu">list</span>(<span class="at">MomEdu =</span> <span class="fu">c</span>(<span class="st">"Never been to school"</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Attended some primary school"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed primary school (5th gr)"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed lower secondary school (9th gr)"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed higher secondary school (12th gr)"</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed university/college degree"</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Completed postgraduate degree"</span>),</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">Toilet =</span> <span class="fu">c</span>(<span class="st">"Own flush toilet"</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Shared flush toilet"</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Traditional pit toilet"</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Ventilation improved pit toilet"</span>,</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"No facility/bush/field"</span>,</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"None of above"</span>),</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                   <span class="at">Water  =</span> <span class="fu">c</span>(<span class="st">"Private tap"</span>,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Public standpipe"</span>,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Bottled water"</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Well in own residence"</span>,</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Public well"</span>,</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Rain water"</span>,</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Spring"</span>,</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"River/lake/pond"</span>, <span class="cn">NA</span>,</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"None of the above"</span>)),</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">disc =</span> <span class="fu">list</span>(<span class="at">GradeHFMD   =</span> <span class="fu">c</span>(<span class="st">"grade 1"</span>,</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 2a"</span>,</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 2b(1)"</span>,</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 2b(2)"</span>,</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 3"</span>,</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"grade 4"</span>,</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Not Applicable"</span>),</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>              <span class="at">Outcome     =</span> <span class="fu">c</span>(<span class="st">"Full recovery without complication"</span>,</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Incomplete recovery"</span>,</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Transferred to another hospital"</span>,</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Taken home without approval"</span>,</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Death"</span>,</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Discharged to die"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Selection of variables from the CRF:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>selection <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">ENROL     =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateEnrol"</span>, <span class="st">"Gender"</span>, <span class="st">"DateBirth"</span>),</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">HIST      =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateIllness"</span>, <span class="st">"DateAdmHTD"</span>, <span class="st">"DateAdmHTD"</span>,</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DateAdmHosp"</span>, <span class="st">"HFMDToday"</span>, <span class="st">"HFMDAdmitted"</span>),</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">EXAM      =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"headCircumference"</span>, <span class="st">"height"</span>, <span class="st">"weigh"</span>),</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">DEVSOCSED =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"MomEdu"</span>, <span class="st">"Toilet"</span>, <span class="st">"Refrigerator"</span>,</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"AirConditioner"</span>, <span class="st">"Motorbike"</span>, <span class="st">"Water"</span>),</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">DISC      =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateDisc"</span>, <span class="st">"GradeHFMD"</span>, <span class="st">"DateHFMD"</span>,</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"TreatSepsis"</span>, <span class="st">"PCR"</span>,</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"EV71"</span>, <span class="st">"Outcome"</span>, <span class="st">"Seizure"</span>, <span class="st">"Hypertonicity"</span>,</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"LimbPara"</span>, <span class="st">"CNP"</span>, <span class="st">"DiapWeak"</span>,</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Trache"</span>, <span class="st">"Nasotube"</span>, <span class="st">"BehaveChange"</span>),</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                  <span class="at">ABC       =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateTested"</span>, <span class="st">"MD1"</span>, <span class="st">"MD2"</span>, <span class="st">"MD3"</span>, <span class="st">"AC1"</span>,</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"AC2"</span>, <span class="st">"BAL1"</span>, <span class="st">"BAL2"</span>, <span class="st">"BAL3"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>selection <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">ENROL     =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateEnrol"</span>, <span class="st">"Gender"</span>, <span class="st">"DateBirth"</span>),</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">HIST      =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateIllness"</span>, <span class="st">"DateAdmHTD"</span>, <span class="st">"DateAdmHTD"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DateAdmHosp"</span>, <span class="st">"HFMDToday"</span>, <span class="st">"HFMDAdmitted"</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">EXAM      =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"headCircumference"</span>, <span class="st">"height"</span>, <span class="st">"weigh"</span>),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">DEVSOCSED =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"MomEdu"</span>, <span class="st">"Toilet"</span>, <span class="st">"Refrigerator"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"AirConditioner"</span>, <span class="st">"Motorbike"</span>, <span class="st">"Water"</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">DISC      =</span> <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"DateDisc"</span>, <span class="st">"GradeHFMD"</span>, <span class="st">"TreatSepsis"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Outcome"</span>, <span class="st">"Seizure"</span>, <span class="st">"Hypertonicity"</span>, <span class="st">"LimbPara"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"CNP"</span>, <span class="st">"DiapWeak"</span>, <span class="st">"Trache"</span>, <span class="st">"Nasotube"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"BehaveChange"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p><strong>NOTE:</strong> in <code>ABC</code> (Movement Assessment Battery for Children, second edition)),</p>
-<ul>
-<li><code>MD</code> stands for manual dexterity,</li>
-<li><code>AC</code> stands for aiming and catching and</li>
-<li><code>BAL</code> stands for balance.</li>
-</ul>
+</section>
+<section id="pcr-data" class="level2" data-number="0.5">
+<h2 data-number="0.5" class="anchored" data-anchor-id="pcr-data"><span class="header-section-number">0.5</span> PCR data</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>PCR <span class="ot">&lt;-</span> <span class="st">"03EI-08RS PCR-Seq result.xlsx"</span> <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel2</span>(<span class="st">"08RS"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ID, <span class="st">`</span><span class="at">OUCRU RESULT</span><span class="st">`</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ID, as.numeric)) <span class="sc">|&gt;</span> </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="children-data" class="level2" data-number="0.6">
+<h2 data-number="0.6" class="anchored" data-anchor-id="children-data"><span class="header-section-number">0.6</span> Children data</h2>
+<p>The case and control groups:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>groups <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">"HFMD"</span>, <span class="dv">299</span>), <span class="fu">rep</span>(<span class="st">"control"</span>, <span class="dv">200</span>),</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>            <span class="fu">rep</span>(<span class="st">"HFMD"</span>, <span class="dv">200</span>), <span class="fu">rep</span>(<span class="st">"control"</span>, <span class="dv">299</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <p>First recoding of variables:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>recoding1 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(Gender, <span class="sc">~</span> <span class="fu">c</span>(<span class="st">"male"</span>, <span class="st">"female"</span>)[.x]),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"Date"</span>), as.Date),</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(<span class="fu">c</span>(<span class="st">"Refrigerator"</span>, <span class="st">"AirConditioner"</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Motorbike"</span>, <span class="st">"TreatSepsis"</span>, <span class="st">"EV71"</span>), <span class="sc">~</span> .x <span class="sc">&lt;</span> <span class="dv">2</span>))</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>recoding1 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(Gender, <span class="sc">~</span> <span class="fu">c</span>(<span class="st">"male"</span>, <span class="st">"female"</span>)[.x]),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"Date"</span>), as.Date),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(<span class="fu">c</span>(<span class="st">"Refrigerator"</span>, <span class="st">"AirConditioner"</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Motorbike"</span>, <span class="st">"TreatSepsis"</span>), <span class="sc">~</span> .x <span class="sc">&lt;</span> <span class="dv">2</span>))</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Second recoding of variables:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>recoding2 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(<span class="st">"HFMDToday"</span>, <span class="st">"HFMDAdmitted"</span>, <span class="st">"GradeHFMD"</span>),</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                  <span class="sc">~</span> CRF_dict<span class="sc">$</span>disc<span class="sc">$</span>GradeHFMD[.x]),</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(MomEdu, <span class="sc">~</span> CRF_dict<span class="sc">$</span>devsocsed<span class="sc">$</span>MomEdu[.x]),</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(Toilet, <span class="sc">~</span> CRF_dict<span class="sc">$</span>devsocsed<span class="sc">$</span>Toilet[.x]),</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(Water, <span class="sc">~</span> CRF_dict<span class="sc">$</span>devsocsed<span class="sc">$</span>Water[.x]),</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(PCR, <span class="sc">~</span> CRF_dict<span class="sc">$</span>disc<span class="sc">$</span>PCR[.x]),</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(Outcome, <span class="sc">~</span> CRF_dict<span class="sc">$</span>disc<span class="sc">$</span>Outcome[.x]))</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#  CRF2$ABC |&gt; </span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#    mutate(across(starts_with(c("M", "A", "B")), ~ crf$ABC$MD1[.x]))</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>recoding2 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(HFMD, <span class="sc">~</span> CRF_dict<span class="sc">$</span>disc<span class="sc">$</span>GradeHFMD[.x]),</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(MomEdu, <span class="sc">~</span> CRF_dict<span class="sc">$</span>devsocsed<span class="sc">$</span>MomEdu[.x]),</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(Toilet, <span class="sc">~</span> CRF_dict<span class="sc">$</span>devsocsed<span class="sc">$</span>Toilet[.x]),</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(Water, <span class="sc">~</span> CRF_dict<span class="sc">$</span>devsocsed<span class="sc">$</span>Water[.x]),</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(Outcome, <span class="sc">~</span> CRF_dict<span class="sc">$</span>disc<span class="sc">$</span>Outcome[.x]))</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Selecting and recoding the variables from the CRF:</p>
+<p>Selecting, recoding the variables from the CRF, and assigning to case or control:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>CRF2 <span class="ot">&lt;-</span> selection <span class="sc">|&gt;</span> </span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="sc">-</span><span class="dv">1</span>) <span class="sc">|&gt;</span> <span class="co"># putting ABC aside for now because of multiple assessments</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vars</span>(CRF) <span class="sc">|&gt;</span> </span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reduce</span>(left_join, <span class="at">by =</span> <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">recoding1</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">recoding2</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<p><strong>Questions:</strong></p>
-<ul>
-<li>is <code>CRF$HIST$HFMDToday</code> equivalent to <code>AdmissionGrade</code> is Saras’?</li>
-<li>what HFMD grade do we use? The maximum one? The one at enrollment?</li>
-<li>Patient <code>03-354</code> is present only in the <code>ABC</code> dataset. What do we do?</li>
-<li>Can we explain why we have this (i.e.&nbsp;the multiple assessments of the M-ABC):</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">table</span>(CRF<span class="sc">$</span>ABC<span class="sc">$</span>ParNo))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
- 1  2  3  4  5 
-68 18 22 13  1 </code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>children <span class="ot">&lt;-</span> selection <span class="sc">|&gt;</span> </span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">remove_slots</span>(<span class="st">"ABC"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vars</span>(CRF) <span class="sc">|&gt;</span> </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reduce</span>(left_join, <span class="at">by =</span> <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">HFMD =</span> <span class="fu">max</span>(<span class="fu">across</span>(<span class="fu">c</span>(HFMDToday, HFMDAdmitted, GradeHFMD)))) <span class="sc">|&gt;</span> <span class="co">#takes max grade</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">recoding1</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">recoding2</span>() <span class="sc">|&gt;</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID    =</span> <span class="fu">as.numeric</span>(<span class="fu">str_remove</span>(ParNo, <span class="st">"^.*-"</span>)),</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">group =</span> groups[ID]) <span class="sc">|&gt;</span> </span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(PCR, <span class="st">"ID"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">PCR =</span> <span class="st">`</span><span class="at">OUCRU RESULT</span><span class="st">`</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>HFMDToday, <span class="sc">-</span>HFMDAdmitted, <span class="sc">-</span>GradeHFMD, <span class="sc">-</span>ID) <span class="sc">|&gt;</span> </span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, Gender, DateBirth, DateIllness, DateAdmHosp,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>         DateAdmHTD, DateEnrol, DateDisc, <span class="fu">everything</span>()) <span class="sc">|&gt;</span> </span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="bayley-data" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="bayley-data"><span class="header-section-number">5</span> Bayley data</h2>
+<section id="m-abc-data" class="level2" data-number="0.7">
+<h2 data-number="0.7" class="anchored" data-anchor-id="m-abc-data"><span class="header-section-number">0.7</span> M-ABC data</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="ot">&lt;-</span> CRF<span class="sc">$</span>ABC <span class="sc">|&gt;</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateTested, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"Date"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo, DateTested)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Of note, here * <code>MD</code> stands for manual dexterity, * <code>AC</code> stands for aiming and catching and * <code>BAL</code> stands for balance.</p>
+</section>
+<section id="bayley-data" class="level2" data-number="0.8">
+<h2 data-number="0.8" class="anchored" data-anchor-id="bayley-data"><span class="header-section-number">0.8</span> Bayley data</h2>
 <p>Loading the data from CliRes:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>Bayley <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"12-9-2025-Bayley_v3_P1_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>Bayley0 <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"12-9-2025-Bayley_v3_P1_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The tabs that we are interested in are the following:</p>
 <ul>
@@ -333,38 +342,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>GM:</strong> gross motor (motor scale)</li>
 </ul>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>Bayley_tabs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>Bayley_tabs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s generate the data frame from these tabs:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>common_variables1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"EVENT"</span>, <span class="st">"DATETESTED"</span>)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>common_variables2 <span class="ot">&lt;-</span> <span class="fu">c</span>(common_variables1, <span class="st">"SCALESCORE"</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>Bayley2 <span class="ot">&lt;-</span> Bayley_tabs <span class="sc">|&gt;</span> </span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">c</span>(common_variables2, .x)) <span class="sc">|&gt;</span> </span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(Bayley_tabs) <span class="sc">|&gt;</span> </span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vars</span>(Bayley) <span class="sc">|&gt;</span> </span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map2</span>(<span class="fu">paste0</span>(<span class="st">"SCALESCORE_"</span>, Bayley_tabs), rename2, <span class="st">"SCALESCORE"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map2</span>(<span class="fu">paste0</span>(<span class="st">"DATETESTED_"</span>, Bayley_tabs), rename2, <span class="st">"DATETESTED"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reduce</span>(left_join, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"EVENT"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"DATE"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ParNo =</span> PARNO) <span class="sc">|&gt;</span> </span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ParNo, <span class="sc">~</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(.x, <span class="st">"08RS_"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>common_variables1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"DATETESTED"</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>common_variables2 <span class="ot">&lt;-</span> <span class="fu">c</span>(common_variables1, <span class="st">"SCALESCORE"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>Bayley<span class="ot">&lt;-</span> Bayley_tabs <span class="sc">|&gt;</span> </span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">c</span>(common_variables2, .x)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(Bayley_tabs) <span class="sc">|&gt;</span> </span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vars</span>(Bayley0) <span class="sc">|&gt;</span> </span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map2</span>(<span class="fu">paste0</span>(<span class="st">"SCALESCORE_"</span>, Bayley_tabs), rename2, <span class="st">"SCALESCORE"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reduce</span>(left_join, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"DATETESTED"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"DATE"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ParNo =</span> PARNO) <span class="sc">|&gt;</span> </span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ParNo, <span class="sc">~</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(.x, <span class="st">"08RS_"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="pcr-data" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="pcr-data"><span class="header-section-number">6</span> PCR data</h2>
+<section id="saras-csv-file" class="level2" data-number="0.9">
+<h2 data-number="0.9" class="anchored" data-anchor-id="saras-csv-file"><span class="header-section-number">0.9</span> Saras’ CSV file</h2>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>PCR <span class="ot">&lt;-</span> <span class="st">"03EI-08RS PCR-Seq result.xlsx"</span> <span class="sc">|&gt;</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel2</span>(<span class="st">"08RS"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ID, <span class="st">`</span><span class="at">OUCRU RESULT</span><span class="st">`</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-</section>
-<section id="saras-csv-file" class="level2" data-number="7">
-<h2 data-number="7" class="anchored" data-anchor-id="saras-csv-file"><span class="header-section-number">7</span> Saras’ CSV file</h2>
-<div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>saras <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">paste0</span>(root, <span class="st">"GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>saras <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">paste0</span>(root, <span class="st">"GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>New names:
 Rows: 1408 Columns: 77
@@ -378,82 +377,81 @@ DateAdmHTD, DateAdmHosp,...
 Specify the column types or set `show_col_types = FALSE` to quiet this message.
 • `` -&gt; `...1`</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>names_saras <span class="ot">&lt;-</span> <span class="fu">names</span>(saras)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co">#tmp &lt;- setNames(map(names_saras, ~ which(map_lgl(names_crf, is.element, el = .x))), names_saras)</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co">#tmp &lt;- tmp[map_dbl(tmp, length) &gt; 0]</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co">#unique(unlist(map(tmp, names)))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Comparing CRF with Saras’ data:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(<span class="fu">names</span>(CRF2))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code> [1] "ParNo"             "DateEnrol"         "Gender"           
- [4] "DateBirth"         "DateIllness"       "DateAdmHTD"       
- [7] "DateAdmHosp"       "HFMDToday"         "HFMDAdmitted"     
-[10] "headCircumference" "height"            "weigh"            
-[13] "MomEdu"            "Toilet"            "Refrigerator"     
-[16] "AirConditioner"    "Motorbike"         "Water"            
-[19] "DateDisc"          "GradeHFMD"         "DateHFMD"         
-[22] "TreatSepsis"       "PCR"               "EV71"             
-[25] "Outcome"           "Seizure"           "Hypertonicity"    
-[28] "LimbPara"          "CNP"               "DiapWeak"         
-[31] "Trache"            "Nasotube"          "BehaveChange"     </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setdiff</span>(<span class="fu">names</span>(saras), <span class="fu">unique</span>(<span class="fu">names</span>(CRF2)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> [1] "...1"            "code"            "group"           "DateofEnrol"    
- [5] "DateBirth.CRF"   "dayIllatADM"     "EnrolGrade"      "AdmissionGrade" 
- [9] "WEIGHT"          "HEIGHT"          "zlen"            "zwei"           
-[13] "zwfl"            "stunt"           "waste"           "HTDEV.x"        
-[17] "HTDEV71.x"       "PCR_final"       "FUP"             "DateTested.BAY" 
-[21] "GM"              "GMscale"         "FM"              "FMscale"        
-[25] "EC"              "ECscale"         "RC"              "RCscale"        
-[29] "DateBirth.Bay"   "age.Bayentry"    "Age.Baycalc"     "CS"             
-[33] "cogscale"        "ddifENB"         "visitM"          "DateTested.MABC"
-[37] "order1"          "age.M"           "ddifEN"          "MD1"            
-[41] "MD2"             "MD3"             "AC1"             "AC2"            
-[45] "BAL1"            "BAL2"            "BAL3"            "FUP1"           
-[49] "groupdetail"     "withdrew"       </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>saras[, <span class="fu">setdiff</span>(<span class="fu">names</span>(saras), <span class="fu">unique</span>(<span class="fu">names</span>(CRF2)))]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1,408 × 50
-    ...1  code group DateofEnrol DateBirth.CRF dayIllatADM EnrolGrade
-   &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;date&gt;      &lt;date&gt;              &lt;dbl&gt; &lt;chr&gt;     
- 1     1     1 HFMD  2013-06-18  2010-07-23              2 4         
- 2     2     1 HFMD  2013-06-18  2010-07-23              2 4         
- 3     3     1 HFMD  2013-06-18  2010-07-23              2 4         
- 4     4    10 HFMD  2013-09-19  2010-12-07              3 3         
- 5     5    10 HFMD  2013-09-19  2010-12-07              3 3         
- 6     6    10 HFMD  2013-09-19  2010-12-07              3 3         
- 7     7    11 HFMD  2013-09-19  2012-08-25              1 2b        
- 8     8    11 HFMD  2013-09-19  2012-08-25              1 2b        
- 9     9    11 HFMD  2013-09-19  2012-08-25              1 2b        
-10    10    12 HFMD  2013-09-24  2012-04-28              1 3         
-# ℹ 1,398 more rows
-# ℹ 43 more variables: AdmissionGrade &lt;chr&gt;, WEIGHT &lt;dbl&gt;, HEIGHT &lt;dbl&gt;,
-#   zlen &lt;dbl&gt;, zwei &lt;dbl&gt;, zwfl &lt;dbl&gt;, stunt &lt;chr&gt;, waste &lt;chr&gt;,
-#   HTDEV.x &lt;chr&gt;, HTDEV71.x &lt;chr&gt;, PCR_final &lt;chr&gt;, FUP &lt;chr&gt;,
-#   DateTested.BAY &lt;date&gt;, GM &lt;dbl&gt;, GMscale &lt;dbl&gt;, FM &lt;dbl&gt;, FMscale &lt;dbl&gt;,
-#   EC &lt;dbl&gt;, ECscale &lt;dbl&gt;, RC &lt;dbl&gt;, RCscale &lt;dbl&gt;, DateBirth.Bay &lt;date&gt;,
-#   age.Bayentry &lt;dbl&gt;, Age.Baycalc &lt;dbl&gt;, CS &lt;dbl&gt;, cogscale &lt;dbl&gt;, …</code></pre>
+<pre><code># A tibble: 1,408 × 6
+   waste      visitM ddifENB ddifEN FUP   FUP1 
+   &lt;chr&gt;       &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;
+ 1 Not Wasted      2      NA    547 18m   18m  
+ 2 Not Wasted     NA     184     NA 6m    &lt;NA&gt; 
+ 3 Not Wasted      1      NA      3 ENROL ENROL
+ 4 Not Wasted      2      NA    547 18m   18m  
+ 5 Not Wasted      1     182    182 6m    6m   
+ 6 Not Wasted     NA      11     NA ENROL &lt;NA&gt; 
+ 7 Not Wasted     NA     567     NA 18m   &lt;NA&gt; 
+ 8 Not Wasted     NA     204     NA 6m    &lt;NA&gt; 
+ 9 Not Wasted     NA      14     NA ENROL &lt;NA&gt; 
+10 Not Wasted     NA      16     NA prem  &lt;NA&gt; 
+# ℹ 1,398 more rows</code></pre>
 </div>
 </div>
-<p>Checking that same variable across different tabs of the CRF excel file are identical:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>merged <span class="ot">&lt;-</span> <span class="fu">reduce</span>(CRF2, left_join, <span class="at">by =</span> <span class="st">"ParNo"</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">identical</span>(merged<span class="sc">$</span>DateBirth.x, merged<span class="sc">$</span>DateBirth.y)</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(merged, DateBirth.x, DateBirth.y)</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="fu">identical</span>(merged<span class="sc">$</span>Gender.x, merged<span class="sc">$</span>Gender.y)</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(merged, Gender.x, Gender.y)</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(merged, Trache.x, Trache.x.x, Trache.y, Trache.y.y) <span class="sc">|&gt;</span> </span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">identical</span>(Trache.y.y, Trache.y))</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">table</span>(merged<span class="sc">$</span>ParNo))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(saras<span class="sc">$</span>waste)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Not Wasted      Waste 
+      1350         43 </code></pre>
+</div>
+</div>
+</section>
+<section id="generating-the-time-points" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Generating the time points</h1>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateEnrol, DateDisc) <span class="sc">|&gt;</span> </span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ABC, <span class="st">"ParNo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 642 × 12
+   ParNo  DateEnrol  DateDisc   DateTested MD1ISS MD2ISS MD3ISS AC1ISS AC2ISS
+   &lt;chr&gt;  &lt;date&gt;     &lt;date&gt;     &lt;date&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+ 1 03-001 2013-06-18 2013-06-21 2013-06-21      4      8      0      0      0
+ 2 03-001 2013-06-18 2013-06-21 2014-12-17      3     10      6     11      6
+ 3 03-001 2013-06-18 2013-06-21 2015-06-30      5     12      1      9     10
+ 4 03-002 2013-06-28 2013-07-03 NA             NA     NA     NA     NA     NA
+ 5 03-003 2013-07-18 2013-07-23 2015-01-15     11     14     13     12     14
+ 6 03-004 2013-07-22 2013-07-26 2015-01-20     14     16      1      9      6
+ 7 03-005 2013-07-30 2013-08-05 NA             NA     NA     NA     NA     NA
+ 8 03-006 2013-08-02 2013-08-06 NA             NA     NA     NA     NA     NA
+ 9 03-007 2013-08-06 2013-08-12 2015-02-02      9     10      5      8     12
+10 03-008 2013-08-06 2013-08-07 NA             NA     NA     NA     NA     NA
+# ℹ 632 more rows
+# ℹ 3 more variables: BAL1ISS &lt;dbl&gt;, BAL2ISS &lt;dbl&gt;, BAL3ISS &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateEnrol, DateDisc) <span class="sc">|&gt;</span> </span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(Bayley, <span class="st">"ParNo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1,283 × 14
+   ParNo  DateEnrol  DateDisc   DATETESTED SCALESCORE_CS    CS SCALESCORE_RC
+   &lt;chr&gt;  &lt;date&gt;     &lt;date&gt;     &lt;date&gt;             &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
+ 1 03-001 2013-06-18 2013-06-21 2013-12-19             7    70            NA
+ 2 03-002 2013-06-28 2013-07-03 2013-07-15             3    47             1
+ 3 03-002 2013-06-28 2013-07-03 2013-12-30             1    36             1
+ 4 03-003 2013-07-18 2013-07-23 2013-07-30             7    61            10
+ 5 03-003 2013-07-18 2013-07-23 2014-01-15             8    67             8
+ 6 03-004 2013-07-22 2013-07-26 2013-08-02             7    52             8
+ 7 03-004 2013-07-22 2013-07-26 2014-01-16             9    63            10
+ 8 03-004 2013-07-22 2013-07-26 2015-01-20             8    72            11
+ 9 03-005 2013-07-30 2013-08-05 2013-08-12             7    27             7
+10 03-005 2013-07-30 2013-08-05 2014-02-12             9    42             6
+# ℹ 1,273 more rows
+# ℹ 7 more variables: RC &lt;dbl&gt;, SCALESCORE_EC &lt;dbl&gt;, EC &lt;dbl&gt;,
+#   SCALESCORE_FM &lt;dbl&gt;, FM &lt;dbl&gt;, SCALESCORE_GM &lt;dbl&gt;, GM &lt;dbl&gt;</code></pre>
+</div>
 </div>
 </section>
 
