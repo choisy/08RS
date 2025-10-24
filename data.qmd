@@ -74,6 +74,7 @@ Loading some packages for interactive use:
 library(dplyr)
 library(purrr)
 library(stringr)
+library(tidyr)
 ```
 
 
@@ -283,6 +284,14 @@ children <- selection |>
   arrange(ParNo)
 ```
 
+Note: the date of discharge is missing for many children:
+
+```{r}
+children |> 
+  select(ParNo, DateEnrol, DateDisc) |> 
+  filter(is.na(DateDisc))
+```
+
 
 ## M-ABC data
 
@@ -297,6 +306,11 @@ Of note, here
 * `MD` stands for manual dexterity,
 * `AC` stands for aiming and catching and
 * `BAL` stands for balance.
+
+```{r}
+ABC |> 
+  na.exclude()
+```
 
 
 ## Bayley data
@@ -352,17 +366,72 @@ table(saras$waste)
 ```
 
 
-# Generating the time points
+## Time points
+
+A function that generates the time points:
 
 ```{r}
-children |> 
-  select(ParNo, DateEnrol, DateDisc) |> 
-  left_join(ABC, "ParNo")
+make_time_points <- function(x) {
+  children |> 
+    select(ParNo, DateEnrol, DateDisc) |> 
+    left_join(x, "ParNo") |> 
+    mutate(time_diff = DateTested - DateEnrol,
+           time1 = 0, time2 = 6, time3 = 18, # in months
+           across(c(time1, time2, time3), ~ as.numeric(abs(time_diff - 30 * .x)))) |> 
+    rowwise() |> 
+    mutate(min_delay = min(across(c(time1, time2, time3)))) |> 
+    ungroup() |> 
+    mutate(time_point = ifelse(min_delay == time1,
+                               "enrollment", ifelse(min_delay == time2,
+                                                    "6 months", "18 months")))
+}
 ```
 
+A function that gets the IDs of children with duplicated assessments:
+
 ```{r}
-children |> 
-  select(ParNo, DateEnrol, DateDisc) |> 
-  left_join(Bayley, "ParNo")
+get_IDs_with_duplicated <- function(x) {
+  x |> 
+    filter(! is.na(time_point)) |> 
+    group_by(ParNo) |> 
+    group_modify(~ .x |>
+                   group_by(time_point) |>
+                   tally()) |> 
+    ungroup() |> 
+    filter(n > 1) |> 
+    pull(ParNo) |> 
+    unique()
+}
 ```
+
+A function that uses the previous two to generate the data with duplicated assessments:
+
+```{r}
+show_duplicated_assessments <- function(x) {
+  data_with_time_points <- make_time_points(x)
+  IDs_with_duplicates <- get_IDs_with_duplicated(data_with_time_points)
+  filter(data_with_time_points, ParNo %in% IDs_with_duplicates)
+}
+```
+
+
+### M-ABC data
+
+```{r}
+ABC |>
+  show_duplicated_assessments() |> 
+  writexl::write_xlsx("M-ABC2.xlsx")
+```
+
+
+### Bayley data
+
+```{r}
+Bayley |>
+  rename(DateTested = DATETESTED) |>
+  show_duplicated_assessments() |> 
+  writexl::write_xlsx("Bayley2.xlsx")
+```
+
+
 

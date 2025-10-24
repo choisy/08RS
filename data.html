@@ -81,16 +81,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link active" data-scroll-target="#global-parameters"><span class="header-section-number">0.1</span> Global parameters</a></li>
-  <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages"><span class="header-section-number">0.2</span> Packages</a></li>
-  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions"><span class="header-section-number">0.3</span> Functions</a></li>
-  <li><a href="#crf-data" id="toc-crf-data" class="nav-link" data-scroll-target="#crf-data"><span class="header-section-number">0.4</span> CRF data</a></li>
-  <li><a href="#pcr-data" id="toc-pcr-data" class="nav-link" data-scroll-target="#pcr-data"><span class="header-section-number">0.5</span> PCR data</a></li>
-  <li><a href="#children-data" id="toc-children-data" class="nav-link" data-scroll-target="#children-data"><span class="header-section-number">0.6</span> Children data</a></li>
-  <li><a href="#m-abc-data" id="toc-m-abc-data" class="nav-link" data-scroll-target="#m-abc-data"><span class="header-section-number">0.7</span> M-ABC data</a></li>
-  <li><a href="#bayley-data" id="toc-bayley-data" class="nav-link" data-scroll-target="#bayley-data"><span class="header-section-number">0.8</span> Bayley data</a></li>
-  <li><a href="#saras-csv-file" id="toc-saras-csv-file" class="nav-link" data-scroll-target="#saras-csv-file"><span class="header-section-number">0.9</span> Saras’ CSV file</a></li>
-  <li><a href="#generating-the-time-points" id="toc-generating-the-time-points" class="nav-link" data-scroll-target="#generating-the-time-points"><span class="header-section-number">1</span> Generating the time points</a></li>
+  <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link active" data-scroll-target="#global-parameters"><span class="header-section-number">1</span> Global parameters</a></li>
+  <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages"><span class="header-section-number">2</span> Packages</a></li>
+  <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions"><span class="header-section-number">3</span> Functions</a></li>
+  <li><a href="#crf-data" id="toc-crf-data" class="nav-link" data-scroll-target="#crf-data"><span class="header-section-number">4</span> CRF data</a></li>
+  <li><a href="#pcr-data" id="toc-pcr-data" class="nav-link" data-scroll-target="#pcr-data"><span class="header-section-number">5</span> PCR data</a></li>
+  <li><a href="#children-data" id="toc-children-data" class="nav-link" data-scroll-target="#children-data"><span class="header-section-number">6</span> Children data</a></li>
+  <li><a href="#m-abc-data" id="toc-m-abc-data" class="nav-link" data-scroll-target="#m-abc-data"><span class="header-section-number">7</span> M-ABC data</a></li>
+  <li><a href="#bayley-data" id="toc-bayley-data" class="nav-link" data-scroll-target="#bayley-data"><span class="header-section-number">8</span> Bayley data</a></li>
+  <li><a href="#saras-csv-file" id="toc-saras-csv-file" class="nav-link" data-scroll-target="#saras-csv-file"><span class="header-section-number">9</span> Saras’ CSV file</a></li>
+  <li><a href="#time-points" id="toc-time-points" class="nav-link" data-scroll-target="#time-points"><span class="header-section-number">10</span> Time points</a>
+  <ul>
+  <li><a href="#m-abc-data-1" id="toc-m-abc-data-1" class="nav-link" data-scroll-target="#m-abc-data-1"><span class="header-section-number">10.1</span> M-ABC data</a></li>
+  <li><a href="#bayley-data-1" id="toc-bayley-data-1" class="nav-link" data-scroll-target="#bayley-data-1"><span class="header-section-number">10.2</span> Bayley data</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -115,16 +119,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="global-parameters" class="level2" data-number="0.1">
-<h2 data-number="0.1" class="anchored" data-anchor-id="global-parameters"><span class="header-section-number">0.1</span> Global parameters</h2>
+<section id="global-parameters" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="global-parameters"><span class="header-section-number">1</span> Global parameters</h2>
 <p>The path to the data folder on the local computer:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>root <span class="ot">&lt;-</span> <span class="st">"~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>data_folder <span class="ot">&lt;-</span> <span class="fu">paste0</span>(root, <span class="st">"GitHub/choisy/08RS/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="packages" class="level2" data-number="0.2">
-<h2 data-number="0.2" class="anchored" data-anchor-id="packages"><span class="header-section-number">0.2</span> Packages</h2>
+<section id="packages" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="packages"><span class="header-section-number">2</span> Packages</h2>
 <p>Required packages:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>required <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"readxl"</span>, <span class="st">"purrr"</span>, <span class="st">"dplyr"</span>, <span class="st">"magrittr"</span>, <span class="st">"tidyr"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -138,11 +142,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="functions" class="level2" data-number="0.3">
-<h2 data-number="0.3" class="anchored" data-anchor-id="functions"><span class="header-section-number">0.3</span> Functions</h2>
+<section id="functions" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="functions"><span class="header-section-number">3</span> Functions</h2>
 <p>A tuning of the <code>readxl::read_excel()</code> function:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>read_excel2 <span class="ot">&lt;-</span> <span class="cf">function</span>(file, ...) readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="fu">paste0</span>(data_folder, file), ...)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -179,8 +184,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="crf-data" class="level2" data-number="0.4">
-<h2 data-number="0.4" class="anchored" data-anchor-id="crf-data"><span class="header-section-number">0.4</span> CRF data</h2>
+<section id="crf-data" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="crf-data"><span class="header-section-number">4</span> CRF data</h2>
 <p>Loading the data from CliRes:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>CRF <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"6-11-2024-CTU08RS_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -258,8 +263,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"BehaveChange"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="pcr-data" class="level2" data-number="0.5">
-<h2 data-number="0.5" class="anchored" data-anchor-id="pcr-data"><span class="header-section-number">0.5</span> PCR data</h2>
+<section id="pcr-data" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="pcr-data"><span class="header-section-number">5</span> PCR data</h2>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>PCR <span class="ot">&lt;-</span> <span class="st">"03EI-08RS PCR-Seq result.xlsx"</span> <span class="sc">|&gt;</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel2</span>(<span class="st">"08RS"</span>) <span class="sc">|&gt;</span> </span>
@@ -268,8 +273,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="children-data" class="level2" data-number="0.6">
-<h2 data-number="0.6" class="anchored" data-anchor-id="children-data"><span class="header-section-number">0.6</span> Children data</h2>
+<section id="children-data" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="children-data"><span class="header-section-number">6</span> Children data</h2>
 <p>The case and control groups:</p>
 <div class="cell" data-layout-align="center">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>groups <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">"HFMD"</span>, <span class="dv">299</span>), <span class="fu">rep</span>(<span class="st">"control"</span>, <span class="dv">200</span>),</span>
@@ -316,22 +321,64 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>         DateAdmHTD, DateEnrol, DateDisc, <span class="fu">everything</span>()) <span class="sc">|&gt;</span> </span>
 <span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</section>
-<section id="m-abc-data" class="level2" data-number="0.7">
-<h2 data-number="0.7" class="anchored" data-anchor-id="m-abc-data"><span class="header-section-number">0.7</span> M-ABC data</h2>
+<p>Note: the date of discharge is missing for many children:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="ot">&lt;-</span> CRF<span class="sc">$</span>ABC <span class="sc">|&gt;</span> </span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateTested, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"Date"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo, DateTested)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateEnrol, DateDisc) <span class="sc">|&gt;</span> </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">is.na</span>(DateDisc))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 303 × 3
+   ParNo  DateEnrol  DateDisc
+   &lt;chr&gt;  &lt;date&gt;     &lt;date&gt;  
+ 1 03-043 2014-07-17 NA      
+ 2 03-053 2014-09-18 NA      
+ 3 03-054 2014-09-19 NA      
+ 4 03-055 2014-09-29 NA      
+ 5 03-056 2014-10-02 NA      
+ 6 03-060 2014-10-24 NA      
+ 7 03-062 2014-10-27 NA      
+ 8 03-078 2014-12-15 NA      
+ 9 03-079 2014-12-29 NA      
+10 03-300 2014-01-07 NA      
+# ℹ 293 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="m-abc-data" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="m-abc-data"><span class="header-section-number">7</span> M-ABC data</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="ot">&lt;-</span> CRF<span class="sc">$</span>ABC <span class="sc">|&gt;</span> </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateTested, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"Date"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo, DateTested)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Of note, here * <code>MD</code> stands for manual dexterity, * <code>AC</code> stands for aiming and catching and * <code>BAL</code> stands for balance.</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="sc">|&gt;</span> </span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 221 × 10
+   ParNo  DateTested MD1ISS MD2ISS MD3ISS AC1ISS AC2ISS BAL1ISS BAL2ISS BAL3ISS
+   &lt;chr&gt;  &lt;date&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+ 1 03-001 2013-06-21      4      8      0      0      0       0       0       0
+ 2 03-001 2014-12-17      3     10      6     11      6       6       7       1
+ 3 03-001 2015-06-30      5     12      1      9     10       3       1       1
+ 4 03-003 2015-01-15     11     14     13     12     14      14      13      12
+ 5 03-004 2015-01-20     14     16      1      9      6       7       7       6
+ 6 03-007 2015-02-02      9     10      5      8     12      10      11       6
+ 7 03-010 2014-03-20      6     11      1      7     11       6      13       6
+ 8 03-010 2015-03-20     12     12      6     11     12       8      13       4
+ 9 03-016 2015-04-07      8     14     12     12     12       9      13       5
+10 03-020 2014-06-24     11     13     10     12     11       9      13      12
+# ℹ 211 more rows</code></pre>
+</div>
+</div>
 </section>
-<section id="bayley-data" class="level2" data-number="0.8">
-<h2 data-number="0.8" class="anchored" data-anchor-id="bayley-data"><span class="header-section-number">0.8</span> Bayley data</h2>
+<section id="bayley-data" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="bayley-data"><span class="header-section-number">8</span> Bayley data</h2>
 <p>Loading the data from CliRes:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>Bayley0 <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"12-9-2025-Bayley_v3_P1_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>Bayley0 <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"12-9-2025-Bayley_v3_P1_Data.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The tabs that we are interested in are the following:</p>
 <ul>
@@ -342,28 +389,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>GM:</strong> gross motor (motor scale)</li>
 </ul>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>Bayley_tabs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>Bayley_tabs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s generate the data frame from these tabs:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>common_variables1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"DATETESTED"</span>)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>common_variables2 <span class="ot">&lt;-</span> <span class="fu">c</span>(common_variables1, <span class="st">"SCALESCORE"</span>)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>Bayley<span class="ot">&lt;-</span> Bayley_tabs <span class="sc">|&gt;</span> </span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">c</span>(common_variables2, .x)) <span class="sc">|&gt;</span> </span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(Bayley_tabs) <span class="sc">|&gt;</span> </span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vars</span>(Bayley0) <span class="sc">|&gt;</span> </span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map2</span>(<span class="fu">paste0</span>(<span class="st">"SCALESCORE_"</span>, Bayley_tabs), rename2, <span class="st">"SCALESCORE"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reduce</span>(left_join, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"DATETESTED"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"DATE"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ParNo =</span> PARNO) <span class="sc">|&gt;</span> </span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ParNo, <span class="sc">~</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(.x, <span class="st">"08RS_"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>common_variables1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"DATETESTED"</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>common_variables2 <span class="ot">&lt;-</span> <span class="fu">c</span>(common_variables1, <span class="st">"SCALESCORE"</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>Bayley<span class="ot">&lt;-</span> Bayley_tabs <span class="sc">|&gt;</span> </span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">c</span>(common_variables2, .x)) <span class="sc">|&gt;</span> </span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(Bayley_tabs) <span class="sc">|&gt;</span> </span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vars</span>(Bayley0) <span class="sc">|&gt;</span> </span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map2</span>(<span class="fu">paste0</span>(<span class="st">"SCALESCORE_"</span>, Bayley_tabs), rename2, <span class="st">"SCALESCORE"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reduce</span>(left_join, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"PARNO"</span>, <span class="st">"DATETESTED"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"DATE"</span>), as.Date)) <span class="sc">|&gt;</span> </span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ParNo =</span> PARNO) <span class="sc">|&gt;</span> </span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ParNo, <span class="sc">~</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(.x, <span class="st">"08RS_"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="saras-csv-file" class="level2" data-number="0.9">
-<h2 data-number="0.9" class="anchored" data-anchor-id="saras-csv-file"><span class="header-section-number">0.9</span> Saras’ CSV file</h2>
+<section id="saras-csv-file" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="saras-csv-file"><span class="header-section-number">9</span> Saras’ CSV file</h2>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>saras <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">paste0</span>(root, <span class="st">"GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>saras <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">paste0</span>(root, <span class="st">"GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>New names:
 Rows: 1408 Columns: 77
@@ -379,7 +426,7 @@ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 </div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1,408 × 6
    waste      visitM ddifENB ddifEN FUP   FUP1 
@@ -398,7 +445,7 @@ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 </div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(saras<span class="sc">$</span>waste)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(saras<span class="sc">$</span>waste)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Not Wasted      Waste 
@@ -406,53 +453,65 @@ Not Wasted      Waste
 </div>
 </div>
 </section>
-<section id="generating-the-time-points" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Generating the time points</h1>
+<section id="time-points" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="time-points"><span class="header-section-number">10</span> Time points</h2>
+<p>A function that generates the time points:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateEnrol, DateDisc) <span class="sc">|&gt;</span> </span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ABC, <span class="st">"ParNo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 642 × 12
-   ParNo  DateEnrol  DateDisc   DateTested MD1ISS MD2ISS MD3ISS AC1ISS AC2ISS
-   &lt;chr&gt;  &lt;date&gt;     &lt;date&gt;     &lt;date&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
- 1 03-001 2013-06-18 2013-06-21 2013-06-21      4      8      0      0      0
- 2 03-001 2013-06-18 2013-06-21 2014-12-17      3     10      6     11      6
- 3 03-001 2013-06-18 2013-06-21 2015-06-30      5     12      1      9     10
- 4 03-002 2013-06-28 2013-07-03 NA             NA     NA     NA     NA     NA
- 5 03-003 2013-07-18 2013-07-23 2015-01-15     11     14     13     12     14
- 6 03-004 2013-07-22 2013-07-26 2015-01-20     14     16      1      9      6
- 7 03-005 2013-07-30 2013-08-05 NA             NA     NA     NA     NA     NA
- 8 03-006 2013-08-02 2013-08-06 NA             NA     NA     NA     NA     NA
- 9 03-007 2013-08-06 2013-08-12 2015-02-02      9     10      5      8     12
-10 03-008 2013-08-06 2013-08-07 NA             NA     NA     NA     NA     NA
-# ℹ 632 more rows
-# ℹ 3 more variables: BAL1ISS &lt;dbl&gt;, BAL2ISS &lt;dbl&gt;, BAL3ISS &lt;dbl&gt;</code></pre>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>make_time_points <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  children <span class="sc">|&gt;</span> </span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(ParNo, DateEnrol, DateDisc) <span class="sc">|&gt;</span> </span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(x, <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">time_diff =</span> DateTested <span class="sc">-</span> DateEnrol,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">time1 =</span> <span class="dv">0</span>, <span class="at">time2 =</span> <span class="dv">6</span>, <span class="at">time3 =</span> <span class="dv">18</span>, <span class="co"># in months</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>           <span class="fu">across</span>(<span class="fu">c</span>(time1, time2, time3), <span class="sc">~</span> <span class="fu">as.numeric</span>(<span class="fu">abs</span>(time_diff <span class="sc">-</span> <span class="dv">30</span> <span class="sc">*</span> .x)))) <span class="sc">|&gt;</span> </span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">min_delay =</span> <span class="fu">min</span>(<span class="fu">across</span>(<span class="fu">c</span>(time1, time2, time3)))) <span class="sc">|&gt;</span> </span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">time_point =</span> <span class="fu">ifelse</span>(min_delay <span class="sc">==</span> time1,</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"enrollment"</span>, <span class="fu">ifelse</span>(min_delay <span class="sc">==</span> time2,</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>                                                    <span class="st">"6 months"</span>, <span class="st">"18 months"</span>)))</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
+<p>A function that gets the IDs of children with duplicated assessments:</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateEnrol, DateDisc) <span class="sc">|&gt;</span> </span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(Bayley, <span class="st">"ParNo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1,283 × 14
-   ParNo  DateEnrol  DateDisc   DATETESTED SCALESCORE_CS    CS SCALESCORE_RC
-   &lt;chr&gt;  &lt;date&gt;     &lt;date&gt;     &lt;date&gt;             &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
- 1 03-001 2013-06-18 2013-06-21 2013-12-19             7    70            NA
- 2 03-002 2013-06-28 2013-07-03 2013-07-15             3    47             1
- 3 03-002 2013-06-28 2013-07-03 2013-12-30             1    36             1
- 4 03-003 2013-07-18 2013-07-23 2013-07-30             7    61            10
- 5 03-003 2013-07-18 2013-07-23 2014-01-15             8    67             8
- 6 03-004 2013-07-22 2013-07-26 2013-08-02             7    52             8
- 7 03-004 2013-07-22 2013-07-26 2014-01-16             9    63            10
- 8 03-004 2013-07-22 2013-07-26 2015-01-20             8    72            11
- 9 03-005 2013-07-30 2013-08-05 2013-08-12             7    27             7
-10 03-005 2013-07-30 2013-08-05 2014-02-12             9    42             6
-# ℹ 1,273 more rows
-# ℹ 7 more variables: RC &lt;dbl&gt;, SCALESCORE_EC &lt;dbl&gt;, EC &lt;dbl&gt;,
-#   SCALESCORE_FM &lt;dbl&gt;, FM &lt;dbl&gt;, SCALESCORE_GM &lt;dbl&gt;, GM &lt;dbl&gt;</code></pre>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>get_IDs_with_duplicated <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span> </span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span> <span class="fu">is.na</span>(time_point)) <span class="sc">|&gt;</span> </span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(ParNo) <span class="sc">|&gt;</span> </span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_modify</span>(<span class="sc">~</span> .x <span class="sc">|&gt;</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">group_by</span>(time_point) <span class="sc">|&gt;</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">tally</span>()) <span class="sc">|&gt;</span> </span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(ParNo) <span class="sc">|&gt;</span> </span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unique</span>()</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>A function that uses the previous two to generate the data with duplicated assessments:</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>show_duplicated_assessments <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  data_with_time_points <span class="ot">&lt;-</span> <span class="fu">make_time_points</span>(x)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  IDs_with_duplicates <span class="ot">&lt;-</span> <span class="fu">get_IDs_with_duplicated</span>(data_with_time_points)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(data_with_time_points, ParNo <span class="sc">%in%</span> IDs_with_duplicates)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<section id="m-abc-data-1" class="level3" data-number="10.1">
+<h3 data-number="10.1" class="anchored" data-anchor-id="m-abc-data-1"><span class="header-section-number">10.1</span> M-ABC data</h3>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="sc">|&gt;</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_duplicated_assessments</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  writexl<span class="sc">::</span><span class="fu">write_xlsx</span>(<span class="st">"M-ABC2.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="bayley-data-1" class="level3" data-number="10.2">
+<h3 data-number="10.2" class="anchored" data-anchor-id="bayley-data-1"><span class="header-section-number">10.2</span> Bayley data</h3>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>Bayley <span class="sc">|&gt;</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">DateTested =</span> DATETESTED) <span class="sc">|&gt;</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_duplicated_assessments</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  writexl<span class="sc">::</span><span class="fu">write_xlsx</span>(<span class="st">"Bayley2.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 </section>
 
 </main>
