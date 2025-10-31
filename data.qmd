@@ -129,6 +129,49 @@ rename2 <- function(df, newname, oldname) {
 }
 ```
 
+A function that splits a data frame into a list of data frames:
+
+```{r}
+split_df <- function(x, n_rows) {
+  nb_rows <- nrow(x)
+  split(x, gl(nb_rows %/% n_rows + (nb_rows %% n_rows > 0), n_rows, nb_rows))
+}
+```
+
+A function that appends a data frame `x` with `n` rows of values `v`:
+
+```{r}
+append_dataframe <- function(x, n = 1, v = 0) {
+  1:ncol(x) |>
+    map(~ rep(v, n)) |> 
+    as.data.frame() |> 
+    setNames(names(x)) |>  
+    (\(y) bind_rows(x, y))()
+}
+```
+
+A function that applies `append_dataframe()` to the last slot of a list `x` of data
+frame so that the number of rows of the data frame in the last slot is equal to the
+number of rows of the data frame in the first lost:
+
+```{r}
+append_last <- function(x, v = 1) {
+  nb_slots <- length(x)
+  nb_rows1 <- nrow(x[[1]])
+  nb_rows2 <- nrow(x[[nb_slots]])
+  if (nb_rows2 < nb_rows1) {
+    x[[nb_slots]] <- append_dataframe(x[[nb_slots]], nb_rows1 - nb_rows2, v)
+  }
+  x
+}
+```
+
+A function that reverses a matrix by row:
+
+```{r}
+rev_matrix_by_row <- function(x) x[nrow(x):1, ]
+```
+
 
 ## CRF data
 
@@ -303,6 +346,7 @@ ABC <- CRF$ABC |>
 ```
 
 Of note, here
+
 * `MD` stands for manual dexterity,
 * `AC` stands for aiming and catching and
 * `BAL` stands for balance.
@@ -423,15 +467,124 @@ ABC |>
   writexl::write_xlsx("M-ABC2.xlsx")
 ```
 
+Here all the duplicates are complete. We'll simply keep all the earlier ones:
+
+```{r}
+ABC2 <- ABC |> 
+  make_time_points() |>
+  arrange(ParNo, time_point, min_delay) |> 
+  group_by(ParNo, time_point) |> 
+  group_modify(~ head(.x, 1)) |> 
+  ungroup() |> 
+  select(-DateEnrol, -DateDisc, -min_delay, - time_diff, -time1, -time2, -time3) |> 
+  rename(Date_ABC = DateTested)
+```
+
 
 ### Bayley data
 
 ```{r}
+Bayley <- rename(Bayley, DateTested = DATETESTED)
+
 Bayley |>
-  rename(DateTested = DATETESTED) |>
   show_duplicated_assessments() |> 
   writexl::write_xlsx("Bayley2.xlsx")
 ```
+
+This shows that
+
+* there is one and only one complete measurement per time point
+* the complete measurement is always the earlier one, except for patient `03-514`
+
+In consequence, we decide to simply filter out all the incomplete duplicates:
+
+```{r}
+Bayley2 <- Bayley |> 
+  make_time_points() |>
+  group_by(ParNo, time_point) |> 
+  group_modify(~ {if (nrow(.x) > 1) return(na.exclude(.x)); .x }) |> 
+  ungroup() |> 
+  select(-DateEnrol, -DateDisc, -min_delay, - time_diff, -time1, -time2, -time3) |> 
+  rename(Date_Bayley = DateTested)
+```
+
+
+### Merging
+
+```{r}
+followups <- full_join(ABC2, Bayley2, c("ParNo", "time_point"))
+```
+
+
+### Visualization
+
+```{r}
+intercalate <- function(x) {
+  nb <- length(x)
+  last_slot <- x[[nb]]
+  x[-nb] |> 
+    map(~ mutate(.x, a = 1)) |> 
+    c(list(last_slot))
+}
+```
+
+```{r}
+side_by_side <- function(x, n) {
+  x |>
+    select(-ParNo) |>
+    split_df(n) |> 
+    append_last() |>
+    intercalate() |> 
+    reduce(cbind) |> 
+    as.matrix()
+}
+```
+
+```{r}
+image2 <- function(x, col_no, col_yes) {
+  nb_col <- ncol(x)
+  nb_row <- nrow(x)
+  x |> 
+    rev_matrix_by_row() |> 
+    t() |> 
+    image(x = 0:nb_col, y = 0:nb_row, z = _, axes = T, col = c(col_no, col_yes))
+}
+```
+
+```{r}
+templated <- expand_grid(ParNo      = unique(followups$ParNo),
+                         time_point = c("enrollment", "6 months", "18 months")) |> 
+  left_join(followups, c("ParNo", "time_point")) |> 
+  select(ParNo, time_point, starts_with("Date")) |> 
+  mutate(across(starts_with("Date"), ~ as.numeric(! is.na(.x)) + 1))
+```
+
+```{r}
+transparent <- adjustcolor("white", 0)
+adjustcolor2 <- function(col) adjustcolor(col, .3)
+
+templated |> 
+  select(-Date_Bayley) |> 
+  pivot_wider(names_from = time_point, values_from = Date_ABC) |> 
+  side_by_side(30) |> 
+  image2(transparent, adjustcolor2("red"))
+
+par(new = TRUE)
+
+templated |> 
+  select(-Date_ABC) |> 
+  pivot_wider(names_from = time_point, values_from = Date_Bayley) |> 
+  side_by_side(30) |> 
+  image2(transparent, adjustcolor2("blue"))
+
+abline(v = 0:71, col = "white")
+abline(h = 0:30, col = "white")
+```
+
+
+
+
+
 
 
 
