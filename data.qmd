@@ -34,7 +34,7 @@ knitr::knit_hooks$set(
     if (before) par2(plt = c(.105, .97, .15, .95)) else NULL
   })
 
-eps <- .8
+eps <- 1
 knitr::opts_chunk$set(margin1    = TRUE,
                       fig.retina = 2,
                       fig.align  = "center",
@@ -166,19 +166,19 @@ append_last <- function(x, v = 1) {
 }
 ```
 
-A function that reverses a matrix by row:
+A tuning of the `image()` function:
 
 ```{r}
-rev_matrix_by_row <- function(x) x[nrow(x):1, ]
+image2 <- function(x, y, z, ...) image(x, y, t(z[nrow(z):1, ]), ...)
 ```
 
 
-## CRF data
+## 08RS CRF data
 
 Loading the data from CliRes:
 
 ```{r}
-CRF <- read_excel_file("6-11-2024-CTU08RS_Data.xlsx")
+CRF08RS <- read_excel_file("6-11-2024-CTU08RS_Data.xlsx")
 ```
 
 The names of the data frames in CliRes and in Saras' code, with definitions:
@@ -203,7 +203,7 @@ The names of the data frames in CliRes and in Saras' code, with definitions:
 # ABC           data_MABC       movement ABC-2
 ```
 
-The CRF dictionary:
+The 08RS CRF dictionary:
 
 ```{r}
 CRF_dict <- list(
@@ -244,19 +244,35 @@ CRF_dict <- list(
                               "Discharged to die")))
 ```
 
-Selection of variables from the CRF:
+Selection of variables from the 08RS CRF:
 
 ```{r}
-selection <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth"),
-                  HIST      = c("ParNo", "DateIllness", "DateAdmHTD", "DateAdmHTD",
-                                "DateAdmHosp", "HFMDToday", "HFMDAdmitted"),
-                  EXAM      = c("ParNo", "headCircumference", "height", "weigh"),
-                  DEVSOCSED = c("ParNo", "MomEdu", "Toilet", "Refrigerator",
-                                "AirConditioner", "Motorbike", "Water"),
-                  DISC      = c("ParNo", "DateDisc", "GradeHFMD", "TreatSepsis",
-                                "Outcome", "Seizure", "Hypertonicity", "LimbPara",
-                                "CNP", "DiapWeak", "Trache", "Nasotube",
-                                "BehaveChange"))
+selection08RS <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth"),
+                      HIST      = c("ParNo", "DateIllness", "DateAdmHTD", "DateAdmHTD",
+                                    "DateAdmHosp", "HFMDToday", "HFMDAdmitted"),
+                      EXAM      = c("ParNo", "headCircumference", "height", "weigh"),
+                      DEVSOCSED = c("ParNo", "MomEdu", "Toilet", "Refrigerator",
+                                    "AirConditioner", "Motorbike", "Water"),
+                      DISC      = c("ParNo", "DateDisc", "GradeHFMD", "TreatSepsis",
+                                    "Outcome", "Seizure", "Hypertonicity", "LimbPara",
+                                    "CNP", "DiapWeak", "Trache", "Nasotube",
+                                    "BehaveChange"))
+```
+
+
+## 02EI CRF data
+
+```{r}
+CRF02EI <- read_excel_file("6-11-2024-CTU02EI_Data.xlsx")
+```
+
+Selection of variables from the 02EI CRF:
+
+```{r}
+selection02EI <- list(Demo  = c("studyCode", "height", "weight"),
+                      Hist  = c("studyCode", "IllnessDate"),
+                      Disch = c("studyCode", "seizures", "tracheostomy",
+                                "muscleStength", "limbParalysing", "nerveParalysing"))
 ```
 
 
@@ -268,6 +284,23 @@ PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
   select(ID, `OUCRU RESULT`) |> 
   mutate(across(ID, as.numeric)) |> 
   na.exclude()
+```
+
+
+## MRI data
+
+```{r, message = FALSE}
+MRI <- paste0(root, "GitHub/choisy/08RS/part_dataMRIentry_28AUG15_errorcor.csv") |>
+  readr::read_csv() |> 
+  rename(ID = code) |> 
+  select(ID, Final, Acute) |> 
+  mutate(across(c("Final", "Acute"), ~ .x == "Yes"))
+```
+
+What is the difference between `Final` and `Acute`?
+
+```{r}
+filter(MRI, Final != Acute)
 ```
 
 
@@ -305,12 +338,13 @@ recoding2 <- function(x) {
 }
 ```
 
-Selecting, recoding the variables from the CRF, and assigning to case or control:
+Selecting and recoding the variables from the 08RS CRF, and assigning to case or
+control:
 
 ```{r}
-children <- selection |> 
+children <- selection08RS |> 
   remove_slots("ABC") |> 
-  get_vars(CRF) |> 
+  get_vars(CRF08RS) |> 
   reduce(left_join, by = "ParNo") |> 
   rowwise() |> 
   mutate(HFMD = max(across(c(HFMDToday, HFMDAdmitted, GradeHFMD)))) |> #takes max grade
@@ -319,11 +353,53 @@ children <- selection |>
   recoding2() |>
   mutate(ID    = as.numeric(str_remove(ParNo, "^.*-")),
          group = groups[ID]) |> 
+  left_join(MRI, "ID") |> 
   left_join(PCR, "ID") |> 
   rename(PCR = `OUCRU RESULT`) |> 
   select(-HFMDToday, -HFMDAdmitted, -GradeHFMD, -ID) |> 
   select(ParNo, Gender, DateBirth, DateIllness, DateAdmHosp,
          DateAdmHTD, DateEnrol, DateDisc, everything()) |> 
+  arrange(ParNo)
+```
+
+Conversion of IDs between 02EI and 08RS:
+
+```{r}
+(ID_conv <- tibble(s02EI = paste0("03-0", c(paste0("0", c(1, 3:9)), c("11", "13"))),
+                   s08RS = paste0("03-0", c(43, 52:56, 60, 62, 78, 79))))
+```
+
+Data patch from the 02EI CRF:
+
+```{r}
+(patch <- selection02EI |> 
+  get_vars(CRF02EI) |> 
+  reduce(left_join, by = "studyCode") |> 
+  mutate(across(IllnessDate, as.Date),
+         across(c("seizures", "tracheostomy", "muscleStength", "limbParalysing",
+                  "nerveParalysing"), ~ .x < 2)) |> 
+  rename(ParNo         = studyCode,
+         weigh         = weight,
+         DateIllness   = IllnessDate,
+         Seizure       = seizures,
+         Trache        = tracheostomy,
+         Hypertonicity = muscleStength,
+         LimbPara      = limbParalysing,
+         CNP           = nerveParalysing) |> 
+  filter(ParNo %in% ID_conv$s02EI) |> 
+  mutate(across(ParNo, ~ with(ID_conv, setNames(s08RS, s02EI))[.x])))
+```
+
+Patching the data values to the `children` data frame:
+
+```{r}
+tmp <- filter(children, ParNo %in% ID_conv$s08RS)
+tmp_names <- names(tmp)
+tmp <- bind_cols(patch, tmp[, setdiff(tmp_names, names(patch))])[tmp_names]
+
+children <- children |>
+  filter(! ParNo %in% ID_conv$s08RS) |> 
+  bind_rows(tmp) |> 
   arrange(ParNo)
 ```
 
@@ -339,7 +415,7 @@ children |>
 ## M-ABC data
 
 ```{r}
-ABC <- CRF$ABC |> 
+ABC <- CRF08RS$ABC |> 
   select(ParNo, DateTested, ends_with("ISS")) |> 
   mutate(across(starts_with("Date"), as.Date)) |> 
   arrange(ParNo, DateTested)
@@ -397,7 +473,7 @@ Bayley<- Bayley_tabs |>
 
 ## Saras' CSV file
 
-```{r}
+```{r, message = FALSE}
 saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
 ```
 
@@ -511,6 +587,8 @@ Bayley2 <- Bayley |>
 
 ### Merging
 
+Merging the M-ABC and Bayley data:
+
 ```{r}
 followups <- full_join(ABC2, Bayley2, c("ParNo", "time_point"))
 ```
@@ -518,73 +596,99 @@ followups <- full_join(ABC2, Bayley2, c("ParNo", "time_point"))
 
 ### Visualization
 
+A function that prepend all the data frames of a list `x` of data frames with `n`
+columns of the `v` values:
+
 ```{r}
-intercalate <- function(x) {
-  nb <- length(x)
-  last_slot <- x[[nb]]
-  x[-nb] |> 
-    map(~ mutate(.x, a = 1)) |> 
-    c(list(last_slot))
+prepend_white <- function(x, n, v) {
+  nbrows <- nrow(x[[1]])
+  white_space <- v |> 
+    rep(n * nbrows) |> 
+    matrix(nbrows) |> 
+    as.data.frame()
+  map(x, ~ cbind(white_space, .x))
 }
 ```
 
+A function that (i) splits the data frame `x` into a list of data frame of `n` rows 
+(except possibly for the last slot), (ii) prepends each of these data frames with `wc`
+columns of 1s, and (iii) concatenate all these data frames side by side into a matrix:
+
 ```{r}
-side_by_side <- function(x, n) {
+side_by_side <- function(x, n, wc) {
   x |>
     select(-ParNo) |>
     split_df(n) |> 
     append_last() |>
-    intercalate() |> 
+    prepend_white(wc, 1) |> 
     reduce(cbind) |> 
     as.matrix()
 }
 ```
 
+A tuning of `image2()`:
+
 ```{r}
-image2 <- function(x, col_no, col_yes) {
-  nb_col <- ncol(x)
-  nb_row <- nrow(x)
-  x |> 
-    rev_matrix_by_row() |> 
-    t() |> 
-    image(x = 0:nb_col, y = 0:nb_row, z = _, axes = T, col = c(col_no, col_yes))
+image3 <- function(x, col_no, col_yes) {
+  image2(0:ncol(x), 0:nrow(x), x, axes = FALSE, ann = FALSE, col = c(col_no, col_yes))
 }
 ```
 
+The function that plots the heatmap:
+
 ```{r}
-templated <- expand_grid(ParNo      = unique(followups$ParNo),
-                         time_point = c("enrollment", "6 months", "18 months")) |> 
+heatmap2 <- function(x, nbrow = 30, nb_wc = 3,
+                     col_Bayley = adjustcolor("red", .3),
+                     col_ABC    = adjustcolor("blue", .3),
+                     col_NA     = adjustcolor("white", 0),
+                     col_lines  = "white") {
+# plotting M-ABC data:
+  tmp <- x |> 
+    select(-Date_Bayley) |> 
+    pivot_wider(names_from = time_point, values_from = Date_ABC) |> 
+    side_by_side(nbrow, nb_wc)
+  image3(tmp, col_NA, col_Bayley)
+  
+# adding Bayley data:
+  par(new = TRUE)
+  x |> 
+    select(-Date_ABC) |> 
+    pivot_wider(names_from = time_point, values_from = Date_Bayley) |> 
+    side_by_side(nbrow, nb_wc) |> 
+    image3(col_NA, col_ABC)
+
+# adding separation lines:
+  abline(v = 0:ncol(tmp), col = col_lines)
+  abline(h = 0:nbrow, col = col_lines)
+
+# adding children IDs:
+  ids <- str_remove(unique(x$ParNo), "^.*-")
+  sel <- 1:length(ids)
+  by <- 3 + nb_wc
+  ncol_tmp <- ncol(tmp)
+  nbcol <- ncol_tmp / by
+  xs <- rep(seq(1, ncol_tmp, by), each = nbrow)[sel]
+  ys <- rep(rev(1:nbrow - .5), nbcol)[sel]
+  text(xs, ys, ids)
+
+# adding time points:
+  xx <- seq(1 + nb_wc, ncol_tmp, by) - .5
+  mtext(rep(c("e", "1", "2"), nbcol)[sel], at = sort(c(xx, xx + 1, xx + 2)))
+}
+```
+
+An overview of the M-ABC and Bayley data for all the children and the 3 time points:
+
+```{r fig.height = 11, fig.width  = 14}
+expand_grid(ParNo      = unique(followups$ParNo),
+            time_point = c("enrollment", "6 months", "18 months")) |> 
   left_join(followups, c("ParNo", "time_point")) |> 
   select(ParNo, time_point, starts_with("Date")) |> 
-  mutate(across(starts_with("Date"), ~ as.numeric(! is.na(.x)) + 1))
+  mutate(across(starts_with("Date"), ~ as.numeric(! is.na(.x)) + 1)) |> 
+  heatmap2(nbrow = 45, nb_wc = 2)
 ```
 
-```{r}
-transparent <- adjustcolor("white", 0)
-adjustcolor2 <- function(col) adjustcolor(col, .3)
-
-templated |> 
-  select(-Date_Bayley) |> 
-  pivot_wider(names_from = time_point, values_from = Date_ABC) |> 
-  side_by_side(30) |> 
-  image2(transparent, adjustcolor2("red"))
-
-par(new = TRUE)
-
-templated |> 
-  select(-Date_ABC) |> 
-  pivot_wider(names_from = time_point, values_from = Date_Bayley) |> 
-  side_by_side(30) |> 
-  image2(transparent, adjustcolor2("blue"))
-
-abline(v = 0:71, col = "white")
-abline(h = 0:30, col = "white")
-```
-
-
-
-
-
-
-
+where blue is where the Bayley data are available, red is where the M-ABC data are
+available, purple is where both data are available and white is where none of the data
+are available.
 
