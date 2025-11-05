@@ -119,7 +119,24 @@ get_vars <- function(sel, x) {
 The variables in questions are defined in the named list `sel` of character vectors.
 The names of this list should be among the names of `x` and the character vectors of
 each slots should be among the names of the columns of the data frames in the
-corresponding slots. A function that renames a column of a data frame:
+corresponding slots. A function that patches data values from the data frame `patch`
+into the data frame `df`, using the `key` variable as a common key between the two data
+frames:
+
+```{r}
+patch <- function(patch, df, key) {
+  ref <- df[, key]
+  sel <- df[[key]] %in% patch[[key]]
+  tmp <- df[sel, ]
+  tmp_names <- names(tmp)
+  tmp <- bind_cols(patch, tmp[, setdiff(tmp_names, names(patch))])[tmp_names]
+  df[! sel, ] |> 
+    bind_rows(tmp) |> 
+    left_join(x = ref, y = _, by = key)
+}
+```
+
+A function that renames a column of a data frame:
 
 ```{r}
 rename2 <- function(df, newname, oldname) {
@@ -369,10 +386,10 @@ Conversion of IDs between 02EI and 08RS:
                    s08RS = paste0("03-0", c(43, 52:56, 60, 62, 78, 79))))
 ```
 
-Data patch from the 02EI CRF:
+Patching the data values from the 02EI CRF:
 
 ```{r}
-(patch <- selection02EI |> 
+children <- selection02EI |> 
   get_vars(CRF02EI) |> 
   reduce(left_join, by = "studyCode") |> 
   mutate(across(IllnessDate, as.Date),
@@ -387,20 +404,8 @@ Data patch from the 02EI CRF:
          LimbPara      = limbParalysing,
          CNP           = nerveParalysing) |> 
   filter(ParNo %in% ID_conv$s02EI) |> 
-  mutate(across(ParNo, ~ with(ID_conv, setNames(s08RS, s02EI))[.x])))
-```
-
-Patching the data values to the `children` data frame:
-
-```{r}
-tmp <- filter(children, ParNo %in% ID_conv$s08RS)
-tmp_names <- names(tmp)
-tmp <- bind_cols(patch, tmp[, setdiff(tmp_names, names(patch))])[tmp_names]
-
-children <- children |>
-  filter(! ParNo %in% ID_conv$s08RS) |> 
-  bind_rows(tmp) |> 
-  arrange(ParNo)
+  mutate(across(ParNo, ~ unname(with(ID_conv, setNames(s08RS, s02EI))[.x]))) |> 
+  patch(children, "ParNo")
 ```
 
 Note: the date of discharge is missing for many children:
@@ -637,7 +642,7 @@ image3 <- function(x, col_no, col_yes) {
 The function that plots the heatmap:
 
 ```{r}
-heatmap2 <- function(x, nbrow = 30, nb_wc = 3,
+heatmap2 <- function(x, nbrow = 45, nb_wc = 2,
                      col_Bayley = adjustcolor("red", .3),
                      col_ABC    = adjustcolor("blue", .3),
                      col_NA     = adjustcolor("white", 0),
@@ -685,7 +690,7 @@ expand_grid(ParNo      = unique(followups$ParNo),
   left_join(followups, c("ParNo", "time_point")) |> 
   select(ParNo, time_point, starts_with("Date")) |> 
   mutate(across(starts_with("Date"), ~ as.numeric(! is.na(.x)) + 1)) |> 
-  heatmap2(nbrow = 45, nb_wc = 2)
+  heatmap2()
 ```
 
 where blue is where the Bayley data are available, red is where the M-ABC data are
