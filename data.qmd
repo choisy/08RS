@@ -428,6 +428,20 @@ children <- children |>
   select(- zlen, - zwfl)
 ```
 
+### Missing values
+
+```{r}
+n <- nrow(children)
+
+children |> 
+  select(- group) |> 
+  map_dfr(~ sum(is.na(.x))) |> 
+  pivot_longer(! ParNo, names_to = "variable", values_to = "number_of_NA") |> 
+  mutate(percentage_of_NA = round(100 * number_of_NA / n)) |> 
+  select(- ParNo) |>
+  print(n = Inf)
+```
+
 
 ## M-ABC data
 
