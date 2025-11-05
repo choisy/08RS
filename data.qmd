@@ -58,7 +58,7 @@ data_folder <- paste0(root, "GitHub/choisy/08RS/")
 Required packages:
 
 ```{r}
-required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr")
+required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro")
 ```
 
 Installing those that are not installed yet:
@@ -323,6 +323,8 @@ filter(MRI, Final != Acute)
 
 ## Children data
 
+### 08RS, PCR, MRI
+
 The case and control groups:
 
 ```{r}
@@ -379,6 +381,8 @@ children <- selection08RS |>
   arrange(ParNo)
 ```
 
+### Patching 02EI CRF
+
 Conversion of IDs between 02EI and 08RS:
 
 ```{r}
@@ -408,12 +412,20 @@ children <- selection02EI |>
   patch(children, "ParNo")
 ```
 
-Note: the date of discharge is missing for many children:
+### Stunt and waste
 
 ```{r}
-children |> 
-  select(ParNo, DateEnrol, DateDisc) |> 
-  filter(is.na(DateDisc))
+children <- children |> 
+  mutate(age = DateEnrol - DateBirth,
+         z   = anthro::anthro_zscores(c(male = 1, female = 2)[Gender],
+                                      as.numeric(age),
+                                      weight = weigh,
+                                      lenhei = height)[c("zlen", "zwfl")]) |> 
+  unnest(z) |> 
+  mutate(stunting = zlen < -2,
+         wasting  = ifelse(zwfl < -3, "severe",
+                           ifelse(zwfl < -2, "moderate", "no"))) |> 
+  select(- zlen, - zwfl)
 ```
 
 
