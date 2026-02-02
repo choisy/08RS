@@ -189,6 +189,18 @@ A tuning of the `image()` function:
 image2 <- function(x, y, z, ...) image(x, y, t(z[nrow(z):1, ]), ...)
 ```
 
+A function that adds a zero y value to both ends of a data frame with two columns `x`
+and `y`:
+
+```{r}
+adding_zero_ys <- function(x) {
+  x <- as_tibble(x[c("x", "y")])
+  x <- bind_rows(head(x, 1), x, tail(x, 1))
+  x$y[c(1, nrow(x))] <- 0
+  x
+}
+```
+
 
 ## 08RS CRF data
 
@@ -722,4 +734,40 @@ expand_grid(ParNo      = unique(followups$ParNo),
 where blue is where the Bayley data are available, red is where the M-ABC data are
 available, purple is where both data are available and white is where none of the data
 are available.
+
+
+## Analysis
+
+From here we work with 2 data frames: `children` that contains the children
+information, and `followups` that contains the follow-up data. Let's look at the age
+distribution of the controls and HFMD cases:
+
+```{r}
+cols <- c(2, 4)
+adjcol <- function(...) adjustcolor(..., alpha = .3)
+
+tmp <- children |>
+  mutate(across(age, ~ as.numeric(.x) / 30)) |> 
+  group_by(group) |> 
+  group_map(~ .x |> pull(age) |> density(from = 0))
+
+tmp |> 
+  map(~ .x |> unclass() |> magrittr::extract(c("x", "y")) |> as_tibble()) |> 
+  bind_rows() |> 
+  map(range) |> 
+  with(plot(NA, xlim = x, ylim = y, xlab = "age (months)", ylab = "density"))
+
+tmp |> 
+  walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
+
+legend("topright", legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
+```
+
+Let's now look at the level of the mother's education:
+
+```{r}
+
+```
+
+
 
