@@ -739,13 +739,34 @@ are available.
 ## Analysis
 
 From here we work with 2 data frames: `children` that contains the children
-information, and `followups` that contains the follow-up data. Let's look at the age
-distribution of the controls and HFMD cases:
+information, and `followups` that contains the follow-up data. Note that height and
+weight (and consequently stunting) is missing for about 22% of children:
 
-```{r fig_age_distribution}
+```{r}
+children |> 
+  select(group, age, MomEdu, Gender, stunting) |> 
+  map_int(~ sum(is.na(.x)))
+```
+
+Some common code:
+
+```{r}
 cols <- c(2, 4)
 adjcol <- function(...) adjustcolor(..., alpha = .3)
 
+barplot2 <- function(height, x) {
+  barplot(height, names.arg = x, beside = TRUE, ylab = "proportion",
+          col = adjcol(rev(cols)))
+}
+
+add_legend <- function(where = "topright") {
+  legend(where, legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
+}
+```
+
+Let's look at the age distribution of the controls and HFMD cases:
+
+```{r fig_age_distribution}
 tmp <- children |>
   mutate(across(age, ~ as.numeric(.x) / 30)) |> 
   group_by(group) |> 
@@ -760,12 +781,12 @@ tmp |>
 tmp |> 
   walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
 
-legend("topright", legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
+add_legend()
 ```
 
 Let's now look at the level of the mother's education:
 
-```{r}
+```{r fig_mom_edu}
 edu_order <- c("Never been to school", "Attended some primary school",
                "Completed primary school (5th gr)",
                "Completed lower secondary school (9th gr)",
@@ -775,15 +796,31 @@ edu_order <- c("Never been to school", "Attended some primary school",
 children |> 
   with(table(MomEdu, group)) |>
   prop.table(2) %>%
-#  as.matrix() %>%
   `[`(edu_order, ) |> 
   t() |> 
-  barplot(names.arg = c("none", "some", "5th grd", "9th grd", "12th grd", "college",
-                        "postgrad"), beside = TRUE, col = adjcol(rev(cols)),
-          ylab = "proportion")
+  barplot2(c("none", "some", "5th grd", "9th grd", "12th grd", "college", "postgrad"))
 
-legend("topleft", legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
+add_legend()
 ```
 
+Stunt and gender:
 
+```{r fig_sex_stunt}
+children |> 
+  select(group, Gender, stunting) |> 
+  na.exclude() |> 
+  group_by(group) |> 
+  group_split() |> 
+  map(~ .x |> group_by(Gender, stunting) |> tally() |> ungroup()) |> 
+  reduce(left_join, c("Gender", "stunting")) |> 
+  select(starts_with("n")) |> 
+  as.matrix() |> 
+  prop.table(2) |> 
+  t() %>%
+  `[`(2:1, ) |> 
+  barplot2(rep(c("female", "male"), each = 2))
+
+mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = c(2, 5, 8, 11))
+add_legend()
+```
 
