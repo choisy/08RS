@@ -742,7 +742,7 @@ From here we work with 2 data frames: `children` that contains the children
 information, and `followups` that contains the follow-up data. Let's look at the age
 distribution of the controls and HFMD cases:
 
-```{r}
+```{r fig_age_distribution}
 cols <- c(2, 4)
 adjcol <- function(...) adjustcolor(..., alpha = .3)
 
@@ -766,7 +766,23 @@ legend("topright", legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty 
 Let's now look at the level of the mother's education:
 
 ```{r}
+edu_order <- c("Never been to school", "Attended some primary school",
+               "Completed primary school (5th gr)",
+               "Completed lower secondary school (9th gr)",
+               "Completed higher secondary school (12th gr)",
+               "Completed university/college degree", "Completed postgraduate degree")
 
+children |> 
+  with(table(MomEdu, group)) |>
+  prop.table(2) %>%
+#  as.matrix() %>%
+  `[`(edu_order, ) |> 
+  t() |> 
+  barplot(names.arg = c("none", "some", "5th grd", "9th grd", "12th grd", "college",
+                        "postgrad"), beside = TRUE, col = adjcol(rev(cols)),
+          ylab = "proportion")
+
+legend("topleft", legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
 ```
 
 
