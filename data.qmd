@@ -722,7 +722,7 @@ heatmap2 <- function(x, nbrow = 45, nb_wc = 2,
 
 An overview of the M-ABC and Bayley data for all the children and the 3 time points:
 
-```{r fig.height = 11, fig.width  = 14}
+```{r fig_followup_data_availability, fig.height = 11, fig.width  = 14}
 expand_grid(ParNo      = unique(followups$ParNo),
             time_point = c("enrollment", "6 months", "18 months")) |> 
   left_join(followups, c("ParNo", "time_point")) |> 
