@@ -58,7 +58,8 @@ data_folder <- paste0(root, "GitHub/choisy/08RS/")
 Required packages:
 
 ```{r}
-required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang")
+required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
+              "cobalt", "survey")
 ```
 
 Installing those that are not installed yet:
@@ -75,6 +76,8 @@ library(dplyr)
 library(purrr)
 library(stringr)
 library(tidyr)
+library(cobalt)
+library(survey)
 ```
 
 
@@ -738,6 +741,8 @@ are available.
 
 ## Analysis
 
+### HFMD vs controls
+
 From here we work with 2 data frames: `children` that contains the children
 information, and `followups` that contains the follow-up data. Note that height and
 weight (and consequently stunting) is missing for about 22% of children:
@@ -824,90 +829,170 @@ mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = c(2, 5, 8, 11))
 add_legend()
 ```
 
+### Propensity scores
+
 The covariables:
 
 ```{r}
 covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
 ```
 
+A function that generates a data set for a given response variable at a given time
+point:
+
+```{r}
+make_data <- function(response, timepoint) {
+  followups |> 
+    filter(time_point == timepoint) |> 
+    select(ParNo, all_of(response)) |> 
+    na.exclude() |> 
+    left_join(covariables, "ParNo") |> 
+    select(-ParNo) |> 
+    select(all_of(response), group, everything()) |> 
+    na.exclude()
+}
+```
+
 Making the data for FM at enrollment:
 
 ```{r}
-FM_data_enrollment <- followups |> 
-  filter(time_point == "enrollment") |> 
-  select(ParNo, FM) |> 
-  na.exclude() |> 
-  left_join(covariables, "ParNo") |> 
-  select(-ParNo) |> 
-  select(FM, group, everything()) |> 
-  na.exclude()
+FM_data_enrollment <- make_data("FM", "enrollment")
 ```
 
-```{r}
-hist(FM_data_enrollment$FM)
-```
+#### Logistic regression
+
+The function that generates the propensity scores from a logistic regression:
 
 ```{r}
-FM_data_enrollment |> 
-  group_by(group) |> 
-  tally()
+logistic_ps <- function(data, formula) {
+  data |>
+    glm(formula, binomial, data = _) |> 
+    predict(type = "response")
+}
 ```
 
+Let's compute the propensity scores and the weights:
+
 ```{r}
-# Estimating propensity scores:
-FM_data_enrollment2 <- mutate(FM_data_enrollment, across(group, ~ .x == "HFMD"))
 ps_formula <- group ~ Gender + age + MomEdu + stunting
-ps_mod <- glm(ps_formula, binomial, FM_data_enrollment2)
-FM_data_enrollment2$ps <- predict(ps_mod, type = "response")
 
-# Propensity score quick diagnostic:
-tmp <- FM_data_enrollment2 |> 
-  group_by(group) |> 
-  group_map(~ .x |> pull(ps) |> density(from = 0, to = 1))
-
-tmp |> 
-  map(~ .x |> unclass() |> magrittr::extract(c("x", "y")) |> as_tibble()) |> 
-  bind_rows() |> 
-  map(range) |> 
-  with(plot(NA, xlim = x, ylim = y, xlab = "propensity score", ylab = "density"))
-
-tmp |> 
-  walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
-
-# Overlap weights:
-FM_data_enrollment2 <- FM_data_enrollment2 |> 
-  mutate(ow = ifelse(group, 1 - ps, ps), # overlap weigths
-         ow_norm = ow * n() / sum(ow))   # normalized overlap weights
-  
-# Check covariate balance after weighting
-library(cobalt)
-(bal_ow  <- bal.tab(ps_formula, data = FM_data_enrollment2, s.d.denom = "treated",
-                    weights = "ow", un = TRUE))
-love.plot(bal_ow, stars = "std", abs = TRUE, thresholds = c(m = .1))
-
-# Estimate treatment effect
-library(survey)
-# create survey design with normalized overlap weights
-des_ow <- svydesign(ids = ~1, weights = ~ow_norm, data = FM_data_enrollment2)
-# Weighted GLM:
-fit_model <- svyglm(FM ~ group, des_ow)
-summary(fit_model)
-coef(fit_model)
-confint(fit_model)
+FM_data_enrollment2 <- FM_data_enrollment |>
+  mutate(across(group, ~ .x == "HFMD"),
+         ps = logistic_ps(pick(everything()), ps_formula),
+         ow = ifelse(group, 1 - ps, ps))
 ```
+
+Diagnostic:
+
+```{r}
+FM_data_enrollment2 |>
+  bal.tab(ps_formula, data = _, s.d.denom = "treated", weights = "ow", un = TRUE) |> 
+  love.plot(stars = "std", abs = TRUE, thresholds = c(m = .1))
+```
+
+The treatment effect:
+
+```{r}
+fit_model <- FM_data_enrollment2 |> 
+  svydesign(ids = ~1, weights = ~ow, data = _) |> 
+  svyglm(FM ~ group, design = _)
+
+map(list(summary, coef, confint), ~ .x(fit_model))
+```
+
+Pipeline:
+
+```{r}
+ps_formula <- group ~ Gender + age + MomEdu + stunting
+
+lr_out <- expand_grid(response  = c("CS", "RC", "EC", "FM", "GM"),
+                      timepoint = c("enrollment", "6 months", "18 months")) |> 
+  mutate(dataset = map2(response, timepoint,
+                        ~ make_data(.x, .y) |> 
+                          mutate(across(group, ~ .x == "HFMD"),
+                                 ps = logistic_ps(pick(everything()), ps_formula),
+                                 ow = ifelse(group, 1 - ps, ps))),
+         ctable = map(dataset, ~ .x |>
+                        pull(group) |>
+                        table() |>
+                        as.vector() |>
+                        setNames(c("control", "HFMD")))) |> 
+  unnest_wider(ctable) |>
+  mutate(balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
+                                          weights = "ow", un = TRUE)),
+         pass = all(abs(a$Balance$Diff.Adj) < .1),
+         model = map2(dataset, response, ~ .x |>
+                       svydesign(ids = ~1, weights = ~ow, data = _) |> 
+                       svyglm(reformulate("group", .y), design = _)),
+         coef = map_dbl(model, ~ coef(.x)[2]),
+         ci = map(model, ~ confint(.x)[2, ])) |> 
+  unnest_wider(ci) |> 
+  mutate(p = map_dbl(model, ~ last(as.vector(coefficients(summary(.x))))))
+```
+
+TO DO: filter (1) the tables that have 1 value and (2) the group that have 3 values
+
+Which gives:
+
+```{r}
+lr_out
+```
+
+```{r}
+lr_out2 <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                                     "BAL1ISS", "BAL2ISS", "BAL3ISS"),
+                       timepoint = "18 months") |> 
+  mutate(dataset = map2(response, timepoint,
+                        ~ make_data(.x, .y) |> 
+                          mutate(across(group, ~ .x == "HFMD"),
+                                 ps = logistic_ps(pick(everything()), ps_formula),
+                                 ow = ifelse(group, 1 - ps, ps))),
+         ctable = map(dataset, ~ .x |>
+                        pull(group) |>
+                        table() |>
+                        as.vector() |>
+                        setNames(c("control", "HFMD")))) |> 
+  unnest_wider(ctable) |>
+  mutate(balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
+                                          weights = "ow", un = TRUE)),
+         pass = all(abs(a$Balance$Diff.Adj) < .1),
+         model = map2(dataset, response, ~ .x |>
+                       svydesign(ids = ~1, weights = ~ow, data = _) |> 
+                       svyglm(reformulate("group", .y), design = _)),
+         coef = map_dbl(model, ~ coef(.x)[2]),
+         ci = map(model, ~ confint(.x)[2, ])) |> 
+  unnest_wider(ci) |> 
+  mutate(p = map_dbl(model, ~ last(as.vector(coefficients(summary(.x))))))
+```
+
+Which gives:
+
+```{r}
+lr_out2
+```
+
+
+
+
+
+
+
+
+
+#### TMLE
 
 Using TMLE (Takes 3'):
 
-```{r}
+```{r eval=FALSE}
 tmle_output <- tmle(FM_data_enrollment$FM, as.integer(FM_data_enrollment$group == "HFMD"),
                     select(FM_data_enrollment, -c(FM, group)))
 ```
 
-```{r}
+```{r eval=FALSE}
 summary(tmle_output)
 ```
 
-```{r}
+```{r eval=FALSE}
 tmle_output2 <- tmle(FM_data_enrollment$FM, as.integer(FM_data_enrollment$group == "HFMD"),
                      select(FM_data_enrollment, -c(FM, group)),
                      Qform = FM_data_enrollment$FM ~ A + W1 + W2 + W3,
@@ -938,16 +1023,15 @@ tmle3 <- function(x, ...) {
 }
 ```
 
-
 takes 3':
 
-```{r}
+```{r eval=FALSE}
 a <- FM_data_enrollment |> 
   mutate(across(group, ~ as.integer(.x == "HFMD"))) |> 
   tmle2()
 ```
 
-```{r}
+```{r eval=FALSE}
 system.time(
 b <- FM_data_enrollment |> 
   mutate(across(group, ~ as.integer(.x == "HFMD"))) |> 
@@ -955,7 +1039,7 @@ b <- FM_data_enrollment |>
 )
 ```
 
-```{r}
+```{r eval=FALSE}
 x <- FM_data_enrollment |> 
   mutate(across(group, ~ as.integer(.x == "HFMD")),
          across(age, as.numeric),
