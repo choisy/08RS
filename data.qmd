@@ -58,7 +58,7 @@ data_folder <- paste0(root, "GitHub/choisy/08RS/")
 Required packages:
 
 ```{r}
-required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro")
+required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang")
 ```
 
 Installing those that are not installed yet:
@@ -822,5 +822,152 @@ children |>
 
 mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = c(2, 5, 8, 11))
 add_legend()
+```
+
+The covariables:
+
+```{r}
+covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+Making the data for FM at enrollment:
+
+```{r}
+FM_data_enrollment <- followups |> 
+  filter(time_point == "enrollment") |> 
+  select(ParNo, FM) |> 
+  na.exclude() |> 
+  left_join(covariables, "ParNo") |> 
+  select(-ParNo) |> 
+  select(FM, group, everything()) |> 
+  na.exclude()
+```
+
+```{r}
+hist(FM_data_enrollment$FM)
+```
+
+```{r}
+FM_data_enrollment |> 
+  group_by(group) |> 
+  tally()
+```
+
+```{r}
+# Estimating propensity scores:
+FM_data_enrollment2 <- mutate(FM_data_enrollment, across(group, ~ .x == "HFMD"))
+ps_formula <- group ~ Gender + age + MomEdu + stunting
+ps_mod <- glm(ps_formula, binomial, FM_data_enrollment2)
+FM_data_enrollment2$ps <- predict(ps_mod, type = "response")
+
+# Propensity score quick diagnostic:
+tmp <- FM_data_enrollment2 |> 
+  group_by(group) |> 
+  group_map(~ .x |> pull(ps) |> density(from = 0, to = 1))
+
+tmp |> 
+  map(~ .x |> unclass() |> magrittr::extract(c("x", "y")) |> as_tibble()) |> 
+  bind_rows() |> 
+  map(range) |> 
+  with(plot(NA, xlim = x, ylim = y, xlab = "propensity score", ylab = "density"))
+
+tmp |> 
+  walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
+
+# Overlap weights:
+FM_data_enrollment2 <- FM_data_enrollment2 |> 
+  mutate(ow = ifelse(group, 1 - ps, ps), # overlap weigths
+         ow_norm = ow * n() / sum(ow))   # normalized overlap weights
+  
+# Check covariate balance after weighting
+library(cobalt)
+(bal_ow  <- bal.tab(ps_formula, data = FM_data_enrollment2, s.d.denom = "treated",
+                    weights = "ow", un = TRUE))
+love.plot(bal_ow, stars = "std", abs = TRUE, thresholds = c(m = .1))
+
+# Estimate treatment effect
+library(survey)
+# create survey design with normalized overlap weights
+des_ow <- svydesign(ids = ~1, weights = ~ow_norm, data = FM_data_enrollment2)
+# Weighted GLM:
+fit_model <- svyglm(FM ~ group, des_ow)
+summary(fit_model)
+coef(fit_model)
+confint(fit_model)
+```
+
+Using TMLE (Takes 3'):
+
+```{r}
+tmle_output <- tmle(FM_data_enrollment$FM, as.integer(FM_data_enrollment$group == "HFMD"),
+                    select(FM_data_enrollment, -c(FM, group)))
+```
+
+```{r}
+summary(tmle_output)
+```
+
+```{r}
+tmle_output2 <- tmle(FM_data_enrollment$FM, as.integer(FM_data_enrollment$group == "HFMD"),
+                     select(FM_data_enrollment, -c(FM, group)),
+                     Qform = FM_data_enrollment$FM ~ A + W1 + W2 + W3,
+                     gform = A ~ W1 + W2 + W3)
+```
+
+```{r}
+tmle2 <- function(x, ...) {
+  Y <- x[[1]]
+  A <- x[[2]]
+  W <- x[, -(1:2)]
+  covariables <- paste(names(W), collapse = "+")
+  tmle(Y, A, W,
+       Qform = as.formula(paste("Y ~ A +", covariables)),
+       gform = paste("A ~ ", covariables), ...)
+}
+```
+
+```{r}
+tmle3 <- function(x, ...) {
+  Y <- x[[1]]
+  A <- x[[2]]
+  W <- x[, -(1:2)]
+  covariables <- paste(names(W), collapse = "+")
+  tmle(Y, A, W,
+       Qform = Y ~ A + Gender + age + MomEdu + stunting,
+       gform = A ~ Gender + age + MomEdu + stunting, ...)
+}
+```
+
+
+takes 3':
+
+```{r}
+a <- FM_data_enrollment |> 
+  mutate(across(group, ~ as.integer(.x == "HFMD"))) |> 
+  tmle2()
+```
+
+```{r}
+system.time(
+b <- FM_data_enrollment |> 
+  mutate(across(group, ~ as.integer(.x == "HFMD"))) |> 
+  tmle3()
+)
+```
+
+```{r}
+x <- FM_data_enrollment |> 
+  mutate(across(group, ~ as.integer(.x == "HFMD")),
+         across(age, as.numeric),
+         across(where(is.character), as.factor),
+         across(where(is.logical), as.integer))
+
+
+
+Y <- x$FM
+A <- x$group
+W <- x[, -(1:2)]
+
+output <- tmle(Y, A, W, Qform = Y ~ A + Gender + age + MomEdu + stunting, gform = A ~ Gender + age + MomEdu + stunting)
 ```
 
