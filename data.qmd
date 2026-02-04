@@ -924,7 +924,8 @@ lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2I
                                       ow = ifelse(group, 1 - ps, ps))),
          balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
                                           weights = "ow", un = TRUE)),
-         pass = map_lgl(balance, ~ all(.x$Balance$Diff.Adj < .1)),
+         max_diff = map_dbl(balance, ~ max(.x$Balance$Diff.Adj)),
+         pass = max_diff < .1,
          model = map2(dataset, response, ~ .x |>
                        svydesign(ids = ~1, weights = ~ow, data = _) |> 
                        svyglm(reformulate("group", .y), design = _)),
@@ -938,7 +939,7 @@ Which gives:
 
 ```{r}
 lr_ps |> 
-  select(-c(dataset, balance, model)) |>
+  select(-c(dataset, balance, model, pass)) |>
   print(n = Inf)
 ```
 
