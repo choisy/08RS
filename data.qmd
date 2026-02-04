@@ -1129,6 +1129,134 @@ lr_ps$dataset[[1]] |>
 ```
 
 
+#### TMLE
+
+```{r}
+df <- FM_data_enrollment
+```
+
+```{r}
+Qlib <- c("SL.glm", "SL.glmnet", "SL.mean")  # outcome regressions
+glib <- c("SL.glm", "SL.glmnet", "SL.mean")  # propensity score regressions
+
+Y <- df$FM
+A <- as.integer(df$group == "HFMD")
+W <- df |> 
+  select(Gender, age, MomEdu, stunting) |> 
+  mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+         across(age, as.numeric))
+
+out <- tmle(Y, A, W, family = "gaussian", Q.SL.library = Qlib, g.SL.library = glib)
+
+out$estimates$ATT[c("psi", "CI", "pvalue")]
+```
+
+
+```{r}
+# 0) Install packages if you don't have them (run once)
+# install.packages(c("tmle", "SuperLearner", "glmnet", "mgcv")) 
+# SuperLearner package will automatically use wrappers available; glmnet/mgcv recommended for better learners.
+
+library(tmle)
+library(SuperLearner)
+
+# 1) Prepare your data frame (assume it's called df)
+# Ensure variable names and types:
+# df$FM       : positive integer outcome
+# df$group    : "cases" / "control" (character or factor)
+# df$Gender   : binary (e.g. "M"/"F" or 0/1)
+# df$age      : numeric
+# df$MomEdu   : factor with 6 levels
+# df$stunting : binary (0/1 or "yes"/"no")
+
+# Example checks / conversions:
+df$group <- factor(df$group, levels = c("control", "HFMD"))  # ensure "control" is reference
+# convert binary char to 0/1 if necessary:
+if(is.character(df$stunting) || is.factor(df$stunting)) {
+  # adapt mapping if needed; here assume "no"/"yes" or "0"/"1"
+  df$stunting <- as.numeric(as.character(df$stunting))
+}
+if(is.character(df$Gender) || is.factor(df$Gender)) {
+  # map to 0/1 (example: Female = 0, Male = 1) — adapt to your coding
+  df$Gender <- as.numeric(df$Gender == "M") 
+}
+
+# 2) Define outcome Y, treatment A, covariates W
+Y <- df$FM
+A <- as.numeric(df$group == "HFMD")  # A = 1 for cases, 0 for control
+W <- df[, c("Gender", "age", "MomEdu", "stunting")]
+
+# 3) Choose SuperLearner libraries (simple example)
+# You can change/add libraries depending on installed wrappers:
+Qlib <- c("SL.glm", "SL.glmnet", "SL.mean")   # outcome regressions
+glib <- c("SL.glm", "SL.glmnet", "SL.mean")  # propensity score regressions
+
+# -----------------------------
+# Option A: TMLE treating FM as continuous (Gaussian)
+# -----------------------------
+tmle_cont <- tmle(Y = Y,
+                  A = A,
+                  W = W,
+                  family = "gaussian",            # continuous outcome
+                  Q.SL.library = Qlib,
+                  g.SL.library = glib,
+                  verbose = TRUE)
+
+# Quick summary
+print(summary(tmle_cont))
+# Extract ATE (difference in adjusted means: E[Y|A=1] - E[Y|A=0])
+# tmle_cont$estimates contains entries; the ATE entry is typically:
+if(!is.null(tmle_cont$estimates$ATE)) {
+  ate_est <- tmle_cont$estimates$ATE$psi
+  ate_var <- tmle_cont$estimates$ATE$var.psi
+  ate_se  <- sqrt(ate_var)
+  ate_ci  <- ate_est + c(-1,1) * qnorm(0.975) * ate_se
+  cat("Adjusted mean difference (cases - control):", round(ate_est,4), "\n")
+  cat("95% CI: [", round(ate_ci[1],4), ",", round(ate_ci[2],4), "]\n")
+} else {
+  # some tmle versions name it differently; printing object helps inspect
+  print("No ATE element found in tmle_cont$estimates; inspect summary(tmle_cont) to find psi and var.")
+}
+
+# -----------------------------
+# Option B: If FM is skewed / count => log-transform TMLE
+# -----------------------------
+# Transform outcome
+Ylog <- log(Y + 1)   # add 1 to handle zeros
+
+tmle_log <- tmle(Y = Ylog,
+                 A = A,
+                 W = W,
+                 family = "gaussian",            # regression on transformed outcome
+                 Q.SL.library = Qlib,
+                 g.SL.library = glib,
+                 verbose = TRUE)
+
+print(summary(tmle_log))
+if(!is.null(tmle_log$estimates$ATE)) {
+  psi_log <- tmle_log$estimates$ATE$psi    # difference in mean(log(Y+1))
+  var_log <- tmle_log$estimates$ATE$var.psi
+  se_log  <- sqrt(var_log)
+  ci_log  <- psi_log + c(-1,1) * qnorm(0.975) * se_log
+  cat("Adjusted difference on log-scale (cases - control):", round(psi_log,4), "\n")
+  cat("95% CI (log-scale): [", round(ci_log[1],4), ",", round(ci_log[2],4), "]\n")
+  # Back-transform interpretation: approx multiplicative effect on (Y+1)
+  ratio_est <- exp(psi_log)
+  ratio_ci  <- exp(ci_log)
+  cat("Approx. ratio of geometric means (cases / control) on (FM+1) scale:", round(ratio_est,3), "\n")
+  cat("95% CI for ratio: [", round(ratio_ci[1],3), ",", round(ratio_ci[2],3), "]\n")
+}
+
+# -----------------------------
+# Diagnostics & tips
+# -----------------------------
+# 1) Check positivity: ensure both groups exist across covariate patterns (no perfect separation).
+# 2) Try different SuperLearner libraries (SL.gam, SL.ranger, etc.) if installed for robustness.
+# 3) If you prefer TMLE using a poisson/quasi-poisson model directly, consider tmle3 or use GLM-based Q/g that
+#    include poisson link — classic tmle() primarily supports gaussian/binomial families for the final targeting step.
+# 4) Check model fit and influence function diagnostics in the tmle object (residuals, clever covariate).
+
+```
 
 
 #### TMLE
