@@ -222,6 +222,12 @@ A tuning of the `confint()` function:
 confint2 <- function(x) as_vector(last(suppressMessages(confint(x))))
 ```
 
+A function that retrieve the p value of the last parameter of a model:
+
+```{r}
+get_p <- function(x) last(as.vector(coefficients(summary(x))))
+```
+
 
 ## 08RS CRF data
 
@@ -855,6 +861,12 @@ The covariables:
 covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
 ```
 
+The formula:
+
+```{r}
+ps_formula <- group ~ Gender + age + MomEdu + stunting
+```
+
 A function that generates a data set for a given response variable at a given time
 point:
 
@@ -884,6 +896,7 @@ The function that generates the propensity scores from a logistic regression:
 ```{r}
 logistic_ps <- function(data, formula) {
   data |>
+    mutate(across(group, ~ .x == "HFMD")) |> 
     glm(formula, binomial, data = _) |> 
     predict(type = "response")
 }
@@ -892,10 +905,8 @@ logistic_ps <- function(data, formula) {
 Let's compute the propensity scores and the weights:
 
 ```{r}
-ps_formula <- group ~ Gender + age + MomEdu + stunting
-
 FM_data_enrollment2 <- FM_data_enrollment |>
-  mutate(across(group, ~ .x == "HFMD"),
+  mutate(#across(group, ~ .x == "HFMD"),
          ps = logistic_ps(pick(everything()), ps_formula),
          ow = ifelse(group, 1 - ps, ps))
 ```
@@ -919,44 +930,6 @@ map(list(summary, coef, confint), ~ .x(fit_model))
 ```
 
 Pipeline:
-
-```{r}
-ps_formula <- group ~ Gender + age + MomEdu + stunting
-
-lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                                   "BAL1ISS", "BAL2ISS", "BAL3ISS",
-                                   "CS", "RC", "EC", "FM", "GM"),
-                     timepoint = c("enrollment", "6 months", "18 months")) |> 
-  mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
-         ctable  = map(dataset, ~ .x |>
-                         pull(group) |>
-                         table() |>
-                         as.vector())) |> 
-  filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
-  mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
-  unnest_wider(ctable) |> 
-  filter(HFMD > 3) |> 
-  mutate(dataset = map(dataset,
-                       \(x) mutate(x, across(group, \(y) y == "HFMD"),
-                                      ps = logistic_ps(pick(everything()), ps_formula),
-                                      ow = ifelse(group, 1 - ps, ps))),
-         balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
-                                          weights = "ow", un = TRUE)),
-         max_diff = map_dbl(balance, ~ max(.x$Balance$Diff.Adj)),
-         pass = max_diff < .1,
-         model = map2(dataset, response, ~ .x |>
-                       svydesign(ids = ~1, weights = ~ow, data = _) |> 
-                       svyglm(reformulate("group", .y), design = _)),
-         coef = map_dbl(model, ~ coef(.x)[2]),
-         ci = map(model, ~ confint(.x)[2, ])) |> 
-  unnest_wider(ci) |> 
-  mutate(p = map_dbl(model, ~ last(as.vector(coefficients(summary(.x))))))
-```
-
-```{r}
-get_p <- function(x) last(as.vector(coefficients(summary(x))))
-```
-
 
 ```{r}
 ps_formula <- group ~ Gender + age + MomEdu + stunting
@@ -1022,6 +995,140 @@ lr_ps |>
   select(response, timepoint, starts_with("coef"), starts_with("p"), -pass) |> 
   print(n = Inf)
 ```
+
+#### Take 2
+
+```{r}
+logistic_ps <- function(data) {
+  data |>
+    mutate(across(group, ~ .x == "HFMD")) |> 
+    glm(ps_formula, binomial, data = _) |> 
+    predict(type = "response")
+}
+```
+
+```{r}
+twang_ps <- function(data, ...) {
+  data |> 
+    mutate(across(group, ~ as.integer(group == "HFMD")),
+           across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+           across(age, as.numeric)) |> 
+    as.data.frame() |> 
+    ps(ps_formula, data = _, estimand = "ATT", stop.method = "es.mean",
+       verbose = FALSE, ...) |> 
+    get.weights("es.mean")  
+}
+```
+
+```{r}
+svyglm2 <- function(formula, data, w) {
+  data |>
+    svydesign(ids = ~1, weights = w, data = _) |> 
+    svyglm(formula, design = _)
+}
+```
+
+```{r}
+bal_tab <- function(data, w) {
+  data |> 
+    mutate(across(group, ~ .x == "HFMD")) |> 
+    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated", un = TRUE)
+}
+```
+
+```{r}
+get_diff <- function(x) x$Balance$Diff.Adj
+```
+
+```{r}
+get_max_diff <- function(data, w) {
+  data |> 
+    bal_tab(w) |> 
+    get_diff() |> 
+    max()
+}
+```
+
+```{r}
+reformulate2 <- function(x) {
+  reformulate(c("Gender", "age", "MomEdu", "stunting", "group"), x)
+}
+```
+
+
+
+```{r}
+lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                                   "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                                   "CS", "RC", "EC", "FM", "GM"),
+                     timepoint = c("enrollment", "6 months", "18 months")) |> 
+  mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
+         ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
+  filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+  mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+  unnest_wider(ctable) |> 
+  filter(HFMD > 3) |> 
+  mutate(dataset = map(dataset,
+                       ~ mutate(.x, ps = logistic_ps(pick(everything())),
+                                    ow = ifelse(group == "HFMD", 1 - ps, ps),
+                                    tw = twang_ps(pick(everything())),
+                                    t2 = twang_ps(pick(everything()), 
+                                                  n.trees = 5000,
+                                                  interaction.depth = 2))),
+         mdifow = map_dbl(dataset, get_max_diff, "ow"),
+         mdiftw = map_dbl(dataset, get_max_diff, "tw"),
+         mdift2 = map_dbl(dataset, get_max_diff, "t2"),
+         formula = map(response, ~ reformulate("group", .x)),
+         glm0 = map2(formula, dataset, ~ glm(.x, data = .y)),
+         glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
+         m_ow = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow)),
+         m_tw = map2(formula, dataset, ~ svyglm2(.x, .y, ~tw)),
+         m_t2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~t2)),
+         cf_l0 = map_dbl(glm0, coef2),
+         ci = map(glm0, confint2)) |>   
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
+  mutate(p_l0 = map_dbl(glm0, get_p),
+         cf_l1 = map_dbl(glm1, coef2),
+         ci = map(glm1, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
+  mutate(p_l1 = map_dbl(glm1, get_p),
+         cf_ow = map_dbl(m_ow, coef2),
+         ci = map(m_ow, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
+  mutate(p_ow = map_dbl(m_ow, get_p),
+         cf_tw = map_dbl(m_tw, coef2),
+         ci = map(m_tw, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
+  mutate(p_tw = map_dbl(m_tw, get_p),
+         cf_t2 = map_dbl(m_t2, coef2),
+         ci = map(m_t2, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
+  mutate(p_t2 = map_dbl(m_t2, get_p))  
+```
+
+
+
+
+#### TWANG
+
+```{r}
+library(twang)
+
+lr_ps$dataset[[1]] |> 
+  mutate(across(group, ~ as.integer(group == "HFMD")),
+         across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+         across(age, as.numeric)) |> 
+  as.data.frame() |> 
+  ps(ps_formula, data = _, estimand = "ATT", stop.method = "es.mean") |> 
+  get.weights("es.mean")
+```
+
+
 
 
 #### TMLE
