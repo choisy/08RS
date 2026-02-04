@@ -204,6 +204,24 @@ adding_zero_ys <- function(x) {
 }
 ```
 
+A function that converts a 1-row matrix with columns names into a named vector:
+
+```{r}
+as_vector <- function(x) setNames(as.vector(x), colnames(x))
+```
+
+A tuning of the `coef()` function:
+
+```{r}
+coef2 <- function(x) last(coef(x))
+```
+
+A tuning of the `confint()` function:
+
+```{r}
+confint2 <- function(x) as_vector(last(suppressMessages(confint(x))))
+```
+
 
 ## 08RS CRF data
 
@@ -935,11 +953,73 @@ lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2I
   mutate(p = map_dbl(model, ~ last(as.vector(coefficients(summary(.x))))))
 ```
 
+```{r}
+get_p <- function(x) last(as.vector(coefficients(summary(x))))
+```
+
+
+```{r}
+ps_formula <- group ~ Gender + age + MomEdu + stunting
+
+lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                                   "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                                   "CS", "RC", "EC", "FM", "GM"),
+                     timepoint = c("enrollment", "6 months", "18 months")) |> 
+  mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
+         ctable  = map(dataset, ~ .x |>
+                         pull(group) |>
+                         table() |>
+                         as.vector())) |> 
+  filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+  mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+  unnest_wider(ctable) |> 
+  filter(HFMD > 3) |> 
+  mutate(dataset = map(dataset,
+                       \(x) mutate(x, across(group, \(y) y == "HFMD"),
+                                      ps = logistic_ps(pick(everything()), ps_formula),
+                                      ow = ifelse(group, 1 - ps, ps))),
+         balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
+                                          weights = "ow", un = TRUE)),
+         max_diff = map_dbl(balance, ~ max(.x$Balance$Diff.Adj)),
+         pass = max_diff < .1,
+         formula = map(response, ~ reformulate("group", .x)),
+         model0 = map2(formula, dataset, ~ glm(.x, data = .y)),
+         model1 = map2(response, dataset,
+                       ~ glm(reformulate(c("Gender", "age", "MomEdu", "stunting",
+                                           "group"), .x), data = .y)),
+         model2 = map2(formula, dataset, ~ .y |>
+                       svydesign(ids = ~1, weights = ~ow, data = _) |> 
+                       svyglm(.x, design = _)),
+         coef0 = map_dbl(model0, coef2),
+         ci = map(model0, confint2)) |>   
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "0"), ends_with("%")) |> 
+  mutate(p0 = map_dbl(model0, get_p),
+         coef1 = map_dbl(model1, coef2),
+         ci = map(model1, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "1"), ends_with("%")) |> 
+  mutate(p1 = map_dbl(model1, get_p),
+         coef2 = map_dbl(model2, coef2),
+         ci = map(model2, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "2"), ends_with("%")) |> 
+  mutate(p2 = map_dbl(model2, get_p))
+```
+
 Which gives:
 
 ```{r}
 lr_ps |> 
-  select(-c(dataset, balance, model, pass)) |>
+  select(response, timepoint, control, HFMD, max_diff, ends_with("2"), -model2) |> 
+  print(n = Inf)
+```
+
+Let's compare with the results without propensity scores:
+
+```{r}
+lr_ps |> 
+  select(response, timepoint, starts_with("coef"), starts_with("p"), -pass) |> 
   print(n = Inf)
 ```
 
