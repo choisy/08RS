@@ -112,6 +112,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#propensity-scores" id="toc-propensity-scores" class="nav-link" data-scroll-target="#propensity-scores"><span class="header-section-number">13.2</span> Propensity scores</a>
   <ul class="collapse">
   <li><a href="#logistic-regression" id="toc-logistic-regression" class="nav-link" data-scroll-target="#logistic-regression"><span class="header-section-number">13.2.1</span> Logistic regression</a></li>
+  <li><a href="#tmle" id="toc-tmle" class="nav-link" data-scroll-target="#tmle"><span class="header-section-number">13.2.2</span> TMLE</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -960,7 +961,7 @@ Not Wasted      Waste
 <span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
 <span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(covariables, <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb67-7"><a href="#cb67-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>ParNo) <span class="sc">|&gt;</span> </span>
-<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(FM, group, <span class="fu">everything</span>()) <span class="sc">|&gt;</span> </span>
+<span id="cb67-8"><a href="#cb67-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">all_of</span>(response), group, <span class="fu">everything</span>()) <span class="sc">|&gt;</span> </span>
 <span id="cb67-9"><a href="#cb67-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.exclude</span>()</span>
 <span id="cb67-10"><a href="#cb67-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -1039,69 +1040,138 @@ Number of Fisher Scoring iterations: 2
 groupTRUE   -0.9782135  2.733524</code></pre>
 </div>
 </div>
+<p>Pipeline:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>ps_formula <span class="ot">&lt;-</span> group <span class="sc">~</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>lr_ps <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(<span class="at">response  =</span> <span class="fu">c</span>(<span class="st">"MD1ISS"</span>, <span class="st">"MD2ISS"</span>, <span class="st">"MD3ISS"</span>, <span class="st">"AC1ISS"</span>, <span class="st">"AC2ISS"</span>,</span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"BAL1ISS"</span>, <span class="st">"BAL2ISS"</span>, <span class="st">"BAL3ISS"</span>,</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>),</span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>                     <span class="at">timepoint =</span> <span class="fu">c</span>(<span class="st">"enrollment"</span>, <span class="st">"6 months"</span>, <span class="st">"18 months"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dataset =</span> <span class="fu">map2</span>(response, timepoint, <span class="sc">~</span> <span class="fu">make_data</span>(.x, .y)),</span>
+<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">ctable  =</span> <span class="fu">map</span>(dataset, <span class="sc">~</span> .x <span class="sc">|&gt;</span></span>
+<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">pull</span>(group) <span class="sc">|&gt;</span></span>
+<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">table</span>() <span class="sc">|&gt;</span></span>
+<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">as.vector</span>())) <span class="sc">|&gt;</span> </span>
+<span id="cb74-12"><a href="#cb74-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">map_lgl</span>(ctable, <span class="sc">~</span> <span class="fu">length</span>(.x) <span class="sc">&gt;</span> <span class="dv">1</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb74-13"><a href="#cb74-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ctable =</span> <span class="fu">map</span>(ctable, <span class="sc">~</span> <span class="fu">setNames</span>(.x, <span class="fu">c</span>(<span class="st">"control"</span>, <span class="st">"HFMD"</span>)))) <span class="sc">|&gt;</span> </span>
+<span id="cb74-14"><a href="#cb74-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(ctable) <span class="sc">|&gt;</span> </span>
+<span id="cb74-15"><a href="#cb74-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(HFMD <span class="sc">&gt;</span> <span class="dv">3</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb74-16"><a href="#cb74-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dataset =</span> <span class="fu">map</span>(dataset,</span>
+<span id="cb74-17"><a href="#cb74-17" aria-hidden="true" tabindex="-1"></a>                       \(x) <span class="fu">mutate</span>(x, <span class="fu">across</span>(group, \(y) y <span class="sc">==</span> <span class="st">"HFMD"</span>),</span>
+<span id="cb74-18"><a href="#cb74-18" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">ps =</span> <span class="fu">logistic_ps</span>(<span class="fu">pick</span>(<span class="fu">everything</span>()), ps_formula),</span>
+<span id="cb74-19"><a href="#cb74-19" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">ow =</span> <span class="fu">ifelse</span>(group, <span class="dv">1</span> <span class="sc">-</span> ps, ps))),</span>
+<span id="cb74-20"><a href="#cb74-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">balance =</span> <span class="fu">map</span>(dataset, <span class="sc">~</span> <span class="fu">bal.tab</span>(ps_formula, <span class="at">data =</span> .x, <span class="at">s.d.denom =</span> <span class="st">"treated"</span>,</span>
+<span id="cb74-21"><a href="#cb74-21" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">weights =</span> <span class="st">"ow"</span>, <span class="at">un =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb74-22"><a href="#cb74-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">pass =</span> <span class="fu">map_lgl</span>(balance, <span class="sc">~</span> <span class="fu">all</span>(.x<span class="sc">$</span>Balance<span class="sc">$</span>Diff.Adj <span class="sc">&lt;</span> .<span class="dv">1</span>)),</span>
+<span id="cb74-23"><a href="#cb74-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">model =</span> <span class="fu">map2</span>(dataset, response, <span class="sc">~</span> .x <span class="sc">|&gt;</span></span>
+<span id="cb74-24"><a href="#cb74-24" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">svydesign</span>(<span class="at">ids =</span> <span class="sc">~</span><span class="dv">1</span>, <span class="at">weights =</span> <span class="sc">~</span>ow, <span class="at">data =</span> _) <span class="sc">|&gt;</span> </span>
+<span id="cb74-25"><a href="#cb74-25" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">svyglm</span>(<span class="fu">reformulate</span>(<span class="st">"group"</span>, .y), <span class="at">design =</span> _)),</span>
+<span id="cb74-26"><a href="#cb74-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">coef =</span> <span class="fu">map_dbl</span>(model, <span class="sc">~</span> <span class="fu">coef</span>(.x)[<span class="dv">2</span>]),</span>
+<span id="cb74-27"><a href="#cb74-27" aria-hidden="true" tabindex="-1"></a>         <span class="at">ci =</span> <span class="fu">map</span>(model, <span class="sc">~</span> <span class="fu">confint</span>(.x)[<span class="dv">2</span>, ])) <span class="sc">|&gt;</span> </span>
+<span id="cb74-28"><a href="#cb74-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
+<span id="cb74-29"><a href="#cb74-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">p =</span> <span class="fu">map_dbl</span>(model, <span class="sc">~</span> <span class="fu">last</span>(<span class="fu">as.vector</span>(<span class="fu">coefficients</span>(<span class="fu">summary</span>(.x))))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Which gives:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>lr_ps <span class="sc">|&gt;</span> </span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(dataset, balance, model)) <span class="sc">|&gt;</span></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 23 × 9
+   response timepoint  control  HFMD pass     coef `2.5 %` `97.5 %`      p
+   &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt; &lt;lgl&gt;   &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;
+ 1 MD1ISS   18 months       69    23 TRUE  -1.13    -3.64     1.38  0.372 
+ 2 MD2ISS   18 months       69    22 TRUE  -0.737   -2.56     1.08  0.423 
+ 3 MD3ISS   18 months       69    23 TRUE  -0.404   -3.47     2.66  0.794 
+ 4 AC1ISS   18 months       69    21 TRUE   0.839   -2.13     3.80  0.576 
+ 5 AC2ISS   18 months       69    21 TRUE  -0.374   -3.27     2.52  0.798 
+ 6 BAL1ISS  18 months       69    21 TRUE  -0.595   -2.77     1.58  0.588 
+ 7 BAL2ISS  18 months       69    20 TRUE   0.0884  -2.08     2.26  0.936 
+ 8 BAL3ISS  18 months       67    21 TRUE  -2.30    -5.16     0.552 0.113 
+ 9 CS       enrollment     248   114 TRUE   2.52    -0.395    5.44  0.0899
+10 CS       6 months       202   104 TRUE   1.84    -0.565    4.25  0.133 
+11 CS       18 months      161    79 TRUE   1.22    -0.403    2.85  0.140 
+12 RC       enrollment     248   113 TRUE  -0.156   -2.09     1.78  0.874 
+13 RC       6 months       202   103 TRUE   0.896   -1.29     3.08  0.420 
+14 RC       18 months      161    79 TRUE   0.976   -0.734    2.69  0.262 
+15 EC       enrollment     248   114 TRUE   0.885   -1.47     3.24  0.460 
+16 EC       6 months       201   103 TRUE   1.11    -1.34     3.55  0.373 
+17 EC       18 months      161    79 TRUE   0.961   -0.485    2.41  0.192 
+18 FM       enrollment     248   114 TRUE   0.878   -0.978    2.73  0.353 
+19 FM       6 months       202   103 TRUE   0.127   -1.60     1.86  0.885 
+20 FM       18 months      161    79 TRUE   0.803   -0.804    2.41  0.326 
+21 GM       enrollment     248   113 TRUE   3.39     0.797    5.98  0.0105
+22 GM       6 months       201   104 TRUE   1.08    -0.654    2.81  0.222 
+23 GM       18 months      161    79 TRUE   0.489   -0.587    1.56  0.372 </code></pre>
+</div>
+</div>
+</section>
+<section id="tmle" class="level4" data-number="13.2.2">
+<h4 data-number="13.2.2" class="anchored" data-anchor-id="tmle"><span class="header-section-number">13.2.2</span> TMLE</h4>
 <p>Using TMLE (Takes 3’):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>tmle_output <span class="ot">&lt;-</span> <span class="fu">tmle</span>(FM_data_enrollment<span class="sc">$</span>FM, <span class="fu">as.integer</span>(FM_data_enrollment<span class="sc">$</span>group <span class="sc">==</span> <span class="st">"HFMD"</span>),</span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">select</span>(FM_data_enrollment, <span class="sc">-</span><span class="fu">c</span>(FM, group)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>tmle_output <span class="ot">&lt;-</span> <span class="fu">tmle</span>(FM_data_enrollment<span class="sc">$</span>FM, <span class="fu">as.integer</span>(FM_data_enrollment<span class="sc">$</span>group <span class="sc">==</span> <span class="st">"HFMD"</span>),</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">select</span>(FM_data_enrollment, <span class="sc">-</span><span class="fu">c</span>(FM, group)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(tmle_output)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(tmle_output)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>tmle_output2 <span class="ot">&lt;-</span> <span class="fu">tmle</span>(FM_data_enrollment<span class="sc">$</span>FM, <span class="fu">as.integer</span>(FM_data_enrollment<span class="sc">$</span>group <span class="sc">==</span> <span class="st">"HFMD"</span>),</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">select</span>(FM_data_enrollment, <span class="sc">-</span><span class="fu">c</span>(FM, group)),</span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Qform =</span> FM_data_enrollment<span class="sc">$</span>FM <span class="sc">~</span> A <span class="sc">+</span> W1 <span class="sc">+</span> W2 <span class="sc">+</span> W3,</span>
-<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">gform =</span> A <span class="sc">~</span> W1 <span class="sc">+</span> W2 <span class="sc">+</span> W3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>tmle_output2 <span class="ot">&lt;-</span> <span class="fu">tmle</span>(FM_data_enrollment<span class="sc">$</span>FM, <span class="fu">as.integer</span>(FM_data_enrollment<span class="sc">$</span>group <span class="sc">==</span> <span class="st">"HFMD"</span>),</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">select</span>(FM_data_enrollment, <span class="sc">-</span><span class="fu">c</span>(FM, group)),</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">Qform =</span> FM_data_enrollment<span class="sc">$</span>FM <span class="sc">~</span> A <span class="sc">+</span> W1 <span class="sc">+</span> W2 <span class="sc">+</span> W3,</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">gform =</span> A <span class="sc">~</span> W1 <span class="sc">+</span> W2 <span class="sc">+</span> W3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>tmle2 <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
-<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> x[[<span class="dv">1</span>]]</span>
-<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> x[[<span class="dv">2</span>]]</span>
-<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> x[, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
-<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>  covariables <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">names</span>(W), <span class="at">collapse =</span> <span class="st">"+"</span>)</span>
-<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle</span>(Y, A, W,</span>
-<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">Qform =</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">"Y ~ A +"</span>, covariables)),</span>
-<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">gform =</span> <span class="fu">paste</span>(<span class="st">"A ~ "</span>, covariables), ...)</span>
-<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>tmle2 <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> x[[<span class="dv">1</span>]]</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> x[[<span class="dv">2</span>]]</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> x[, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  covariables <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">names</span>(W), <span class="at">collapse =</span> <span class="st">"+"</span>)</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle</span>(Y, A, W,</span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">Qform =</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">"Y ~ A +"</span>, covariables)),</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">gform =</span> <span class="fu">paste</span>(<span class="st">"A ~ "</span>, covariables), ...)</span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>tmle3 <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> x[[<span class="dv">1</span>]]</span>
-<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> x[[<span class="dv">2</span>]]</span>
-<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> x[, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
-<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>  covariables <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">names</span>(W), <span class="at">collapse =</span> <span class="st">"+"</span>)</span>
-<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle</span>(Y, A, W,</span>
-<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">Qform =</span> Y <span class="sc">~</span> A <span class="sc">+</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting,</span>
-<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">gform =</span> A <span class="sc">~</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting, ...)</span>
-<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>tmle3 <span class="ot">&lt;-</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  Y <span class="ot">&lt;-</span> x[[<span class="dv">1</span>]]</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> x[[<span class="dv">2</span>]]</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>  W <span class="ot">&lt;-</span> x[, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>  covariables <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">names</span>(W), <span class="at">collapse =</span> <span class="st">"+"</span>)</span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle</span>(Y, A, W,</span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">Qform =</span> Y <span class="sc">~</span> A <span class="sc">+</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting,</span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">gform =</span> A <span class="sc">~</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting, ...)</span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>takes 3’:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> FM_data_enrollment <span class="sc">|&gt;</span> </span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> <span class="fu">as.integer</span>(.x <span class="sc">==</span> <span class="st">"HFMD"</span>))) <span class="sc">|&gt;</span> </span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle2</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> FM_data_enrollment <span class="sc">|&gt;</span> </span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> <span class="fu">as.integer</span>(.x <span class="sc">==</span> <span class="st">"HFMD"</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle2</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(</span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> FM_data_enrollment <span class="sc">|&gt;</span> </span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> <span class="fu">as.integer</span>(.x <span class="sc">==</span> <span class="st">"HFMD"</span>))) <span class="sc">|&gt;</span> </span>
-<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle3</span>()</span>
-<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> FM_data_enrollment <span class="sc">|&gt;</span> </span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> <span class="fu">as.integer</span>(.x <span class="sc">==</span> <span class="st">"HFMD"</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tmle3</span>()</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> FM_data_enrollment <span class="sc">|&gt;</span> </span>
-<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> <span class="fu">as.integer</span>(.x <span class="sc">==</span> <span class="st">"HFMD"</span>)),</span>
-<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(age, as.numeric),</span>
-<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">where</span>(is.character), as.factor),</span>
-<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">where</span>(is.logical), as.integer))</span>
-<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> x<span class="sc">$</span>FM</span>
-<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> x<span class="sc">$</span>group</span>
-<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> x[, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
-<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb81-13"><a href="#cb81-13" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">tmle</span>(Y, A, W, <span class="at">Qform =</span> Y <span class="sc">~</span> A <span class="sc">+</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting, <span class="at">gform =</span> A <span class="sc">~</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> FM_data_enrollment <span class="sc">|&gt;</span> </span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> <span class="fu">as.integer</span>(.x <span class="sc">==</span> <span class="st">"HFMD"</span>)),</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(age, as.numeric),</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">where</span>(is.character), as.factor),</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="fu">where</span>(is.logical), as.integer))</span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> x<span class="sc">$</span>FM</span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>A <span class="ot">&lt;-</span> x<span class="sc">$</span>group</span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>W <span class="ot">&lt;-</span> x[, <span class="sc">-</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">tmle</span>(Y, A, W, <span class="at">Qform =</span> Y <span class="sc">~</span> A <span class="sc">+</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting, <span class="at">gform =</span> A <span class="sc">~</span> Gender <span class="sc">+</span> age <span class="sc">+</span> MomEdu <span class="sc">+</span> stunting)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>

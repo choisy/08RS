@@ -905,57 +905,26 @@ Pipeline:
 ```{r}
 ps_formula <- group ~ Gender + age + MomEdu + stunting
 
-lr_out <- expand_grid(response  = c("CS", "RC", "EC", "FM", "GM"),
-                      timepoint = c("enrollment", "6 months", "18 months")) |> 
-  mutate(dataset = map2(response, timepoint,
-                        ~ make_data(.x, .y) |> 
-                          mutate(across(group, ~ .x == "HFMD"),
-                                 ps = logistic_ps(pick(everything()), ps_formula),
-                                 ow = ifelse(group, 1 - ps, ps))),
-         ctable = map(dataset, ~ .x |>
-                        pull(group) |>
-                        table() |>
-                        as.vector() |>
-                        setNames(c("control", "HFMD")))) |> 
-  unnest_wider(ctable) |>
-  mutate(balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
+lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                                   "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                                   "CS", "RC", "EC", "FM", "GM"),
+                     timepoint = c("enrollment", "6 months", "18 months")) |> 
+  mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
+         ctable  = map(dataset, ~ .x |>
+                         pull(group) |>
+                         table() |>
+                         as.vector())) |> 
+  filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+  mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+  unnest_wider(ctable) |> 
+  filter(HFMD > 3) |> 
+  mutate(dataset = map(dataset,
+                       \(x) mutate(x, across(group, \(y) y == "HFMD"),
+                                      ps = logistic_ps(pick(everything()), ps_formula),
+                                      ow = ifelse(group, 1 - ps, ps))),
+         balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
                                           weights = "ow", un = TRUE)),
-         pass = all(abs(a$Balance$Diff.Adj) < .1),
-         model = map2(dataset, response, ~ .x |>
-                       svydesign(ids = ~1, weights = ~ow, data = _) |> 
-                       svyglm(reformulate("group", .y), design = _)),
-         coef = map_dbl(model, ~ coef(.x)[2]),
-         ci = map(model, ~ confint(.x)[2, ])) |> 
-  unnest_wider(ci) |> 
-  mutate(p = map_dbl(model, ~ last(as.vector(coefficients(summary(.x))))))
-```
-
-TO DO: filter (1) the tables that have 1 value and (2) the group that have 3 values
-
-Which gives:
-
-```{r}
-lr_out
-```
-
-```{r}
-lr_out2 <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                                     "BAL1ISS", "BAL2ISS", "BAL3ISS"),
-                       timepoint = "18 months") |> 
-  mutate(dataset = map2(response, timepoint,
-                        ~ make_data(.x, .y) |> 
-                          mutate(across(group, ~ .x == "HFMD"),
-                                 ps = logistic_ps(pick(everything()), ps_formula),
-                                 ow = ifelse(group, 1 - ps, ps))),
-         ctable = map(dataset, ~ .x |>
-                        pull(group) |>
-                        table() |>
-                        as.vector() |>
-                        setNames(c("control", "HFMD")))) |> 
-  unnest_wider(ctable) |>
-  mutate(balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
-                                          weights = "ow", un = TRUE)),
-         pass = all(abs(a$Balance$Diff.Adj) < .1),
+         pass = map_lgl(balance, ~ all(.x$Balance$Diff.Adj < .1)),
          model = map2(dataset, response, ~ .x |>
                        svydesign(ids = ~1, weights = ~ow, data = _) |> 
                        svyglm(reformulate("group", .y), design = _)),
@@ -968,15 +937,10 @@ lr_out2 <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC
 Which gives:
 
 ```{r}
-lr_out2
+lr_ps |> 
+  select(-c(dataset, balance, model)) |>
+  print(n = Inf)
 ```
-
-
-
-
-
-
-
 
 
 #### TMLE
