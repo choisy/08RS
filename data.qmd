@@ -1132,25 +1132,29 @@ lr_ps$dataset[[1]] |>
 #### TMLE
 
 ```{r}
-df <- FM_data_enrollment
+#libs <- c("SL.glm", "SL.glmnet", "SL.mean") # "SL.gam", "SL.ranger"
+#libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam", "SL.ranger")
+libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam")
+libs <- c("SL.glm", "SL.glmnet", "SL.gam")
+
+tmle2 <- function(data, response, family = "gaussian", ...) {
+  out <- data |> 
+    select(Gender, age, MomEdu, stunting) |> 
+    mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+           across(age, as.numeric)) |>
+    tmle(data[[response]], as.integer(data$group == "HFMD"), W = _, family = family,
+         Q.SL.library = libs, g.SL.library = libs)
+  unlist(out$estimates$ATT[c("psi", "CI", "pvalue")])
+}
+
+tmle2(FM_data_enrollment, "FM")
 ```
 
-```{r}
-Qlib <- c("SL.glm", "SL.glmnet", "SL.mean")  # outcome regressions
-glib <- c("SL.glm", "SL.glmnet", "SL.mean")  # propensity score regressions
+        psi         CI1         CI2      pvalue 
+1.037064873 0.356031919 1.718097828 0.002839509 
 
-Y <- df$FM
-A <- as.integer(df$group == "HFMD")
-W <- df |> 
-  select(Gender, age, MomEdu, stunting) |> 
-  mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
-         across(age, as.numeric))
-
-out <- tmle(Y, A, W, family = "gaussian", Q.SL.library = Qlib, g.SL.library = glib)
-
-out$estimates$ATT[c("psi", "CI", "pvalue")]
-```
-
+       psi        CI1        CI2     pvalue 
+-0.1563582 -0.7466466  0.4339302  0.6036463
 
 ```{r}
 # 0) Install packages if you don't have them (run once)
