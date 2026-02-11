@@ -48,9 +48,19 @@ knitr::opts_chunk$set(margin1    = TRUE,
 The path to the data folder on the local computer:
 
 ```{r}
-root <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
-data_folder <- paste0(root, "GitHub/choisy/08RS/")
+root <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit"
+data_folder <- paste0(root, "/GitHub/choisy/08RS/")
 ``` 
+
+```{r include = FALSE}
+path2cache <- paste0(stringr::str_replace(getwd(), Sys.getenv("HOME"), root),
+                     "/cache/")
+if (! dir.exists(path2cache)) dir.create(path2cache)
+make_path <- function(x) paste0(path2cache, x)
+file_exists <- function(x) file.exists(make_path(x))
+readRDScache <- function(x) readRDS(make_path(x))
+saveRDScache <- function(object, file) saveRDS(object, make_path(file))
+```
 
 
 ## Packages
@@ -358,7 +368,7 @@ PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
 ## MRI data
 
 ```{r, message = FALSE}
-MRI <- paste0(root, "GitHub/choisy/08RS/part_dataMRIentry_28AUG15_errorcor.csv") |>
+MRI <- paste0(root, "/GitHub/choisy/08RS/part_dataMRIentry_28AUG15_errorcor.csv") |>
   readr::read_csv() |> 
   rename(ID = code) |> 
   select(ID, Final, Acute) |> 
@@ -556,7 +566,7 @@ Bayley<- Bayley_tabs |>
 ## Saras' CSV file
 
 ```{r, message = FALSE}
-saras <- readr::read_csv(paste0(root, "GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
+saras <- readr::read_csv(paste0(root, "/GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
 ```
 
 ```{r}
@@ -867,7 +877,7 @@ add_legend()
 
 ### Propensity scores
 
-The covariables:
+The covariates:
 
 ```{r}
 covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
@@ -895,120 +905,7 @@ make_data <- function(response, timepoint) {
 }
 ```
 
-Making the data for FM at enrollment:
-
-```{r eval = FALSE}
-FM_data_enrollment <- make_data("FM", "enrollment")
-```
-
-#### Logistic regression
-
-The function that generates the propensity scores from a logistic regression:
-
-```{r eval = FALSE}
-logistic_ps <- function(data, formula) {
-  data |>
-    mutate(across(group, ~ .x == "HFMD")) |> 
-    glm(formula, binomial, data = _) |> 
-    predict(type = "response")
-}
-```
-
-Let's compute the propensity scores and the weights:
-
-```{r eval = FALSE}
-FM_data_enrollment2 <- FM_data_enrollment |>
-  mutate(across(group, ~ .x == "HFMD"),
-         ps = logistic_ps(pick(everything()), ps_formula),
-         ow = ifelse(group, 1 - ps, ps))
-```
-
-Diagnostic:
-
-```{r eval = FALSE}
-FM_data_enrollment2 |>
-  bal.tab(ps_formula, data = _, s.d.denom = "treated", weights = "ow", un = TRUE) |> 
-  love.plot(stars = "std", abs = TRUE, thresholds = c(m = .1))
-```
-
-The treatment effect:
-
-```{r eval = FALSE}
-fit_model <- FM_data_enrollment2 |> 
-  svydesign(ids = ~1, weights = ~ow, data = _) |> 
-  svyglm(FM ~ group, design = _)
-
-map(list(summary, coef, confint), ~ .x(fit_model))
-```
-
-Pipeline:
-
-```{r eval = FALSE}
-ps_formula <- group ~ Gender + age + MomEdu + stunting
-
-lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                                   "BAL1ISS", "BAL2ISS", "BAL3ISS",
-                                   "CS", "RC", "EC", "FM", "GM"),
-                     timepoint = c("enrollment", "6 months", "18 months")) |> 
-  mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
-         ctable  = map(dataset, ~ .x |>
-                         pull(group) |>
-                         table() |>
-                         as.vector())) |> 
-  filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
-  mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
-  unnest_wider(ctable) |> 
-  filter(HFMD > 3) |> 
-  mutate(dataset = map(dataset,
-                       \(x) mutate(x, across(group, \(y) y == "HFMD"),
-                                      ps = logistic_ps(pick(everything()), ps_formula),
-                                      ow = ifelse(group, 1 - ps, ps))),
-         balance = map(dataset, ~ bal.tab(ps_formula, data = .x, s.d.denom = "treated",
-                                          weights = "ow", un = TRUE)),
-         max_diff = map_dbl(balance, ~ max(.x$Balance$Diff.Adj)),
-         pass = max_diff < .1,
-         formula = map(response, ~ reformulate("group", .x)),
-         model0 = map2(formula, dataset, ~ glm(.x, data = .y)),
-         model1 = map2(response, dataset,
-                       ~ glm(reformulate(c("Gender", "age", "MomEdu", "stunting",
-                                           "group"), .x), data = .y)),
-         model2 = map2(formula, dataset, ~ .y |>
-                       svydesign(ids = ~1, weights = ~ow, data = _) |> 
-                       svyglm(.x, design = _)),
-         coef0 = map_dbl(model0, coef2),
-         ci = map(model0, confint2)) |>   
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "0"), ends_with("%")) |> 
-  mutate(p0 = map_dbl(model0, get_p),
-         coef1 = map_dbl(model1, coef2),
-         ci = map(model1, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "1"), ends_with("%")) |> 
-  mutate(p1 = map_dbl(model1, get_p),
-         coef2 = map_dbl(model2, coef2),
-         ci = map(model2, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "2"), ends_with("%")) |> 
-  mutate(p2 = map_dbl(model2, get_p))
-```
-
-Which gives:
-
-```{r eval = FALSE}
-lr_ps |> 
-  select(response, timepoint, control, HFMD, max_diff, ends_with("2"), -model2) |> 
-  print(n = Inf)
-```
-
-Let's compare with the results without propensity scores:
-
-```{r eval = FALSE}
-lr_ps |> 
-  select(response, timepoint, starts_with("coef"), starts_with("p"), -pass) |> 
-  print(n = Inf)
-```
-
-#### Take 2
+A function that generates weights from a logistic regression:
 
 ```{r}
 logistic_ps <- function(data) {
@@ -1018,6 +915,8 @@ logistic_ps <- function(data) {
     predict(type = "response")
 }
 ```
+
+A function that generates weights from the `twang` package:
 
 ```{r}
 twang_ps <- function(data, ...) {
@@ -1032,6 +931,8 @@ twang_ps <- function(data, ...) {
 }
 ```
 
+A function that computes balance statistics for diagnostic of the propensity scores:
+
 ```{r}
 bal_tab <- function(data, w) {
   data |> 
@@ -1040,9 +941,15 @@ bal_tab <- function(data, w) {
 }
 ```
 
+A function that retrieve the balance adjustments for diagnostic of the propensity
+scores:
+
 ```{r}
 get_diff <- function(x) x$Balance$Diff.Adj
 ```
+
+A function that produce the maximum values of the balance adjustments for diagnostic of
+the propensity scores:
 
 ```{r}
 get_max_diff <- function(data, w) {
@@ -1053,19 +960,88 @@ get_max_diff <- function(data, w) {
 }
 ```
 
+A function that generate the formula of the model with the response `y`:
+
 ```{r}
-reformulate2 <- function(x) {
-  reformulate(c("Gender", "age", "MomEdu", "stunting", "group"), x)
+reformulate2 <- function(y) {
+  reformulate(c("Gender", "age", "MomEdu", "stunting", "group"), y)
 }
 ```
 
-Takes 52":
+The pipeline:
 
 ```{r}
-lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                                   "BAL1ISS", "BAL2ISS", "BAL3ISS",
-                                   "CS", "RC", "EC", "FM", "GM"),
-                     timepoint = c("enrollment", "6 months", "18 months")) |> 
+pipeline <- function() {
+  expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                            "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                            "CS", "RC", "EC", "FM", "GM"),
+              timepoint = c("enrollment", "6 months", "18 months")) |> 
+    mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
+           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
+    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+    unnest_wider(ctable) |> 
+    filter(HFMD > 3) |> 
+    mutate(dataset = map(dataset,
+                         ~ mutate(.x, ps = logistic_ps(pick(everything())),
+                                      ow = ifelse(group == "HFMD", 1 - ps, ps),#logreg
+                                      tw = twang_ps(pick(everything())),       #twang1
+                                      t2 = twang_ps(pick(everything()),        #twang2
+                                                    n.trees = 5000,
+                                                    interaction.depth = 2))),
+           mdifow = map_dbl(dataset, get_max_diff, "ow"),
+           mdiftw = map_dbl(dataset, get_max_diff, "tw"),
+           mdift2 = map_dbl(dataset, get_max_diff, "t2"),
+           formula = map(response, ~ reformulate("group", .x)),
+           glm0 = map2(formula, dataset, ~ glm(.x, data = .y)),
+           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
+           m_ow = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow)),
+           m_tw = map2(formula, dataset, ~ svyglm2(.x, .y, ~tw)),
+           m_t2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~t2)),
+  # 1 - logistic regression without any covariate:         
+           cf_l0 = map_dbl(glm0, coef2),
+           ci = map(glm0, confint2)) |>   
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
+    mutate(p_l0 = map_dbl(glm0, get_p),
+  # 2 - logistic regression with covariates:
+           cf_l1 = map_dbl(glm1, coef2),
+           ci = map(glm1, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
+    mutate(p_l1 = map_dbl(glm1, get_p),
+  # 3 - weights calculated from a logistic regression:         
+           cf_ow = map_dbl(m_ow, coef2),
+           ci = map(m_ow, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
+    mutate(p_ow = map_dbl(m_ow, get_p),
+  # 4 - weights calculated from TWANG with default parameters:         
+           cf_tw = map_dbl(m_tw, coef2),
+           ci = map(m_tw, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
+    mutate(p_tw = map_dbl(m_tw, get_p),
+  # 5 - weights calculated from TWANG with Saras' parameters:         
+           cf_t2 = map_dbl(m_t2, coef2),
+           ci = map(m_t2, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
+    mutate(p_t2 = map_dbl(m_t2, get_p))
+}
+```
+
+Running the pipeline (takes 52"):
+
+```{r eval = FALSE}
+output <- pipeline()
+```
+
+```{r include=FALSE, eval = FALSE}
+output <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                                    "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                                    "CS", "RC", "EC", "FM", "GM"),
+                      timepoint = c("enrollment", "6 months", "18 months")) |> 
   mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
          ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
   filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
@@ -1074,9 +1050,9 @@ lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2I
   filter(HFMD > 3) |> 
   mutate(dataset = map(dataset,
                        ~ mutate(.x, ps = logistic_ps(pick(everything())),
-                                    ow = ifelse(group == "HFMD", 1 - ps, ps), # log reg
-                                    tw = twang_ps(pick(everything())),        # twang 1 
-                                    t2 = twang_ps(pick(everything()),         # twang 2
+                                    ow = ifelse(group == "HFMD", 1 - ps, ps),# log reg
+                                    tw = twang_ps(pick(everything())),       # twang 1
+                                    t2 = twang_ps(pick(everything()),        # twang 2
                                                   n.trees = 5000,
                                                   interaction.depth = 2))),
          mdifow = map_dbl(dataset, get_max_diff, "ow"),
@@ -1120,36 +1096,17 @@ lr_ps <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2I
   mutate(p_t2 = map_dbl(m_t2, get_p))
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### TWANG
-
-```{r}
-library(twang)
-
-lr_ps$dataset[[1]] |> 
-  mutate(across(group, ~ as.integer(group == "HFMD")),
-         across(where(~ is.character(.x) | is.logical(.x)), as.factor),
-         across(age, as.numeric)) |> 
-  as.data.frame() |> 
-  ps(ps_formula, data = _, estimand = "ATT", stop.method = "es.mean") |> 
-  get.weights("es.mean")
+```{r include = FALSE}
+if (file_exists("output.rds")) {
+  output <- readRDScache("output.rds")
+} else {
+  output <- pipeline()
+  saveRDScache(output, "output.rds")
+}
 ```
 
 
-#### TMLE
+### TMLE
 
 ```{r}
 tmle2 <- function(data, response, family = "gaussian",
@@ -1164,84 +1121,6 @@ tmle2 <- function(data, response, family = "gaussian",
   unlist(out$estimates$ATT[c("psi", "CI", "pvalue")])
 }
 
-tmle2(FM_data_enrollment, "FM")
-```
-
-
-
-#### TMLE
-
-Using TMLE (Takes 3'):
-
-```{r eval=FALSE}
-tmle_output <- tmle(FM_data_enrollment$FM, as.integer(FM_data_enrollment$group == "HFMD"),
-                    select(FM_data_enrollment, -c(FM, group)))
-```
-
-```{r eval=FALSE}
-summary(tmle_output)
-```
-
-```{r eval=FALSE}
-tmle_output2 <- tmle(FM_data_enrollment$FM, as.integer(FM_data_enrollment$group == "HFMD"),
-                     select(FM_data_enrollment, -c(FM, group)),
-                     Qform = FM_data_enrollment$FM ~ A + W1 + W2 + W3,
-                     gform = A ~ W1 + W2 + W3)
-```
-
-```{r}
-tmle2 <- function(x, ...) {
-  Y <- x[[1]]
-  A <- x[[2]]
-  W <- x[, -(1:2)]
-  covariables <- paste(names(W), collapse = "+")
-  tmle(Y, A, W,
-       Qform = as.formula(paste("Y ~ A +", covariables)),
-       gform = paste("A ~ ", covariables), ...)
-}
-```
-
-```{r}
-tmle3 <- function(x, ...) {
-  Y <- x[[1]]
-  A <- x[[2]]
-  W <- x[, -(1:2)]
-  covariables <- paste(names(W), collapse = "+")
-  tmle(Y, A, W,
-       Qform = Y ~ A + Gender + age + MomEdu + stunting,
-       gform = A ~ Gender + age + MomEdu + stunting, ...)
-}
-```
-
-takes 3':
-
-```{r eval=FALSE}
-a <- FM_data_enrollment |> 
-  mutate(across(group, ~ as.integer(.x == "HFMD"))) |> 
-  tmle2()
-```
-
-```{r eval=FALSE}
-system.time(
-b <- FM_data_enrollment |> 
-  mutate(across(group, ~ as.integer(.x == "HFMD"))) |> 
-  tmle3()
-)
-```
-
-```{r eval=FALSE}
-x <- FM_data_enrollment |> 
-  mutate(across(group, ~ as.integer(.x == "HFMD")),
-         across(age, as.numeric),
-         across(where(is.character), as.factor),
-         across(where(is.logical), as.integer))
-
-
-
-Y <- x$FM
-A <- x$group
-W <- x[, -(1:2)]
-
-output <- tmle(Y, A, W, Qform = Y ~ A + Gender + age + MomEdu + stunting, gform = A ~ Gender + age + MomEdu + stunting)
+tmle2(make_data("FM", "enrollment"), "FM")
 ```
 
