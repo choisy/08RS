@@ -943,6 +943,26 @@ twang_ps <- function(data, ...) {
 }
 ```
 
+A function that computes the TMLE:
+
+```{r}
+default_libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam")
+
+tmle2 <- function(data, response, family = "gaussian",
+                  Qlib = default_libs, glib = default_libs, ...) {
+  data |> 
+    select(Gender, age, MomEdu, stunting) |> 
+    mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+           across(age, as.numeric)) |>
+    tmle(data[[response]], as.integer(data$group == "HFMD"), W = _, family = family,
+         Q.SL.library = Qlib, g.SL.library = glib) |> 
+    mextract2(c("estimates", "ATT")) |> 
+    mextract(c("psi", "CI", "pvalue")) |> 
+    unlist() |> 
+    setNames(c("tmlep", "2.5 %tm", "97.5 %tm", "p_tm"))
+}
+```
+
 A function that computes balance statistics for diagnostic of the propensity scores:
 
 ```{r}
@@ -1068,30 +1088,5 @@ output |>
   select(response, timepoint, control, HFMD, starts_with("p_")) |> 
   mutate(across(starts_with("p"), ~ round(.x, 3))) |> 
   print(n = Inf) 
-```
-
-
-### TMLE
-
-```{r}
-default_libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam")
-
-tmle2 <- function(data, response, family = "gaussian",
-                  Qlib = default_libs, glib = default_libs, ...) {
-  data |> 
-    select(Gender, age, MomEdu, stunting) |> 
-    mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
-           across(age, as.numeric)) |>
-    tmle(data[[response]], as.integer(data$group == "HFMD"), W = _, family = family,
-         Q.SL.library = Qlib, g.SL.library = glib) |> 
-    mextract2(c("estimates", "ATT")) |> 
-    mextract(c("psi", "CI", "pvalue")) |> 
-    unlist() |> 
-    setNames(c("tmlep", "2.5 %tm", "97.5 %tm", "p_tm"))
-}
-```
-
-```{r}
-tmle2(make_data("FM", "enrollment"), "FM")
 ```
 
