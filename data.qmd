@@ -250,6 +250,18 @@ svyglm2 <- function(formula, data, w) {
 }
 ```
 
+Shortcut to `magrittr::extract(...)`:
+
+```{r}
+mextract  <- function(...) magrittr::extract(...)
+```
+
+Shortcut to `magrittr::extract2(...)`:
+
+```{r}
+mextract2 <- function(...) magrittr::extract2(...)
+```
+
 
 ## 08RS CRF data
 
@@ -998,102 +1010,46 @@ pipeline <- function() {
            m_ow = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow)),
            m_tw = map2(formula, dataset, ~ svyglm2(.x, .y, ~tw)),
            m_t2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~t2)),
-  # 1 - logistic regression without any covariate:         
+# 1 - logistic regression without any covariate:         
            cf_l0 = map_dbl(glm0, coef2),
            ci = map(glm0, confint2)) |>   
     unnest_wider(ci) |> 
     rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
     mutate(p_l0 = map_dbl(glm0, get_p),
-  # 2 - logistic regression with covariates:
+# 2 - logistic regression with covariates:
            cf_l1 = map_dbl(glm1, coef2),
            ci = map(glm1, confint2)) |> 
     unnest_wider(ci) |> 
     rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
     mutate(p_l1 = map_dbl(glm1, get_p),
-  # 3 - weights calculated from a logistic regression:         
+# 3 - weights calculated from a logistic regression:         
            cf_ow = map_dbl(m_ow, coef2),
            ci = map(m_ow, confint2)) |> 
     unnest_wider(ci) |> 
     rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
     mutate(p_ow = map_dbl(m_ow, get_p),
-  # 4 - weights calculated from TWANG with default parameters:         
+# 4 - weights calculated from TWANG with default parameters:         
            cf_tw = map_dbl(m_tw, coef2),
            ci = map(m_tw, confint2)) |> 
     unnest_wider(ci) |> 
     rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
     mutate(p_tw = map_dbl(m_tw, get_p),
-  # 5 - weights calculated from TWANG with Saras' parameters:         
+# 5 - weights calculated from TWANG with Saras' parameters:         
            cf_t2 = map_dbl(m_t2, coef2),
            ci = map(m_t2, confint2)) |> 
     unnest_wider(ci) |> 
     rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
-    mutate(p_t2 = map_dbl(m_t2, get_p))
+    mutate(p_t2 = map_dbl(m_t2, get_p),
+# 6 - TMLE:           
+           tmle = map2_dfr(dataset, response, tmle2)) |> 
+    unnest_wider(tmle)
 }
 ```
 
-Running the pipeline (takes 52"):
+Running the pipeline (takes 2'):
 
 ```{r eval = FALSE}
 output <- pipeline()
-```
-
-```{r include=FALSE, eval = FALSE}
-output <- expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                                    "BAL1ISS", "BAL2ISS", "BAL3ISS",
-                                    "CS", "RC", "EC", "FM", "GM"),
-                      timepoint = c("enrollment", "6 months", "18 months")) |> 
-  mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
-         ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
-  filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
-  mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
-  unnest_wider(ctable) |> 
-  filter(HFMD > 3) |> 
-  mutate(dataset = map(dataset,
-                       ~ mutate(.x, ps = logistic_ps(pick(everything())),
-                                    ow = ifelse(group == "HFMD", 1 - ps, ps),# log reg
-                                    tw = twang_ps(pick(everything())),       # twang 1
-                                    t2 = twang_ps(pick(everything()),        # twang 2
-                                                  n.trees = 5000,
-                                                  interaction.depth = 2))),
-         mdifow = map_dbl(dataset, get_max_diff, "ow"),
-         mdiftw = map_dbl(dataset, get_max_diff, "tw"),
-         mdift2 = map_dbl(dataset, get_max_diff, "t2"),
-         formula = map(response, ~ reformulate("group", .x)),
-         glm0 = map2(formula, dataset, ~ glm(.x, data = .y)),
-         glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
-         m_ow = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow)),
-         m_tw = map2(formula, dataset, ~ svyglm2(.x, .y, ~tw)),
-         m_t2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~t2)),
-# 1 - logistic regression without any covariate:         
-         cf_l0 = map_dbl(glm0, coef2),
-         ci = map(glm0, confint2)) |>   
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
-  mutate(p_l0 = map_dbl(glm0, get_p),
-# 2 - logistic regression with covariates:
-         cf_l1 = map_dbl(glm1, coef2),
-         ci = map(glm1, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
-  mutate(p_l1 = map_dbl(glm1, get_p),
-# 3 - weights calculated from a logistic regression:         
-         cf_ow = map_dbl(m_ow, coef2),
-         ci = map(m_ow, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
-  mutate(p_ow = map_dbl(m_ow, get_p),
-# 4 - weights calculated from TWANG with default parameters:         
-         cf_tw = map_dbl(m_tw, coef2),
-         ci = map(m_tw, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
-  mutate(p_tw = map_dbl(m_tw, get_p),
-# 5 - weights calculated from TWANG with Saras' parameters:         
-         cf_t2 = map_dbl(m_t2, coef2),
-         ci = map(m_t2, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
-  mutate(p_t2 = map_dbl(m_t2, get_p))
 ```
 
 ```{r include = FALSE}
@@ -1105,22 +1061,37 @@ if (file_exists("output.rds")) {
 }
 ```
 
+Let's compare the p values:
+
+```{r}
+output |> 
+  select(response, timepoint, control, HFMD, starts_with("p_")) |> 
+  mutate(across(starts_with("p"), ~ round(.x, 3))) |> 
+  print(n = Inf) 
+```
+
 
 ### TMLE
 
 ```{r}
+default_libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam")
+
 tmle2 <- function(data, response, family = "gaussian",
-                  Qlib = c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam"),
-                  glib = c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam"), ...) {
-  out <- data |> 
+                  Qlib = default_libs, glib = default_libs, ...) {
+  data |> 
     select(Gender, age, MomEdu, stunting) |> 
     mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
            across(age, as.numeric)) |>
     tmle(data[[response]], as.integer(data$group == "HFMD"), W = _, family = family,
-         Q.SL.library = Qlib, g.SL.library = glib)
-  unlist(out$estimates$ATT[c("psi", "CI", "pvalue")])
+         Q.SL.library = Qlib, g.SL.library = glib) |> 
+    mextract2(c("estimates", "ATT")) |> 
+    mextract(c("psi", "CI", "pvalue")) |> 
+    unlist() |> 
+    setNames(c("tmlep", "2.5 %tm", "97.5 %tm", "p_tm"))
 }
+```
 
+```{r}
 tmle2(make_data("FM", "enrollment"), "FM")
 ```
 
