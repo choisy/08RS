@@ -920,11 +920,23 @@ make_data <- function(response, timepoint) {
 A function that generates weights from a logistic regression:
 
 ```{r}
-logistic_ps <- function(data) {
+logistic_ps0 <- function(data) {
   data |>
     mutate(across(group, ~ .x == "HFMD")) |> 
     glm(ps_formula, binomial, data = _) |> 
     predict(type = "response")
+}
+```
+
+```{r}
+logistic_ps <- function(data) {
+  data |>
+    mutate(across(group, ~ .x == "HFMD"),
+           ps = ps_formula |>
+             glm(binomial, data = pick(everything())) |> 
+             predict(type = "response"),
+           ow = ifelse(group, 1, ps / (1 - ps))) |> 
+    pull(ow)
 }
 ```
 
@@ -959,7 +971,7 @@ tmle2 <- function(data, response, family = "gaussian",
     mextract2(c("estimates", "ATT")) |> 
     mextract(c("psi", "CI", "pvalue")) |> 
     unlist() |> 
-    setNames(c("tmlep", "2.5 %tm", "97.5 %tm", "p_tm"))
+    setNames(c("cf_tm", "2.5 %tm", "97.5 %tm", "p_tm"))
 }
 ```
 
@@ -1017,6 +1029,7 @@ pipeline <- function() {
     mutate(dataset = map(dataset,
                          ~ mutate(.x, ps = logistic_ps(pick(everything())),
                                       ow = ifelse(group == "HFMD", 1 - ps, ps),#logreg
+                                      ow = ifelse(group == "HFMD", 1, ps / (1 - ps)),#logreg
                                       tw = twang_ps(pick(everything())),       #twang1
                                       t2 = twang_ps(pick(everything()),        #twang2
                                                     n.trees = 5000,
@@ -1066,6 +1079,33 @@ pipeline <- function() {
 }
 ```
 
+```{r}
+output2 <- output |> 
+  mutate(dataset = map(dataset, ~ mutate(.x, ow2 = ifelse(group == "HFMD", 1, ps / (1 - ps)))),
+         mdifow2 = map_dbl(dataset, get_max_diff, "ow2"),
+         m_ow2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow2)),
+         cf_ow2 = map_dbl(m_ow2, coef2),
+         ci = map(m_ow2, confint2)) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "ow2"), ends_with("%")) |> 
+  mutate(p_ow2 = map_dbl(m_ow2, get_p))
+```
+
+```{r}
+output3 <- output2 |> 
+  mutate(dataset = map(dataset, ~ mutate(.x, ow3 = logistic_ps2(pick(everything())))),
+         mdifow3 = map_dbl(dataset, get_max_diff, "ow3"),
+         m_ow3 = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow3)),
+         cf_ow3 = map_dbl(m_ow3, coef2),
+         ci = map(m_ow3, confint2),
+         mdifow2 = map_dbl(dataset, get_max_diff, "ow2")) |> 
+  unnest_wider(ci) |> 
+  rename_with(~ paste0(.x, "ow3"), ends_with("%")) |> 
+  mutate(p_ow3 = map_dbl(m_ow3, get_p))
+```
+
+
+
 Running the pipeline (takes 2'):
 
 ```{r eval = FALSE}
@@ -1084,9 +1124,18 @@ if (file_exists("output.rds")) {
 Let's compare the p values:
 
 ```{r}
-output |> 
+output3 |> 
   select(response, timepoint, control, HFMD, starts_with("p_")) |> 
   mutate(across(starts_with("p"), ~ round(.x, 3))) |> 
+  print(n = Inf) 
+```
+
+Let's look at the diagnostics:
+
+```{r}
+output3 |> 
+  select(response, timepoint, control, HFMD, starts_with("md")) |> 
+  mutate(across(starts_with("m"), ~ round(.x, 3))) |> 
   print(n = Inf) 
 ```
 
