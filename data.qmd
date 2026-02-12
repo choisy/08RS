@@ -920,23 +920,14 @@ make_data <- function(response, timepoint) {
 A function that generates weights from a logistic regression:
 
 ```{r}
-logistic_ps0 <- function(data) {
-  data |>
-    mutate(across(group, ~ .x == "HFMD")) |> 
-    glm(ps_formula, binomial, data = _) |> 
-    predict(type = "response")
-}
-```
-
-```{r}
 logistic_ps <- function(data) {
   data |>
     mutate(across(group, ~ .x == "HFMD"),
-           ps = ps_formula |>
+           weights = ps_formula |>
              glm(binomial, data = pick(everything())) |> 
-             predict(type = "response"),
-           ow = ifelse(group, 1, ps / (1 - ps))) |> 
-    pull(ow)
+             predict(type = "response") %>%
+             { ifelse(group, 1, . / (1 - .)) }) |> 
+    pull(weights)
 }
 ```
 
@@ -1014,8 +1005,8 @@ reformulate2 <- function(y) {
 
 The pipeline:
 
-```{r}
-pipeline <- function() {
+```{r include=FALSE, eval=FALSE}
+pipeline0 <- function() {
   expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
                             "BAL1ISS", "BAL2ISS", "BAL3ISS",
                             "CS", "RC", "EC", "FM", "GM"),
@@ -1080,6 +1071,69 @@ pipeline <- function() {
 ```
 
 ```{r}
+pipeline <- function() {
+  expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                            "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                            "CS", "RC", "EC", "FM", "GM"),
+              timepoint = c("enrollment", "6 months", "18 months")) |> 
+    mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
+           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
+    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+    unnest_wider(ctable) |> 
+    filter(HFMD > 3) |> 
+    mutate(dataset = map(dataset,
+                         ~ mutate(.x, ow = logistic_ps(pick(everything())),
+                                      tw = twang_ps(pick(everything())),
+                                      t2 = twang_ps(pick(everything()),
+                                                    n.trees = 5000,
+                                                    interaction.depth = 2))),
+           mdifow = map_dbl(dataset, get_max_diff, "ow"),
+           mdiftw = map_dbl(dataset, get_max_diff, "tw"),
+           mdift2 = map_dbl(dataset, get_max_diff, "t2"),
+           formula = map(response, ~ reformulate("group", .x)),
+           glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
+           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
+           m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
+           m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
+           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2)),
+# 1 - logistic regression without any covariate:         
+           cf_l0 = map_dbl(glm0, coef2),
+           ci = map(glm0, confint2)) |>   
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
+    mutate(p_l0 = map_dbl(glm0, get_p),
+# 2 - logistic regression with covariates:
+           cf_l1 = map_dbl(glm1, coef2),
+           ci = map(glm1, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
+    mutate(p_l1 = map_dbl(glm1, get_p),
+# 3 - weights calculated from a logistic regression:         
+           cf_ow = map_dbl(m_ow, coef2),
+           ci = map(m_ow, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
+    mutate(p_ow = map_dbl(m_ow, get_p),
+# 4 - weights calculated from TWANG with default parameters:         
+           cf_tw = map_dbl(m_tw, coef2),
+           ci = map(m_tw, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
+    mutate(p_tw = map_dbl(m_tw, get_p),
+# 5 - weights calculated from TWANG with Saras' parameters:         
+           cf_t2 = map_dbl(m_t2, coef2),
+           ci = map(m_t2, confint2)) |> 
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
+    mutate(p_t2 = map_dbl(m_t2, get_p),
+# 6 - TMLE:           
+           tmle = map2_dfr(dataset, response, tmle2)) |> 
+    unnest_wider(tmle)
+}
+```
+
+```{r include=FALSE, eval=FALSE}
 output2 <- output |> 
   mutate(dataset = map(dataset, ~ mutate(.x, ow2 = ifelse(group == "HFMD", 1, ps / (1 - ps)))),
          mdifow2 = map_dbl(dataset, get_max_diff, "ow2"),
@@ -1091,9 +1145,9 @@ output2 <- output |>
   mutate(p_ow2 = map_dbl(m_ow2, get_p))
 ```
 
-```{r}
+```{r include=FALSE, eval=FALSE}
 output3 <- output2 |> 
-  mutate(dataset = map(dataset, ~ mutate(.x, ow3 = logistic_ps2(pick(everything())))),
+  mutate(dataset = map(dataset, ~ mutate(.x, ow3 = logistic_ps(pick(everything())))),
          mdifow3 = map_dbl(dataset, get_max_diff, "ow3"),
          m_ow3 = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow3)),
          cf_ow3 = map_dbl(m_ow3, coef2),
@@ -1103,8 +1157,6 @@ output3 <- output2 |>
   rename_with(~ paste0(.x, "ow3"), ends_with("%")) |> 
   mutate(p_ow3 = map_dbl(m_ow3, get_p))
 ```
-
-
 
 Running the pipeline (takes 2'):
 
@@ -1124,7 +1176,7 @@ if (file_exists("output.rds")) {
 Let's compare the p values:
 
 ```{r}
-output3 |> 
+output |> 
   select(response, timepoint, control, HFMD, starts_with("p_")) |> 
   mutate(across(starts_with("p"), ~ round(.x, 3))) |> 
   print(n = Inf) 
@@ -1133,9 +1185,18 @@ output3 |>
 Let's look at the diagnostics:
 
 ```{r}
-output3 |> 
+output |> 
   select(response, timepoint, control, HFMD, starts_with("md")) |> 
   mutate(across(starts_with("m"), ~ round(.x, 3))) |> 
+  print(n = Inf) 
+```
+
+Let's look at the estimates:
+
+```{r}
+output |> 
+  select(response, timepoint, control, HFMD, starts_with("cf")) |> 
+  mutate(across(starts_with("cf"), ~ round(.x, 2))) |> 
   print(n = Inf) 
 ```
 
