@@ -1047,7 +1047,7 @@ Not Wasted      Waste
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>bal_tab <span class="ot">&lt;-</span> <span class="cf">function</span>(data, w) {</span>
 <span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  data <span class="sc">|&gt;</span> </span>
 <span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(group, <span class="sc">~</span> .x <span class="sc">==</span> <span class="st">"HFMD"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bal.tab</span>(ps_formula, <span class="at">data =</span> _, <span class="at">weights =</span> w, <span class="at">s.d.denom =</span> <span class="st">"treated"</span>, <span class="at">un =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bal.tab</span>(ps_formula, <span class="at">data =</span> _, <span class="at">weights =</span> w, <span class="at">s.d.denom =</span> <span class="st">"treated"</span>)</span>
 <span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>A function that retrieve the balance adjustments for diagnostic of the propensity scores:</p>
@@ -1088,122 +1088,110 @@ Not Wasted      Waste
 <span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">t2 =</span> <span class="fu">twang_ps</span>(<span class="fu">pick</span>(<span class="fu">everything</span>()),</span>
 <span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a>                                                    <span class="at">n.trees =</span> <span class="dv">5000</span>,</span>
 <span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>                                                    <span class="at">interaction.depth =</span> <span class="dv">2</span>))),</span>
-<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>           <span class="at">mdifow =</span> <span class="fu">map_dbl</span>(dataset, get_max_diff, <span class="st">"ow"</span>),</span>
-<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a>           <span class="at">mdiftw =</span> <span class="fu">map_dbl</span>(dataset, get_max_diff, <span class="st">"tw"</span>),</span>
-<span id="cb83-20"><a href="#cb83-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">mdift2 =</span> <span class="fu">map_dbl</span>(dataset, get_max_diff, <span class="st">"t2"</span>),</span>
-<span id="cb83-21"><a href="#cb83-21" aria-hidden="true" tabindex="-1"></a>           <span class="at">formula =</span> <span class="fu">map</span>(response, <span class="sc">~</span> <span class="fu">reformulate</span>(<span class="st">"group"</span>, .x)),</span>
-<span id="cb83-22"><a href="#cb83-22" aria-hidden="true" tabindex="-1"></a>           <span class="at">glm0 =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">glm</span>(.x, <span class="at">data =</span> .y)),</span>
-<span id="cb83-23"><a href="#cb83-23" aria-hidden="true" tabindex="-1"></a>           <span class="at">glm1 =</span> <span class="fu">map2</span>(response, dataset, <span class="sc">~</span> <span class="fu">glm</span>(<span class="fu">reformulate2</span>(.x), <span class="at">data =</span> .y)),</span>
-<span id="cb83-24"><a href="#cb83-24" aria-hidden="true" tabindex="-1"></a>           <span class="at">m_ow =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">svyglm2</span>(.x, .y, <span class="sc">~</span>ow)),</span>
-<span id="cb83-25"><a href="#cb83-25" aria-hidden="true" tabindex="-1"></a>           <span class="at">m_tw =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">svyglm2</span>(.x, .y, <span class="sc">~</span>tw)),</span>
-<span id="cb83-26"><a href="#cb83-26" aria-hidden="true" tabindex="-1"></a>           <span class="at">m_t2 =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">svyglm2</span>(.x, .y, <span class="sc">~</span>t2)),</span>
-<span id="cb83-27"><a href="#cb83-27" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 - logistic regression without any covariate:         </span></span>
-<span id="cb83-28"><a href="#cb83-28" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_l0 =</span> <span class="fu">map_dbl</span>(glm0, coef2),</span>
-<span id="cb83-29"><a href="#cb83-29" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(glm0, confint2)) <span class="sc">|&gt;</span>   </span>
-<span id="cb83-30"><a href="#cb83-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
-<span id="cb83-31"><a href="#cb83-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"l0"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-32"><a href="#cb83-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_l0 =</span> <span class="fu">map_dbl</span>(glm0, get_p),</span>
-<span id="cb83-33"><a href="#cb83-33" aria-hidden="true" tabindex="-1"></a><span class="co"># 2 - logistic regression with covariates:</span></span>
-<span id="cb83-34"><a href="#cb83-34" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_l1 =</span> <span class="fu">map_dbl</span>(glm1, coef2),</span>
-<span id="cb83-35"><a href="#cb83-35" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(glm1, confint2)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-36"><a href="#cb83-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
-<span id="cb83-37"><a href="#cb83-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"l1"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-38"><a href="#cb83-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_l1 =</span> <span class="fu">map_dbl</span>(glm1, get_p),</span>
-<span id="cb83-39"><a href="#cb83-39" aria-hidden="true" tabindex="-1"></a><span class="co"># 3 - weights calculated from a logistic regression:         </span></span>
-<span id="cb83-40"><a href="#cb83-40" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_ow =</span> <span class="fu">map_dbl</span>(m_ow, coef2),</span>
-<span id="cb83-41"><a href="#cb83-41" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(m_ow, confint2)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-42"><a href="#cb83-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
-<span id="cb83-43"><a href="#cb83-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"ow"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-44"><a href="#cb83-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_ow =</span> <span class="fu">map_dbl</span>(m_ow, get_p),</span>
-<span id="cb83-45"><a href="#cb83-45" aria-hidden="true" tabindex="-1"></a><span class="co"># 4 - weights calculated from TWANG with default parameters:         </span></span>
-<span id="cb83-46"><a href="#cb83-46" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_tw =</span> <span class="fu">map_dbl</span>(m_tw, coef2),</span>
-<span id="cb83-47"><a href="#cb83-47" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(m_tw, confint2)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-48"><a href="#cb83-48" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
-<span id="cb83-49"><a href="#cb83-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"tw"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-50"><a href="#cb83-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_tw =</span> <span class="fu">map_dbl</span>(m_tw, get_p),</span>
-<span id="cb83-51"><a href="#cb83-51" aria-hidden="true" tabindex="-1"></a><span class="co"># 5 - weights calculated from TWANG with Saras' parameters:         </span></span>
-<span id="cb83-52"><a href="#cb83-52" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_t2 =</span> <span class="fu">map_dbl</span>(m_t2, coef2),</span>
-<span id="cb83-53"><a href="#cb83-53" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(m_t2, confint2)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-54"><a href="#cb83-54" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
-<span id="cb83-55"><a href="#cb83-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"t2"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-56"><a href="#cb83-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_t2 =</span> <span class="fu">map_dbl</span>(m_t2, get_p),</span>
-<span id="cb83-57"><a href="#cb83-57" aria-hidden="true" tabindex="-1"></a><span class="co"># 6 - TMLE:           </span></span>
-<span id="cb83-58"><a href="#cb83-58" aria-hidden="true" tabindex="-1"></a>           <span class="at">tmle =</span> <span class="fu">map2_dfr</span>(dataset, response, tmle2)) <span class="sc">|&gt;</span> </span>
-<span id="cb83-59"><a href="#cb83-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(tmle)</span>
-<span id="cb83-60"><a href="#cb83-60" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>           <span class="at">formula =</span> <span class="fu">map</span>(response, <span class="sc">~</span> <span class="fu">reformulate</span>(<span class="st">"group"</span>, .x)),</span>
+<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a>           <span class="at">glm0 =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">glm</span>(.x, <span class="at">data =</span> .y)),</span>
+<span id="cb83-20"><a href="#cb83-20" aria-hidden="true" tabindex="-1"></a>           <span class="at">glm1 =</span> <span class="fu">map2</span>(response, dataset, <span class="sc">~</span> <span class="fu">glm</span>(<span class="fu">reformulate2</span>(.x), <span class="at">data =</span> .y)),</span>
+<span id="cb83-21"><a href="#cb83-21" aria-hidden="true" tabindex="-1"></a>           <span class="at">m_ow =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">svyglm2</span>(.x, .y, <span class="sc">~</span>ow)),</span>
+<span id="cb83-22"><a href="#cb83-22" aria-hidden="true" tabindex="-1"></a>           <span class="at">m_tw =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">svyglm2</span>(.x, .y, <span class="sc">~</span>tw)),</span>
+<span id="cb83-23"><a href="#cb83-23" aria-hidden="true" tabindex="-1"></a>           <span class="at">m_t2 =</span> <span class="fu">map2</span>(formula,  dataset, <span class="sc">~</span> <span class="fu">svyglm2</span>(.x, .y, <span class="sc">~</span>t2)),</span>
+<span id="cb83-24"><a href="#cb83-24" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 - logistic regression without any covariate:         </span></span>
+<span id="cb83-25"><a href="#cb83-25" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_l0 =</span> <span class="fu">map_dbl</span>(glm0, coef2),</span>
+<span id="cb83-26"><a href="#cb83-26" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(glm0, confint2)) <span class="sc">|&gt;</span>   </span>
+<span id="cb83-27"><a href="#cb83-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
+<span id="cb83-28"><a href="#cb83-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"l0"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-29"><a href="#cb83-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_l0 =</span> <span class="fu">map_dbl</span>(glm0, get_p),</span>
+<span id="cb83-30"><a href="#cb83-30" aria-hidden="true" tabindex="-1"></a><span class="co"># 2 - logistic regression with covariates:</span></span>
+<span id="cb83-31"><a href="#cb83-31" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_l1 =</span> <span class="fu">map_dbl</span>(glm1, coef2),</span>
+<span id="cb83-32"><a href="#cb83-32" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(glm1, confint2)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-33"><a href="#cb83-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
+<span id="cb83-34"><a href="#cb83-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"l1"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-35"><a href="#cb83-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_l1 =</span> <span class="fu">map_dbl</span>(glm1, get_p),</span>
+<span id="cb83-36"><a href="#cb83-36" aria-hidden="true" tabindex="-1"></a><span class="co"># 3 - weights calculated from a logistic regression:         </span></span>
+<span id="cb83-37"><a href="#cb83-37" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_ow =</span> <span class="fu">map_dbl</span>(m_ow, coef2),</span>
+<span id="cb83-38"><a href="#cb83-38" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(m_ow, confint2)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-39"><a href="#cb83-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
+<span id="cb83-40"><a href="#cb83-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"ow"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-41"><a href="#cb83-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_ow =</span> <span class="fu">map_dbl</span>(m_ow, get_p),</span>
+<span id="cb83-42"><a href="#cb83-42" aria-hidden="true" tabindex="-1"></a><span class="co"># 4 - weights calculated from TWANG with default parameters:         </span></span>
+<span id="cb83-43"><a href="#cb83-43" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_tw =</span> <span class="fu">map_dbl</span>(m_tw, coef2),</span>
+<span id="cb83-44"><a href="#cb83-44" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(m_tw, confint2)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-45"><a href="#cb83-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
+<span id="cb83-46"><a href="#cb83-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"tw"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-47"><a href="#cb83-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_tw =</span> <span class="fu">map_dbl</span>(m_tw, get_p),</span>
+<span id="cb83-48"><a href="#cb83-48" aria-hidden="true" tabindex="-1"></a><span class="co"># 5 - weights calculated from TWANG with Saras' parameters:         </span></span>
+<span id="cb83-49"><a href="#cb83-49" aria-hidden="true" tabindex="-1"></a>           <span class="at">cf_t2 =</span> <span class="fu">map_dbl</span>(m_t2, coef2),</span>
+<span id="cb83-50"><a href="#cb83-50" aria-hidden="true" tabindex="-1"></a>           <span class="at">ci =</span> <span class="fu">map</span>(m_t2, confint2)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-51"><a href="#cb83-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(ci) <span class="sc">|&gt;</span> </span>
+<span id="cb83-52"><a href="#cb83-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(.x, <span class="st">"t2"</span>), <span class="fu">ends_with</span>(<span class="st">"%"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-53"><a href="#cb83-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">p_t2 =</span> <span class="fu">map_dbl</span>(m_t2, get_p),</span>
+<span id="cb83-54"><a href="#cb83-54" aria-hidden="true" tabindex="-1"></a><span class="co"># 6 - TMLE:           </span></span>
+<span id="cb83-55"><a href="#cb83-55" aria-hidden="true" tabindex="-1"></a>           <span class="at">tmle =</span> <span class="fu">map2_dfr</span>(dataset, response, tmle2)) <span class="sc">|&gt;</span> </span>
+<span id="cb83-56"><a href="#cb83-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(tmle)</span>
+<span id="cb83-57"><a href="#cb83-57" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A function that computes the diagnostic metrics for a dataset <code>x</code> and for the propensity score weight <code>psw</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>diagnostic_metrics <span class="ot">&lt;-</span> <span class="cf">function</span>(x, psw) {</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> x[[psw]]</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">max =</span> max,</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">mea =</span> mean,</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">med =</span> median,</span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">ess =</span> <span class="cf">function</span>(x) <span class="fu">sum</span>(x)<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> <span class="fu">sum</span>(x<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_dfc</span>(<span class="sc">~</span> <span class="fu">.x</span>(y)) <span class="sc">|&gt;</span> </span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">dif =</span> <span class="fu">abs</span>(mea <span class="sc">-</span> med),</span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">bal =</span> <span class="fu">get_max_diff</span>(x, psw))</span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(y) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(psw, <span class="st">"_"</span>, <span class="fu">names</span>(y))</span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>  y</span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A function that runs <code>diagnostic_metrics()</code> on all the datasets of an output <code>x</code> of the <code>pipeline()</code> function, and for the propensity score weight <code>psw</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>diagnostic_ps <span class="ot">&lt;-</span> <span class="cf">function</span>(x, psw) {</span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span> </span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(response, timepoint, control, HFMD, dataset) <span class="sc">|&gt;</span> </span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">diag =</span> <span class="fu">map</span>(dataset, diagnostic_metrics, psw)) <span class="sc">|&gt;</span> </span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(diag) <span class="sc">|&gt;</span> </span>
+<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">n =</span> control <span class="sc">+</span> HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(dataset, control, HFMD))</span>
+<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Running the pipeline (takes 2’):</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s compare the p values:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a>output <span class="sc">|&gt;</span> </span>
-<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD, <span class="fu">starts_with</span>(<span class="st">"p_"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"p"</span>), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>))) <span class="sc">|&gt;</span> </span>
-<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>output <span class="sc">|&gt;</span> </span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD, <span class="fu">starts_with</span>(<span class="st">"p_"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"p"</span>), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 23 × 10
    response timepoint  control  HFMD  p_l0  p_l1  p_ow  p_tw  p_t2  p_tm
    &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
- 1 MD1ISS   18 months       69    23 0.037 0.143 0.196 0.132 0.152 0.385
- 2 MD2ISS   18 months       69    22 0.115 0.08  0.371 0.237 0.29  0.15 
- 3 MD3ISS   18 months       69    23 0.527 0.456 0.386 0.379 0.568 0.653
- 4 AC1ISS   18 months       69    21 0.058 0.052 0.771 0.45  0.4   0.078
- 5 AC2ISS   18 months       69    21 0.735 0.921 0.633 0.614 0.645 0.728
- 6 BAL1ISS  18 months       69    21 0.927 0.666 0.666 0.556 0.664 0.898
- 7 BAL2ISS  18 months       69    20 0.829 0.85  0.847 0.669 0.771 0.973
- 8 BAL3ISS  18 months       67    21 0.003 0.215 0.05  0.053 0.039 0.091
- 9 CS       enrollment     248   114 0.051 0     0.227 0.471 0.718 0.645
-10 CS       6 months       202   104 0.01  0     0.771 0.54  0.431 0.028
-11 CS       18 months      161    79 0     0.026 0.781 0.509 0.533 0.137
-12 RC       enrollment     248   113 0.876 0.689 0.543 0.865 0.911 0.946
-13 RC       6 months       202   103 0.054 0.064 0.85  0.448 0.374 0.189
-14 RC       18 months      161    79 0.008 0.091 0.741 0.287 0.424 0.039
-15 EC       enrollment     248   114 0.331 0.097 0.839 0.555 0.755 0.655
-16 EC       6 months       201   103 0.037 0.057 0.958 0.822 0.817 0.801
-17 EC       18 months      161    79 0.003 0.068 0.808 0.598 0.808 0.392
-18 FM       enrollment     248   114 0.195 0.02  0.649 0.668 0.912 0.238
-19 FM       6 months       202   103 0.077 0.703 0.43  0.717 0.792 0.218
-20 FM       18 months      161    79 0.001 0.058 0.856 0.597 0.639 0.062
-21 GM       enrollment     248   113 0.007 0     0.048 0.657 0.89  0.955
-22 GM       6 months       201   104 0.005 0.02  0.84  0.323 0.325 0.576
-23 GM       18 months      161    79 0.003 0.256 0.681 0.973 0.841 0.919</code></pre>
-</div>
-</div>
-<p>Let’s look at the diagnostics:</p>
-<div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a>output <span class="sc">|&gt;</span> </span>
-<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD, <span class="fu">starts_with</span>(<span class="st">"md"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">starts_with</span>(<span class="st">"m"</span>), <span class="sc">~</span> <span class="fu">round</span>(.x, <span class="dv">3</span>))) <span class="sc">|&gt;</span> </span>
-<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 23 × 7
-   response timepoint  control  HFMD mdifow mdiftw mdift2
-   &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
- 1 MD1ISS   18 months       69    23  0.156  0.07   0.139
- 2 MD2ISS   18 months       69    22  0.113  0.108  0.136
- 3 MD3ISS   18 months       69    23  0.156  0.07   0.139
- 4 AC1ISS   18 months       69    21  0.127  0.086  0.14 
- 5 AC2ISS   18 months       69    21  0.127  0.086  0.14 
- 6 BAL1ISS  18 months       69    21  0.127  0.086  0.14 
- 7 BAL2ISS  18 months       69    20  0.13   0.069  0.126
- 8 BAL3ISS  18 months       67    21  0.168  0.213  0.189
- 9 CS       enrollment     248   114  0.061  0.061  0.061
-10 CS       6 months       202   104  0.067  0.067  0.067
-11 CS       18 months      161    79  0.076  0.077  0.076
-12 RC       enrollment     248   113  0.062  0.062  0.062
-13 RC       6 months       202   103  0.068  0.068  0.068
-14 RC       18 months      161    79  0.076  0.077  0.076
-15 EC       enrollment     248   114  0.061  0.061  0.061
-16 EC       6 months       201   103  0.068  0.068  0.068
-17 EC       18 months      161    79  0.076  0.077  0.076
-18 FM       enrollment     248   114  0.061  0.061  0.061
-19 FM       6 months       202   103  0.068  0.068  0.068
-20 FM       18 months      161    79  0.076  0.077  0.076
-21 GM       enrollment     248   113  0.062  0.062  0.062
-22 GM       6 months       201   104  0.067  0.067  0.067
-23 GM       18 months      161    79  0.076  0.077  0.076</code></pre>
+ 1 MD1ISS   18 months       69    23 0.037 0.143 0.196 0.132 0.152 0.396
+ 2 MD2ISS   18 months       69    22 0.115 0.08  0.371 0.237 0.29  0.16 
+ 3 MD3ISS   18 months       69    23 0.527 0.456 0.386 0.379 0.568 0.636
+ 4 AC1ISS   18 months       69    21 0.058 0.052 0.771 0.45  0.4   0.067
+ 5 AC2ISS   18 months       69    21 0.735 0.921 0.633 0.614 0.645 0.716
+ 6 BAL1ISS  18 months       69    21 0.927 0.666 0.666 0.556 0.664 0.479
+ 7 BAL2ISS  18 months       69    20 0.829 0.85  0.847 0.669 0.771 0.886
+ 8 BAL3ISS  18 months       67    21 0.003 0.215 0.05  0.053 0.039 0.209
+ 9 CS       enrollment     248   114 0.051 0     0.227 0.471 0.718 0.772
+10 CS       6 months       202   104 0.01  0     0.771 0.54  0.431 0.049
+11 CS       18 months      161    79 0     0.026 0.781 0.509 0.533 0.107
+12 RC       enrollment     248   113 0.876 0.689 0.543 0.865 0.911 0.747
+13 RC       6 months       202   103 0.054 0.064 0.85  0.448 0.374 0.192
+14 RC       18 months      161    79 0.008 0.091 0.741 0.287 0.424 0.04 
+15 EC       enrollment     248   114 0.331 0.097 0.839 0.555 0.755 0.338
+16 EC       6 months       201   103 0.037 0.057 0.958 0.822 0.817 0.54 
+17 EC       18 months      161    79 0.003 0.068 0.808 0.598 0.808 0.421
+18 FM       enrollment     248   114 0.195 0.02  0.649 0.668 0.912 0.96 
+19 FM       6 months       202   103 0.077 0.703 0.43  0.717 0.792 0.253
+20 FM       18 months      161    79 0.001 0.058 0.856 0.597 0.639 0.085
+21 GM       enrollment     248   113 0.007 0     0.048 0.657 0.89  0.133
+22 GM       6 months       201   104 0.005 0.02  0.84  0.323 0.325 0.445
+23 GM       18 months      161    79 0.003 0.256 0.681 0.973 0.841 0.752</code></pre>
 </div>
 </div>
 <p>Let’s look at the estimates:</p>
@@ -1217,30 +1205,126 @@ Not Wasted      Waste
    response timepoint  control  HFMD cf_l0 cf_l1 cf_ow cf_tw cf_t2 cf_tm
    &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
  1 MD1ISS   18 months       69    23 -1.35 -1.18 -1.36 -1.3  -1.28 -0.82
- 2 MD2ISS   18 months       69    22 -1    -1.42 -0.8  -1    -0.88 -1.1 
- 3 MD3ISS   18 months       69    23 -0.51 -0.69  1.72  1.44  0.95 -0.35
- 4 AC1ISS   18 months       69    21  1.52  1.97  0.47  0.96  1.05  1.5 
- 5 AC2ISS   18 months       69    21  0.26  0.1  -0.88 -0.76 -0.63  0.28
- 6 BAL1ISS  18 months       69    21 -0.07 -0.43 -0.47 -0.55 -0.4  -0.08
- 7 BAL2ISS  18 months       69    20 -0.17  0.18  0.22  0.51  0.31 -0.03
- 8 BAL3ISS  18 months       67    21 -2.51 -1.25 -2.36 -2.23 -2.36 -1.92
- 9 CS       enrollment     248   114  3.17  2.48  1.9   0.93  0.47 -0.26
-10 CS       6 months       202   104  3.25  1.81  0.38  0.78  0.97  1.06
-11 CS       18 months      161    79  2.97  1.23  0.22  0.53  0.48  0.8 
-12 RC       enrollment     248   113  0.16 -0.18 -0.63  0.15 -0.1  -0.03
-13 RC       6 months       202   103  2.1   0.91 -0.23  1.16  1.31  0.69
-14 RC       18 months      161    79  2.24  0.98  0.28  0.85  0.62  1.18
-15 EC       enrollment     248   114  1.18  0.88  0.25  0.65  0.35  0.24
-16 EC       6 months       201   103  2.55  1.13 -0.07  0.4   0.39 -0.15
-17 EC       18 months      161    79  2.25  1.02  0.18  0.41  0.18  0.46
-18 FM       enrollment     248   114  1.37  0.87  0.47  0.3   0.08 -0.42
-19 FM       6 months       202   103  1.58  0.13 -0.82  0.27  0.2   0.42
-20 FM       18 months      161    79  2.64  0.85 -0.15  0.46  0.37  0.91
-21 GM       enrollment     248   113  3.98  3.34  2.7   0.49  0.15 -0.03
-22 GM       6 months       201   104  2.63  1.07  0.19 -0.76 -0.74 -0.22
-23 GM       18 months      161    79  1.68  0.49 -0.23  0.02 -0.11  0.04</code></pre>
+ 2 MD2ISS   18 months       69    22 -1    -1.42 -0.8  -1    -0.88 -1.04
+ 3 MD3ISS   18 months       69    23 -0.51 -0.69  1.72  1.44  0.95 -0.36
+ 4 AC1ISS   18 months       69    21  1.52  1.97  0.47  0.96  1.05  1.58
+ 5 AC2ISS   18 months       69    21  0.26  0.1  -0.88 -0.76 -0.63  0.29
+ 6 BAL1ISS  18 months       69    21 -0.07 -0.43 -0.47 -0.55 -0.4  -0.47
+ 7 BAL2ISS  18 months       69    20 -0.17  0.18  0.22  0.51  0.31  0.13
+ 8 BAL3ISS  18 months       67    21 -2.51 -1.25 -2.36 -2.23 -2.36 -1.52
+ 9 CS       enrollment     248   114  3.17  2.48  1.9   0.93  0.47  0.14
+10 CS       6 months       202   104  3.25  1.81  0.38  0.78  0.97  0.95
+11 CS       18 months      161    79  2.97  1.23  0.22  0.53  0.48  0.87
+12 RC       enrollment     248   113  0.16 -0.18 -0.63  0.15 -0.1  -0.15
+13 RC       6 months       202   103  2.1   0.91 -0.23  1.16  1.31  0.7 
+14 RC       18 months      161    79  2.24  0.98  0.28  0.85  0.62  1.16
+15 EC       enrollment     248   114  1.18  0.88  0.25  0.65  0.35 -0.63
+16 EC       6 months       201   103  2.55  1.13 -0.07  0.4   0.39 -0.37
+17 EC       18 months      161    79  2.25  1.02  0.18  0.41  0.18  0.44
+18 FM       enrollment     248   114  1.37  0.87  0.47  0.3   0.08  0.02
+19 FM       6 months       202   103  1.58  0.13 -0.82  0.27  0.2   0.38
+20 FM       18 months      161    79  2.64  0.85 -0.15  0.46  0.37  0.83
+21 GM       enrollment     248   113  3.98  3.34  2.7   0.49  0.15 -1.16
+22 GM       6 months       201   104  2.63  1.07  0.19 -0.76 -0.74 -0.3 
+23 GM       18 months      161    79  1.68  0.49 -0.23  0.02 -0.11  0.13</code></pre>
 </div>
 </div>
+<p>Computing the diagnostic metrics for all the propensity score weights:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(<span class="st">"ow"</span>, <span class="st">"tw"</span>, <span class="st">"t2"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb91-2"><a href="#cb91-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(diagnostic_ps, <span class="at">x =</span> output) <span class="sc">|&gt;</span> </span>
+<span id="cb91-3"><a href="#cb91-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">walk</span>(print, <span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 23 × 9
+   response timepoint  ow_max ow_mea ow_med ow_ess  ow_dif ow_bal     n
+   &lt;chr&gt;    &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;int&gt;
+ 1 MD1ISS   18 months    6.12  0.522 0.0822   19.6 0.440   0.156     92
+ 2 MD2ISS   18 months    6.82  0.491 0.0585   19.2 0.433   0.113     91
+ 3 MD3ISS   18 months    6.12  0.522 0.0822   19.6 0.440   0.156     92
+ 4 AC1ISS   18 months    6.25  0.477 0.0565   19.5 0.420   0.127     90
+ 5 AC2ISS   18 months    6.25  0.477 0.0565   19.5 0.420   0.127     90
+ 6 BAL1ISS  18 months    6.25  0.477 0.0565   19.5 0.420   0.127     90
+ 7 BAL2ISS  18 months    5.57  0.459 0.0520   20.0 0.407   0.130     89
+ 8 BAL3ISS  18 months    4.33  0.444 0.0472   21.8 0.397   0.168     88
+ 9 CS       enrollment   1.21  0.608 0.629   274.  0.0212  0.0614   362
+10 CS       6 months     1.96  0.645 0.633   224.  0.0120  0.0673   306
+11 CS       18 months    2.39  0.637 0.545   164.  0.0916  0.0759   240
+12 RC       enrollment   1.17  0.604 0.616   273.  0.0125  0.0619   361
+13 RC       6 months     1.90  0.641 0.624   223.  0.0172  0.0680   305
+14 RC       18 months    2.39  0.637 0.545   164.  0.0916  0.0759   240
+15 EC       enrollment   1.21  0.608 0.629   274.  0.0212  0.0614   362
+16 EC       6 months     1.88  0.643 0.640   223.  0.00296 0.0680   304
+17 EC       18 months    2.39  0.637 0.545   164.  0.0916  0.0759   240
+18 FM       enrollment   1.21  0.608 0.629   274.  0.0212  0.0614   362
+19 FM       6 months     1.90  0.641 0.624   223.  0.0172  0.0680   305
+20 FM       18 months    2.39  0.637 0.545   164.  0.0916  0.0759   240
+21 GM       enrollment   1.17  0.604 0.616   273.  0.0125  0.0619   361
+22 GM       6 months     1.96  0.647 0.644   224.  0.00396 0.0673   305
+23 GM       18 months    2.39  0.637 0.545   164.  0.0916  0.0759   240
+# A tibble: 23 × 9
+   response timepoint  tw_max tw_mea tw_med tw_ess tw_dif tw_bal     n
+   &lt;chr&gt;    &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;int&gt;
+ 1 MD1ISS   18 months    3.90  0.426 0.0646   29.3 0.361  0.0699    92
+ 2 MD2ISS   18 months    3.16  0.410 0.0498   30.1 0.360  0.108     91
+ 3 MD3ISS   18 months    3.90  0.426 0.0646   29.3 0.361  0.0699    92
+ 4 AC1ISS   18 months    2.85  0.398 0.0602   29.8 0.337  0.0863    90
+ 5 AC2ISS   18 months    2.85  0.398 0.0602   29.8 0.337  0.0863    90
+ 6 BAL1ISS  18 months    2.85  0.398 0.0602   29.8 0.337  0.0863    90
+ 7 BAL2ISS  18 months    2.93  0.387 0.0460   28.1 0.341  0.0690    89
+ 8 BAL3ISS  18 months    2.34  0.374 0.0394   30.8 0.335  0.213     88
+ 9 CS       enrollment   1.84  0.574 0.551   241.  0.0230 0.0614   362
+10 CS       6 months     4.71  0.559 0.429   158.  0.130  0.0673   306
+11 CS       18 months    1.69  0.442 0.210   121.  0.232  0.0772   240
+12 RC       enrollment   2.04  0.569 0.528   236.  0.0405 0.0619   361
+13 RC       6 months     4.26  0.553 0.431   159.  0.122  0.0680   305
+14 RC       18 months    1.69  0.442 0.210   121.  0.232  0.0772   240
+15 EC       enrollment   1.84  0.574 0.551   241.  0.0230 0.0614   362
+16 EC       6 months     4.40  0.557 0.424   157.  0.133  0.0680   304
+17 EC       18 months    1.69  0.442 0.210   121.  0.232  0.0772   240
+18 FM       enrollment   1.84  0.574 0.551   241.  0.0230 0.0614   362
+19 FM       6 months     4.26  0.553 0.431   159.  0.122  0.0680   305
+20 FM       18 months    1.69  0.442 0.210   121.  0.232  0.0772   240
+21 GM       enrollment   2.04  0.569 0.528   236.  0.0405 0.0619   361
+22 GM       6 months     4.64  0.562 0.408   156.  0.154  0.0673   305
+23 GM       18 months    1.69  0.442 0.210   121.  0.232  0.0772   240
+# A tibble: 23 × 9
+   response timepoint  t2_max t2_mea t2_med t2_ess t2_dif t2_bal     n
+   &lt;chr&gt;    &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;int&gt;
+ 1 MD1ISS   18 months    2.90  0.430 0.101    32.5 0.329  0.139     92
+ 2 MD2ISS   18 months    3.23  0.409 0.0701   31.0 0.338  0.136     91
+ 3 MD3ISS   18 months    2.90  0.430 0.101    32.5 0.329  0.139     92
+ 4 AC1ISS   18 months    2.68  0.396 0.0762   32.0 0.320  0.140     90
+ 5 AC2ISS   18 months    2.68  0.396 0.0762   32.0 0.320  0.140     90
+ 6 BAL1ISS  18 months    2.68  0.396 0.0762   32.0 0.320  0.140     90
+ 7 BAL2ISS  18 months    2.72  0.397 0.0748   30.2 0.322  0.126     89
+ 8 BAL3ISS  18 months    1.72  0.328 0.0321   29.9 0.296  0.189     88
+ 9 CS       enrollment   2.17  0.584 0.564   239.  0.0198 0.0614   362
+10 CS       6 months     4.23  0.577 0.473   161.  0.104  0.0673   306
+11 CS       18 months    2.75  0.598 0.486   156.  0.112  0.0759   240
+12 RC       enrollment   2.13  0.579 0.535   237.  0.0437 0.0619   361
+13 RC       6 months     4.45  0.571 0.468   159.  0.103  0.0680   305
+14 RC       18 months    2.75  0.598 0.486   156.  0.112  0.0759   240
+15 EC       enrollment   2.17  0.584 0.564   239.  0.0198 0.0614   362
+16 EC       6 months     4.45  0.572 0.481   159.  0.0908 0.0680   304
+17 EC       18 months    2.75  0.598 0.486   156.  0.112  0.0759   240
+18 FM       enrollment   2.17  0.584 0.564   239.  0.0198 0.0614   362
+19 FM       6 months     4.45  0.571 0.468   159.  0.103  0.0680   305
+20 FM       18 months    2.75  0.598 0.486   156.  0.112  0.0759   240
+21 GM       enrollment   2.13  0.579 0.535   237.  0.0437 0.0619   361
+22 GM       6 months     4.18  0.580 0.477   161.  0.103  0.0673   305
+23 GM       18 months    2.75  0.598 0.486   156.  0.112  0.0759   240</code></pre>
+</div>
+</div>
+<p><strong>Interpretations:</strong></p>
+<ul>
+<li>covariates balance &lt; 0.1 is good. Values between 0.1 and 0.2 are indicative of moderate imbalance. Values above 0.2 are a problem.</li>
+<li>weights should not be too high.</li>
+<li>weights distribution should not be too heavy right tail.</li>
+<li>mean an median of weights should not be too different.</li>
+<li>effective sample size should not be too different from real sample size (not less than 50% of original sample size).</li>
+<li>effective sample size should not be lower than the number treated.</li>
+<li>max weight should not be much higher than 10 to 20 times the median weight.</li>
+</ul>
 </section>
 </section>
 

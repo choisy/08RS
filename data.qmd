@@ -972,7 +972,7 @@ A function that computes balance statistics for diagnostic of the propensity sco
 bal_tab <- function(data, w) {
   data |> 
     mutate(across(group, ~ .x == "HFMD")) |> 
-    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated", un = TRUE)
+    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated")
 }
 ```
 
@@ -1005,71 +1005,6 @@ reformulate2 <- function(y) {
 
 The pipeline:
 
-```{r include=FALSE, eval=FALSE}
-pipeline0 <- function() {
-  expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                            "BAL1ISS", "BAL2ISS", "BAL3ISS",
-                            "CS", "RC", "EC", "FM", "GM"),
-              timepoint = c("enrollment", "6 months", "18 months")) |> 
-    mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
-           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
-    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
-    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
-    unnest_wider(ctable) |> 
-    filter(HFMD > 3) |> 
-    mutate(dataset = map(dataset,
-                         ~ mutate(.x, ps = logistic_ps(pick(everything())),
-                                      ow = ifelse(group == "HFMD", 1 - ps, ps),#logreg
-                                      ow = ifelse(group == "HFMD", 1, ps / (1 - ps)),#logreg
-                                      tw = twang_ps(pick(everything())),       #twang1
-                                      t2 = twang_ps(pick(everything()),        #twang2
-                                                    n.trees = 5000,
-                                                    interaction.depth = 2))),
-           mdifow = map_dbl(dataset, get_max_diff, "ow"),
-           mdiftw = map_dbl(dataset, get_max_diff, "tw"),
-           mdift2 = map_dbl(dataset, get_max_diff, "t2"),
-           formula = map(response, ~ reformulate("group", .x)),
-           glm0 = map2(formula, dataset, ~ glm(.x, data = .y)),
-           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
-           m_ow = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow)),
-           m_tw = map2(formula, dataset, ~ svyglm2(.x, .y, ~tw)),
-           m_t2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~t2)),
-# 1 - logistic regression without any covariate:         
-           cf_l0 = map_dbl(glm0, coef2),
-           ci = map(glm0, confint2)) |>   
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
-    mutate(p_l0 = map_dbl(glm0, get_p),
-# 2 - logistic regression with covariates:
-           cf_l1 = map_dbl(glm1, coef2),
-           ci = map(glm1, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
-    mutate(p_l1 = map_dbl(glm1, get_p),
-# 3 - weights calculated from a logistic regression:         
-           cf_ow = map_dbl(m_ow, coef2),
-           ci = map(m_ow, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
-    mutate(p_ow = map_dbl(m_ow, get_p),
-# 4 - weights calculated from TWANG with default parameters:         
-           cf_tw = map_dbl(m_tw, coef2),
-           ci = map(m_tw, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
-    mutate(p_tw = map_dbl(m_tw, get_p),
-# 5 - weights calculated from TWANG with Saras' parameters:         
-           cf_t2 = map_dbl(m_t2, coef2),
-           ci = map(m_t2, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
-    mutate(p_t2 = map_dbl(m_t2, get_p),
-# 6 - TMLE:           
-           tmle = map2_dfr(dataset, response, tmle2)) |> 
-    unnest_wider(tmle)
-}
-```
-
 ```{r}
 pipeline <- function() {
   expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
@@ -1088,9 +1023,6 @@ pipeline <- function() {
                                       t2 = twang_ps(pick(everything()),
                                                     n.trees = 5000,
                                                     interaction.depth = 2))),
-           mdifow = map_dbl(dataset, get_max_diff, "ow"),
-           mdiftw = map_dbl(dataset, get_max_diff, "tw"),
-           mdift2 = map_dbl(dataset, get_max_diff, "t2"),
            formula = map(response, ~ reformulate("group", .x)),
            glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
            glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
@@ -1133,29 +1065,36 @@ pipeline <- function() {
 }
 ```
 
-```{r include=FALSE, eval=FALSE}
-output2 <- output |> 
-  mutate(dataset = map(dataset, ~ mutate(.x, ow2 = ifelse(group == "HFMD", 1, ps / (1 - ps)))),
-         mdifow2 = map_dbl(dataset, get_max_diff, "ow2"),
-         m_ow2 = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow2)),
-         cf_ow2 = map_dbl(m_ow2, coef2),
-         ci = map(m_ow2, confint2)) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "ow2"), ends_with("%")) |> 
-  mutate(p_ow2 = map_dbl(m_ow2, get_p))
+A function that computes the diagnostic metrics for a dataset `x` and for the
+propensity score weight `psw`:
+
+```{r}
+diagnostic_metrics <- function(x, psw) {
+  y <- x[[psw]]
+  y <- c(max = max,
+         mea = mean,
+         med = median,
+         ess = function(x) sum(x)^2 / sum(x^2)) |>
+    map_dfc(~ .x(y)) |> 
+    mutate(dif = abs(mea - med),
+           bal = get_max_diff(x, psw))
+  names(y) <- paste0(psw, "_", names(y))
+  y
+}
 ```
 
-```{r include=FALSE, eval=FALSE}
-output3 <- output2 |> 
-  mutate(dataset = map(dataset, ~ mutate(.x, ow3 = logistic_ps(pick(everything())))),
-         mdifow3 = map_dbl(dataset, get_max_diff, "ow3"),
-         m_ow3 = map2(formula, dataset, ~ svyglm2(.x, .y, ~ow3)),
-         cf_ow3 = map_dbl(m_ow3, coef2),
-         ci = map(m_ow3, confint2),
-         mdifow2 = map_dbl(dataset, get_max_diff, "ow2")) |> 
-  unnest_wider(ci) |> 
-  rename_with(~ paste0(.x, "ow3"), ends_with("%")) |> 
-  mutate(p_ow3 = map_dbl(m_ow3, get_p))
+A function that runs `diagnostic_metrics()` on all the datasets of an output `x` of the
+`pipeline()` function, and for the propensity score weight `psw`:
+
+```{r}
+diagnostic_ps <- function(x, psw) {
+  x |> 
+    select(response, timepoint, control, HFMD, dataset) |> 
+    mutate(diag = map(dataset, diagnostic_metrics, psw)) |> 
+    unnest_wider(diag) |> 
+    mutate(n = control + HFMD) |> 
+    select(-c(dataset, control, HFMD))
+}
 ```
 
 Running the pipeline (takes 2'):
@@ -1182,15 +1121,6 @@ output |>
   print(n = Inf) 
 ```
 
-Let's look at the diagnostics:
-
-```{r}
-output |> 
-  select(response, timepoint, control, HFMD, starts_with("md")) |> 
-  mutate(across(starts_with("m"), ~ round(.x, 3))) |> 
-  print(n = Inf) 
-```
-
 Let's look at the estimates:
 
 ```{r}
@@ -1200,3 +1130,22 @@ output |>
   print(n = Inf) 
 ```
 
+Computing the diagnostic metrics for all the propensity score weights:
+
+```{r}
+c("ow", "tw", "t2") |>
+  map(diagnostic_ps, x = output) |> 
+  walk(print, n = Inf)
+```
+
+**Interpretations:**
+
+* covariates balance < 0.1 is good. Values between 0.1 and 0.2 are indicative of
+moderate imbalance. Values above 0.2 are a problem.
+* weights should not be too high.
+* weights distribution should not be too heavy right tail.
+* mean an median of weights should not be too different.
+* effective sample size should not be too different from real sample size (not less
+than 50% of original sample size).
+* effective sample size should not be lower than the number treated.
+* max weight should not be much higher than 10 to 20 times the median weight.
