@@ -82,36 +82,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link active" data-scroll-target="#global-parameters"><span class="header-section-number">1</span> Global parameters</a></li>
+  <li><a href="#constants" id="toc-constants" class="nav-link active" data-scroll-target="#constants"><span class="header-section-number">1</span> Constants</a></li>
   <li><a href="#packages" id="toc-packages" class="nav-link" data-scroll-target="#packages"><span class="header-section-number">2</span> Packages</a></li>
   <li><a href="#functions" id="toc-functions" class="nav-link" data-scroll-target="#functions"><span class="header-section-number">3</span> Functions</a></li>
-  <li><a href="#rs-crf-data" id="toc-rs-crf-data" class="nav-link" data-scroll-target="#rs-crf-data"><span class="header-section-number">4</span> 08RS CRF data</a></li>
-  <li><a href="#ei-crf-data" id="toc-ei-crf-data" class="nav-link" data-scroll-target="#ei-crf-data"><span class="header-section-number">5</span> 02EI CRF data</a></li>
-  <li><a href="#pcr-data" id="toc-pcr-data" class="nav-link" data-scroll-target="#pcr-data"><span class="header-section-number">6</span> PCR data</a></li>
-  <li><a href="#mri-data" id="toc-mri-data" class="nav-link" data-scroll-target="#mri-data"><span class="header-section-number">7</span> MRI data</a></li>
-  <li><a href="#children-data" id="toc-children-data" class="nav-link" data-scroll-target="#children-data"><span class="header-section-number">8</span> Children data</a>
+  <li><a href="#raw-data" id="toc-raw-data" class="nav-link" data-scroll-target="#raw-data"><span class="header-section-number">4</span> Raw data</a>
   <ul>
-  <li><a href="#rs-pcr-mri" id="toc-rs-pcr-mri" class="nav-link" data-scroll-target="#rs-pcr-mri"><span class="header-section-number">8.1</span> 08RS, PCR, MRI</a></li>
-  <li><a href="#patching-02ei-crf" id="toc-patching-02ei-crf" class="nav-link" data-scroll-target="#patching-02ei-crf"><span class="header-section-number">8.2</span> Patching 02EI CRF</a></li>
-  <li><a href="#stunt-and-waste" id="toc-stunt-and-waste" class="nav-link" data-scroll-target="#stunt-and-waste"><span class="header-section-number">8.3</span> Stunt and waste</a></li>
-  <li><a href="#missing-values" id="toc-missing-values" class="nav-link" data-scroll-target="#missing-values"><span class="header-section-number">8.4</span> Missing values</a></li>
+  <li><a href="#rs-crf" id="toc-rs-crf" class="nav-link" data-scroll-target="#rs-crf"><span class="header-section-number">4.1</span> 08RS CRF</a></li>
+  <li><a href="#ei-crf" id="toc-ei-crf" class="nav-link" data-scroll-target="#ei-crf"><span class="header-section-number">4.2</span> 02EI CRF</a></li>
+  <li><a href="#pcr-data" id="toc-pcr-data" class="nav-link" data-scroll-target="#pcr-data"><span class="header-section-number">4.3</span> PCR data</a></li>
+  <li><a href="#mri-data" id="toc-mri-data" class="nav-link" data-scroll-target="#mri-data"><span class="header-section-number">4.4</span> MRI data</a></li>
   </ul></li>
-  <li><a href="#m-abc-data" id="toc-m-abc-data" class="nav-link" data-scroll-target="#m-abc-data"><span class="header-section-number">9</span> M-ABC data</a></li>
-  <li><a href="#bayley-data" id="toc-bayley-data" class="nav-link" data-scroll-target="#bayley-data"><span class="header-section-number">10</span> Bayley data</a></li>
-  <li><a href="#saras-csv-file" id="toc-saras-csv-file" class="nav-link" data-scroll-target="#saras-csv-file"><span class="header-section-number">11</span> Saras’ CSV file</a></li>
-  <li><a href="#time-points" id="toc-time-points" class="nav-link" data-scroll-target="#time-points"><span class="header-section-number">12</span> Time points</a>
+  <li><a href="#children-data" id="toc-children-data" class="nav-link" data-scroll-target="#children-data"><span class="header-section-number">5</span> Children data</a>
   <ul>
-  <li><a href="#m-abc-data-1" id="toc-m-abc-data-1" class="nav-link" data-scroll-target="#m-abc-data-1"><span class="header-section-number">12.1</span> M-ABC data</a></li>
-  <li><a href="#bayley-data-1" id="toc-bayley-data-1" class="nav-link" data-scroll-target="#bayley-data-1"><span class="header-section-number">12.2</span> Bayley data</a></li>
-  <li><a href="#merging" id="toc-merging" class="nav-link" data-scroll-target="#merging"><span class="header-section-number">12.3</span> Merging</a></li>
-  <li><a href="#visualization" id="toc-visualization" class="nav-link" data-scroll-target="#visualization"><span class="header-section-number">12.4</span> Visualization</a></li>
+  <li><a href="#rs-pcr-mri" id="toc-rs-pcr-mri" class="nav-link" data-scroll-target="#rs-pcr-mri"><span class="header-section-number">5.1</span> 08RS, PCR, MRI</a></li>
+  <li><a href="#patching-02ei-crf" id="toc-patching-02ei-crf" class="nav-link" data-scroll-target="#patching-02ei-crf"><span class="header-section-number">5.2</span> Patching 02EI CRF</a></li>
+  <li><a href="#stunt-and-waste" id="toc-stunt-and-waste" class="nav-link" data-scroll-target="#stunt-and-waste"><span class="header-section-number">5.3</span> Stunt and waste</a></li>
+  <li><a href="#missing-values" id="toc-missing-values" class="nav-link" data-scroll-target="#missing-values"><span class="header-section-number">5.4</span> Missing values</a></li>
   </ul></li>
-  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis"><span class="header-section-number">13</span> Analysis</a>
+  <li><a href="#m-abc-data" id="toc-m-abc-data" class="nav-link" data-scroll-target="#m-abc-data"><span class="header-section-number">6</span> M-ABC data</a></li>
+  <li><a href="#bayley-data" id="toc-bayley-data" class="nav-link" data-scroll-target="#bayley-data"><span class="header-section-number">7</span> Bayley data</a></li>
+  <li><a href="#saras-csv-file" id="toc-saras-csv-file" class="nav-link" data-scroll-target="#saras-csv-file"><span class="header-section-number">8</span> Saras’ CSV file</a></li>
+  <li><a href="#time-points" id="toc-time-points" class="nav-link" data-scroll-target="#time-points"><span class="header-section-number">9</span> Time points</a>
   <ul>
-  <li><a href="#hfmd-vs-controls" id="toc-hfmd-vs-controls" class="nav-link" data-scroll-target="#hfmd-vs-controls"><span class="header-section-number">13.1</span> HFMD vs controls</a></li>
-  <li><a href="#propensity-scores" id="toc-propensity-scores" class="nav-link" data-scroll-target="#propensity-scores"><span class="header-section-number">13.2</span> Propensity scores</a></li>
-  <li><a href="#responses" id="toc-responses" class="nav-link" data-scroll-target="#responses"><span class="header-section-number">13.3</span> Responses</a></li>
-  <li><a href="#plot-effects" id="toc-plot-effects" class="nav-link" data-scroll-target="#plot-effects"><span class="header-section-number">13.4</span> Plot effects</a></li>
+  <li><a href="#m-abc-data-1" id="toc-m-abc-data-1" class="nav-link" data-scroll-target="#m-abc-data-1"><span class="header-section-number">9.1</span> M-ABC data</a></li>
+  <li><a href="#bayley-data-1" id="toc-bayley-data-1" class="nav-link" data-scroll-target="#bayley-data-1"><span class="header-section-number">9.2</span> Bayley data</a></li>
+  <li><a href="#merging" id="toc-merging" class="nav-link" data-scroll-target="#merging"><span class="header-section-number">9.3</span> Merging</a></li>
+  <li><a href="#visualization" id="toc-visualization" class="nav-link" data-scroll-target="#visualization"><span class="header-section-number">9.4</span> Visualization</a></li>
+  </ul></li>
+  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis"><span class="header-section-number">10</span> Analysis</a>
+  <ul>
+  <li><a href="#hfmd-vs-controls" id="toc-hfmd-vs-controls" class="nav-link" data-scroll-target="#hfmd-vs-controls"><span class="header-section-number">10.1</span> HFMD vs controls</a></li>
+  <li><a href="#propensity-scores" id="toc-propensity-scores" class="nav-link" data-scroll-target="#propensity-scores"><span class="header-section-number">10.2</span> Propensity scores</a></li>
+  <li><a href="#responses" id="toc-responses" class="nav-link" data-scroll-target="#responses"><span class="header-section-number">10.3</span> Responses</a></li>
+  <li><a href="#ploting-effects" id="toc-ploting-effects" class="nav-link" data-scroll-target="#ploting-effects"><span class="header-section-number">10.4</span> Ploting effects</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -137,8 +140,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="global-parameters" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="global-parameters"><span class="header-section-number">1</span> Global parameters</h2>
+<section id="constants" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="constants"><span class="header-section-number">1</span> Constants</h2>
 <p>The path to the data folder on the local computer:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>root <span class="ot">&lt;-</span> <span class="st">"~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit"</span></span>
@@ -150,7 +153,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Required packages:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>required <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"readxl"</span>, <span class="st">"purrr"</span>, <span class="st">"dplyr"</span>, <span class="st">"magrittr"</span>, <span class="st">"tidyr"</span>, <span class="st">"anthro"</span>, <span class="st">"twang"</span>,</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"cobalt"</span>, <span class="st">"survey"</span>, <span class="st">"tmle"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>              <span class="st">"cobalt"</span>, <span class="st">"survey"</span>, <span class="st">"tmle"</span>, <span class="st">"RColorBrewer"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Installing those that are not installed yet:</p>
 <div class="cell" data-layout-align="center">
@@ -322,8 +325,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="rs-crf-data" class="level2" data-number="4">
-<h2 data-number="4" class="anchored" data-anchor-id="rs-crf-data"><span class="header-section-number">4</span> 08RS CRF data</h2>
+<section id="raw-data" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="raw-data"><span class="header-section-number">4</span> Raw data</h2>
+<section id="rs-crf" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="rs-crf"><span class="header-section-number">4.1</span> 08RS CRF</h3>
 <p>Loading the data from CliRes:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>CRF08RS <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"6-11-2024-CTU08RS_Data.xlsx"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -401,8 +406,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>                                    <span class="st">"BehaveChange"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="ei-crf-data" class="level2" data-number="5">
-<h2 data-number="5" class="anchored" data-anchor-id="ei-crf-data"><span class="header-section-number">5</span> 02EI CRF data</h2>
+<section id="ei-crf" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="ei-crf"><span class="header-section-number">4.2</span> 02EI CRF</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>CRF02EI <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"6-11-2024-CTU02EI_Data.xlsx"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -414,8 +419,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"muscleStength"</span>, <span class="st">"limbParalysing"</span>, <span class="st">"nerveParalysing"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="pcr-data" class="level2" data-number="6">
-<h2 data-number="6" class="anchored" data-anchor-id="pcr-data"><span class="header-section-number">6</span> PCR data</h2>
+<section id="pcr-data" class="level3" data-number="4.3">
+<h3 data-number="4.3" class="anchored" data-anchor-id="pcr-data"><span class="header-section-number">4.3</span> PCR data</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>PCR <span class="ot">&lt;-</span> <span class="st">"03EI-08RS PCR-Seq result.xlsx"</span> <span class="sc">|&gt;</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel2</span>(<span class="st">"08RS"</span>) <span class="sc">|&gt;</span> </span>
@@ -424,8 +429,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="mri-data" class="level2" data-number="7">
-<h2 data-number="7" class="anchored" data-anchor-id="mri-data"><span class="header-section-number">7</span> MRI data</h2>
+<section id="mri-data" class="level3" data-number="4.4">
+<h3 data-number="4.4" class="anchored" data-anchor-id="mri-data"><span class="header-section-number">4.4</span> MRI data</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>MRI <span class="ot">&lt;-</span> <span class="fu">paste0</span>(root, <span class="st">"/GitHub/choisy/08RS/part_dataMRIentry_28AUG15_errorcor.csv"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  readr<span class="sc">::</span><span class="fu">read_csv</span>() <span class="sc">|&gt;</span> </span>
@@ -453,10 +458,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="children-data" class="level2" data-number="8">
-<h2 data-number="8" class="anchored" data-anchor-id="children-data"><span class="header-section-number">8</span> Children data</h2>
-<section id="rs-pcr-mri" class="level3" data-number="8.1">
-<h3 data-number="8.1" class="anchored" data-anchor-id="rs-pcr-mri"><span class="header-section-number">8.1</span> 08RS, PCR, MRI</h3>
+</section>
+<section id="children-data" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="children-data"><span class="header-section-number">5</span> Children data</h2>
+<section id="rs-pcr-mri" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="rs-pcr-mri"><span class="header-section-number">5.1</span> 08RS, PCR, MRI</h3>
 <p>The case and control groups:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>groups <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">"HFMD"</span>, <span class="dv">299</span>), <span class="fu">rep</span>(<span class="st">"control"</span>, <span class="dv">200</span>),</span>
@@ -505,8 +511,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="patching-02ei-crf" class="level3" data-number="8.2">
-<h3 data-number="8.2" class="anchored" data-anchor-id="patching-02ei-crf"><span class="header-section-number">8.2</span> Patching 02EI CRF</h3>
+<section id="patching-02ei-crf" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="patching-02ei-crf"><span class="header-section-number">5.2</span> Patching 02EI CRF</h3>
 <p>Conversion of IDs between 02EI and 08RS:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>(ID_conv <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">s02EI =</span> <span class="fu">paste0</span>(<span class="st">"03-0"</span>, <span class="fu">c</span>(<span class="fu">paste0</span>(<span class="st">"0"</span>, <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">3</span><span class="sc">:</span><span class="dv">9</span>)), <span class="fu">c</span>(<span class="st">"11"</span>, <span class="st">"13"</span>))),</span>
@@ -548,8 +554,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">patch</span>(children, <span class="st">"ParNo"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="stunt-and-waste" class="level3" data-number="8.3">
-<h3 data-number="8.3" class="anchored" data-anchor-id="stunt-and-waste"><span class="header-section-number">8.3</span> Stunt and waste</h3>
+<section id="stunt-and-waste" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="stunt-and-waste"><span class="header-section-number">5.3</span> Stunt and waste</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>children <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age =</span> DateEnrol <span class="sc">-</span> DateBirth,</span>
@@ -564,8 +570,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span> zlen, <span class="sc">-</span> zwfl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="missing-values" class="level3" data-number="8.4">
-<h3 data-number="8.4" class="anchored" data-anchor-id="missing-values"><span class="header-section-number">8.4</span> Missing values</h3>
+<section id="missing-values" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="missing-values"><span class="header-section-number">5.4</span> Missing values</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(children)</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -617,8 +623,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </section>
 </section>
-<section id="m-abc-data" class="level2" data-number="9">
-<h2 data-number="9" class="anchored" data-anchor-id="m-abc-data"><span class="header-section-number">9</span> M-ABC data</h2>
+<section id="m-abc-data" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="m-abc-data"><span class="header-section-number">6</span> M-ABC data</h2>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="ot">&lt;-</span> CRF08RS<span class="sc">$</span>ABC <span class="sc">|&gt;</span> </span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, DateTested, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>)) <span class="sc">|&gt;</span> </span>
@@ -652,8 +658,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="bayley-data" class="level2" data-number="10">
-<h2 data-number="10" class="anchored" data-anchor-id="bayley-data"><span class="header-section-number">10</span> Bayley data</h2>
+<section id="bayley-data" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="bayley-data"><span class="header-section-number">7</span> Bayley data</h2>
 <p>Loading the data from CliRes:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>Bayley0 <span class="ot">&lt;-</span> <span class="fu">read_excel_file</span>(<span class="st">"12-9-2025-Bayley_v3_P1_Data.xlsx"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -685,8 +691,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ParNo, <span class="sc">~</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(.x, <span class="st">"08RS_"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="saras-csv-file" class="level2" data-number="11">
-<h2 data-number="11" class="anchored" data-anchor-id="saras-csv-file"><span class="header-section-number">11</span> Saras’ CSV file</h2>
+<section id="saras-csv-file" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="saras-csv-file"><span class="header-section-number">8</span> Saras’ CSV file</h2>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>saras <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">paste0</span>(root, <span class="st">"/GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -718,8 +724,8 @@ Not Wasted      Waste
 </div>
 </div>
 </section>
-<section id="time-points" class="level2" data-number="12">
-<h2 data-number="12" class="anchored" data-anchor-id="time-points"><span class="header-section-number">12</span> Time points</h2>
+<section id="time-points" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="time-points"><span class="header-section-number">9</span> Time points</h2>
 <p>A function that generates the time points:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>make_time_points <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
@@ -760,8 +766,8 @@ Not Wasted      Waste
 <span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(data_with_time_points, ParNo <span class="sc">%in%</span> IDs_with_duplicates)</span>
 <span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<section id="m-abc-data-1" class="level3" data-number="12.1">
-<h3 data-number="12.1" class="anchored" data-anchor-id="m-abc-data-1"><span class="header-section-number">12.1</span> M-ABC data</h3>
+<section id="m-abc-data-1" class="level3" data-number="9.1">
+<h3 data-number="9.1" class="anchored" data-anchor-id="m-abc-data-1"><span class="header-section-number">9.1</span> M-ABC data</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>ABC <span class="sc">|&gt;</span></span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show_duplicated_assessments</span>() <span class="sc">|&gt;</span> </span>
@@ -779,8 +785,8 @@ Not Wasted      Waste
 <span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Date_ABC =</span> DateTested)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="bayley-data-1" class="level3" data-number="12.2">
-<h3 data-number="12.2" class="anchored" data-anchor-id="bayley-data-1"><span class="header-section-number">12.2</span> Bayley data</h3>
+<section id="bayley-data-1" class="level3" data-number="9.2">
+<h3 data-number="9.2" class="anchored" data-anchor-id="bayley-data-1"><span class="header-section-number">9.2</span> Bayley data</h3>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>Bayley <span class="ot">&lt;-</span> <span class="fu">rename</span>(Bayley, <span class="at">DateTested =</span> DATETESTED)</span>
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -804,15 +810,15 @@ Not Wasted      Waste
 <span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Date_Bayley =</span> DateTested)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="merging" class="level3" data-number="12.3">
-<h3 data-number="12.3" class="anchored" data-anchor-id="merging"><span class="header-section-number">12.3</span> Merging</h3>
+<section id="merging" class="level3" data-number="9.3">
+<h3 data-number="9.3" class="anchored" data-anchor-id="merging"><span class="header-section-number">9.3</span> Merging</h3>
 <p>Merging the M-ABC and Bayley data:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>followups <span class="ot">&lt;-</span> <span class="fu">full_join</span>(ABC2, Bayley2, <span class="fu">c</span>(<span class="st">"ParNo"</span>, <span class="st">"time_point"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="visualization" class="level3" data-number="12.4">
-<h3 data-number="12.4" class="anchored" data-anchor-id="visualization"><span class="header-section-number">12.4</span> Visualization</h3>
+<section id="visualization" class="level3" data-number="9.4">
+<h3 data-number="9.4" class="anchored" data-anchor-id="visualization"><span class="header-section-number">9.4</span> Visualization</h3>
 <p>A function that prepend all the data frames of a list <code>x</code> of data frames with <code>n</code> columns of the <code>v</code> values:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>prepend_white <span class="ot">&lt;-</span> <span class="cf">function</span>(x, n, v) {</span>
@@ -902,10 +908,10 @@ Not Wasted      Waste
 <p>where blue is where the Bayley data are available, red is where the M-ABC data are available, purple is where both data are available and white is where none of the data are available.</p>
 </section>
 </section>
-<section id="analysis" class="level2" data-number="13">
-<h2 data-number="13" class="anchored" data-anchor-id="analysis"><span class="header-section-number">13</span> Analysis</h2>
-<section id="hfmd-vs-controls" class="level3" data-number="13.1">
-<h3 data-number="13.1" class="anchored" data-anchor-id="hfmd-vs-controls"><span class="header-section-number">13.1</span> HFMD vs controls</h3>
+<section id="analysis" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="analysis"><span class="header-section-number">10</span> Analysis</h2>
+<section id="hfmd-vs-controls" class="level3" data-number="10.1">
+<h3 data-number="10.1" class="anchored" data-anchor-id="hfmd-vs-controls"><span class="header-section-number">10.1</span> HFMD vs controls</h3>
 <p>From here we work with 2 data frames: <code>children</code> that contains the children information, and <code>followups</code> that contains the follow-up data. Note that height and weight (and consequently stunting) is missing for about 22% of children:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
@@ -1006,8 +1012,8 @@ Not Wasted      Waste
 </div>
 </div>
 </section>
-<section id="propensity-scores" class="level3" data-number="13.2">
-<h3 data-number="13.2" class="anchored" data-anchor-id="propensity-scores"><span class="header-section-number">13.2</span> Propensity scores</h3>
+<section id="propensity-scores" class="level3" data-number="10.2">
+<h3 data-number="10.2" class="anchored" data-anchor-id="propensity-scores"><span class="header-section-number">10.2</span> Propensity scores</h3>
 <p>The covariates:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>covariables <span class="ot">&lt;-</span> <span class="fu">select</span>(children, ParNo, Gender, age, MomEdu, stunting, group)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1342,8 +1348,8 @@ Not Wasted      Waste
 <li>max weight should not be much higher than 10 to 20 times the median weight.</li>
 </ul>
 </section>
-<section id="responses" class="level3" data-number="13.3">
-<h3 data-number="13.3" class="anchored" data-anchor-id="responses"><span class="header-section-number">13.3</span> Responses</h3>
+<section id="responses" class="level3" data-number="10.3">
+<h3 data-number="10.3" class="anchored" data-anchor-id="responses"><span class="header-section-number">10.3</span> Responses</h3>
 <p>A function that plots the density of the response for a given data set (where the response is the first variable of input <code>x</code> data frame):</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a>plot_density1 <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
@@ -1387,7 +1393,7 @@ Not Wasted      Waste
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-91-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+<p><img src="data_files/figure-html/fig_responses_distribution1-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1402,14 +1408,14 @@ Not Wasted      Waste
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-92-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+<p><img src="data_files/figure-html/fig_responses_distribution2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="plot-effects" class="level3" data-number="13.4">
-<h3 data-number="13.4" class="anchored" data-anchor-id="plot-effects"><span class="header-section-number">13.4</span> Plot effects</h3>
+<section id="ploting-effects" class="level3" data-number="10.4">
+<h3 data-number="10.4" class="anchored" data-anchor-id="ploting-effects"><span class="header-section-number">10.4</span> Ploting effects</h3>
 <p>The methods and their color code:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="#cb103-1" aria-hidden="true" tabindex="-1"></a>methods <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"l0"</span>, <span class="st">"l1"</span>, <span class="st">"ow"</span>, <span class="st">"tw"</span>, <span class="st">"t2"</span>)</span>
@@ -1477,7 +1483,7 @@ Not Wasted      Waste
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-98-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+<p><img src="data_files/figure-html/fig_M_ABC-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1517,7 +1523,7 @@ Not Wasted      Waste
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-101-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+<p><img src="data_files/figure-html/fig_Bayley-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
 </figure>
 </div>
 </div>

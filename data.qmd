@@ -46,7 +46,7 @@ knitr::opts_chunk$set(margin1    = TRUE,
 ```
 
 
-## Global parameters
+## Constants
 
 The path to the data folder on the local computer:
 
@@ -72,7 +72,7 @@ Required packages:
 
 ```{r}
 required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
-              "cobalt", "survey", "tmle")
+              "cobalt", "survey", "tmle", "RColorBrewer")
 ```
 
 Installing those that are not installed yet:
@@ -303,7 +303,9 @@ range2 <- function(x, var) {
 ```
 
 
-## 08RS CRF data
+## Raw data
+
+### 08RS CRF
 
 Loading the data from CliRes:
 
@@ -390,7 +392,7 @@ selection08RS <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth")
 ```
 
 
-## 02EI CRF data
+### 02EI CRF
 
 ```{r}
 CRF02EI <- read_excel_file("6-11-2024-CTU02EI_Data.xlsx")
@@ -406,7 +408,7 @@ selection02EI <- list(Demo  = c("studyCode", "height", "weight"),
 ```
 
 
-## PCR data
+### PCR data
 
 ```{r message = FALSE}
 PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
@@ -417,7 +419,7 @@ PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
 ```
 
 
-## MRI data
+### MRI data
 
 ```{r, message = FALSE}
 MRI <- paste0(root, "/GitHub/choisy/08RS/part_dataMRIentry_28AUG15_errorcor.csv") |>
@@ -1225,7 +1227,7 @@ plot_density2 <- function(x) {
 
 Let's look at the distribution of the responses:
 
-```{r fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
+```{r fig_responses_distribution1, fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
 opar <- par(mfrow = c(6, 4))
 output |> 
   pull(dataset) |> 
@@ -1236,7 +1238,7 @@ par(opar)
 Let's look at the distribution of the responses, distinguishing control (in blue) and
 infected patients (red):
 
-```{r fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
+```{r fig_responses_distribution2, fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
 opar <- par(mfrow = c(6, 4))
 output |> 
   pull(dataset) |> 
@@ -1245,7 +1247,7 @@ par(opar)
 ```
 
 
-### Plot effects
+### Ploting effects
 
 The methods and their color code:
 
@@ -1301,7 +1303,7 @@ plot_effects <- function(x) {
 
 Plotting the variables that are available at 18 months only:
 
-```{r}
+```{r fig_M_ABC}
 prepare_data1 <- function(method, data) {
   data |> 
     select(response, ends_with(method), -starts_with(c("p", "m"))) |> 
@@ -1345,7 +1347,7 @@ plot_1_variable <- function(var) {
 
 Plotting the other variables:
 
-```{r  fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
+```{r fig_Bayley, fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
 opar <- par(mfrow = c(3, 2))
 output |> 
   pull(response) |> 
