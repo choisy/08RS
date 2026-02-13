@@ -1003,6 +1003,20 @@ reformulate2 <- function(y) {
 }
 ```
 
+A function that processes the output of a model in the `pipeline()` function that
+follows:
+
+```{r}
+process_model <- function(x, model, nm) {
+  x |> 
+    mutate(!!paste0("cf_", nm) := map_dbl({{ model }}, coef2),
+           ci                   = map({{ model }}, confint2)) |>   
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, nm), ends_with("%")) |> 
+    mutate(!!paste0("p_", nm) := map_dbl({{ model}}, get_p))
+}
+```
+
 The pipeline:
 
 ```{r}
@@ -1028,39 +1042,14 @@ pipeline <- function() {
            glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
            m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
            m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
-           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2)),
-# 1 - logistic regression without any covariate:         
-           cf_l0 = map_dbl(glm0, coef2),
-           ci = map(glm0, confint2)) |>   
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "l0"), ends_with("%")) |> 
-    mutate(p_l0 = map_dbl(glm0, get_p),
-# 2 - logistic regression with covariates:
-           cf_l1 = map_dbl(glm1, coef2),
-           ci = map(glm1, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "l1"), ends_with("%")) |> 
-    mutate(p_l1 = map_dbl(glm1, get_p),
-# 3 - weights calculated from a logistic regression:         
-           cf_ow = map_dbl(m_ow, coef2),
-           ci = map(m_ow, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "ow"), ends_with("%")) |> 
-    mutate(p_ow = map_dbl(m_ow, get_p),
-# 4 - weights calculated from TWANG with default parameters:         
-           cf_tw = map_dbl(m_tw, coef2),
-           ci = map(m_tw, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "tw"), ends_with("%")) |> 
-    mutate(p_tw = map_dbl(m_tw, get_p),
-# 5 - weights calculated from TWANG with Saras' parameters:         
-           cf_t2 = map_dbl(m_t2, coef2),
-           ci = map(m_t2, confint2)) |> 
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, "t2"), ends_with("%")) |> 
-    mutate(p_t2 = map_dbl(m_t2, get_p),
+           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2))) |> 
+    process_model(glm0, "l0") |> 
+    process_model(glm1, "l1") |> 
+    process_model(m_ow, "ow") |> 
+    process_model(m_tw, "tw") |> 
+    process_model(m_t2, "t2") |> 
 # 6 - TMLE:           
-           tmle = map2_dfr(dataset, response, tmle2)) |> 
+    mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
     unnest_wider(tmle)
 }
 ```
