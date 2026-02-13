@@ -670,6 +670,17 @@ comparing_data |>
   setNames(c("CRF", "Saras'", "n"))
 ```
 
+Patching the `children` data frame with Saras' CSV file for weight, height, stunt and
+waste, and recomputing our stunting and wasting data:
+
+```{r}
+children <- children |> 
+  left_join(saras_stunt, "ParNo") |> 
+  mutate(across(stunt, ~ .x == "Stunt"),
+         across(waste, ~ .x == "Waste")) |> 
+  stunt_waste(WEIGHT, HEIGHT)
+```
+
 
 ## M-ABC data
 
