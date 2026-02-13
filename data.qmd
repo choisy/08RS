@@ -27,18 +27,17 @@ add_nojekyll <- function() {
 ```
 
 ```{r include = FALSE}
+setHook("plot.new", NULL, action = "replace")
+
 par2 <- function(...) par(..., mgp = c(1.5, .5, 0), bty = "n")
 
 knitr::knit_hooks$set(
-  margin1 = function(before, options, envir) {
+  margin = function(before, options, envir) {
     if (before) par2(plt = c(.105, .97, .15, .95)) else NULL
-  },
-  margin2 = function(before, options, envir) {
-    if (before) par2(plt = c(.105, .97, .25, .95)) else NULL
   })
 
 eps <- 1
-knitr::opts_chunk$set(margin1    = TRUE,
+knitr::opts_chunk$set(margin    = TRUE,
                       fig.retina = 2,
                       fig.align  = "center",
                       fig.height = eps * 5, # default is 5
@@ -300,6 +299,21 @@ range2 <- function(x, var) {
     map(mextract2, var) |> 
     range()
 }
+```
+
+## Saras' CSV file
+
+```{r, message = FALSE}
+saras <- readr::read_csv(paste0(root, "/GitHub/choisy/08RS/complete data including ",
+                                "all withdrawals_updated26_3_21.csv"))
+```
+
+```{r}
+select(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)
+```
+
+```{r}
+table(saras$waste)
 ```
 
 
@@ -581,6 +595,57 @@ controls |>
   print(n = Inf)
 ```
 
+Retrieving the height, weight and stunt data from Saras' CSV file:
+
+```{r}
+saras_stunt <- saras |> 
+  select(code, WEIGHT, HEIGHT, headCircumference, stunt, waste) |> 
+  unique() |> 
+  mutate(ParNo = paste0(ifelse(code < 923, "03-", "05-"), sprintf("%03d", code)))
+```
+
+Merging with our children data frame:
+
+```{r}
+comparing_data <- children |> 
+  select(ParNo, height, weigh, stunting) |> 
+  left_join(saras_stunt, "ParNo")
+```
+
+Checking that children codes match:
+
+```{r}
+setdiff(saras_stunt$ParNo, comparing_data$ParNo)
+setdiff(comparing_data$ParNo, saras_stunt$ParNo)
+```
+
+```{r}
+plot_comp <- function(...) {
+  plot(..., col = adjustcolor(4, .15), pch = 19,
+       xlab = "CRF", ylab = "Saras'", asp = 1)
+  abline(0, 1, col = 2)
+}
+```
+
+Comparing height data:
+
+```{r fig_comparisons, fig.width = 6, fig.height = 3}
+opar <- par(mfrow = 1:2, pty = "s", plt = rep(c(.2, .93), 2), bty = "o")
+
+comparing_data |> 
+  filter_out(is.na(height)) |> 
+  with(plot_comp(height, HEIGHT))
+mtext("heights (cm)", line = .2)
+
+comparing_data |> 
+  filter_out(is.na(weigh)) |> 
+  with(plot_comp(weigh, WEIGHT))
+mtext("weights (kg)", line = .2)
+
+par(opar)
+```
+
+
 
 ## M-ABC data
 
@@ -638,21 +703,6 @@ Bayley<- Bayley_tabs |>
   mutate(across(starts_with("DATE"), as.Date)) |> 
   rename(ParNo = PARNO) |> 
   mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_")))
-```
-
-
-## Saras' CSV file
-
-```{r, message = FALSE}
-saras <- readr::read_csv(paste0(root, "/GitHub/choisy/08RS/complete data including all withdrawals_updated26_3_21.csv"))
-```
-
-```{r}
-select(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)
-```
-
-```{r}
-table(saras$waste)
 ```
 
 
@@ -888,7 +938,7 @@ barplot2 <- function(height, x) {
           col = adjcol(rev(cols)))
 }
 
-add_legend <- function(where = "topright") {
+add_legend1 <- function(where = "topright") {
   legend(where, legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
 }
 ```
@@ -910,7 +960,7 @@ tmp |>
 tmp |> 
   walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
 
-add_legend()
+add_legend1()
 ```
 
 Let's now look at the level of the mother's education:
@@ -929,7 +979,7 @@ children |>
   t() |> 
   barplot2(c("none", "some", "5th grd", "9th grd", "12th grd", "college", "postgrad"))
 
-add_legend()
+add_legend1()
 ```
 
 Stunt and gender:
@@ -950,7 +1000,7 @@ children |>
   barplot2(rep(c("female", "male"), each = 2))
 
 mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = c(2, 5, 8, 11))
-add_legend()
+add_legend1()
 ```
 
 ### Propensity scores
@@ -1302,7 +1352,7 @@ output |>
 A function that adds the legend to a plot:
 
 ```{r}
-add_legend <- function() {
+add_legend2 <- function() {
   legend("topright", legend = methods, col = cols, lwd = 1, pch = 19, bty = "n")
 }
 ```
@@ -1339,7 +1389,7 @@ methods |>
   map(prepare_data1, filter(output, response %in% var1timepoint)) |> 
   plot_effects()
 
-add_legend()
+add_legend2()
 mtext(var1timepoint, 1, at = seq_along(var1timepoint))
 ```
 
@@ -1378,7 +1428,7 @@ output |>
   unique() |> 
   setdiff(var1timepoint) |> 
   walk(plot_1_variable)
-add_legend()
+add_legend2()
 par(opar)
 ```
 
