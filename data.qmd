@@ -545,15 +545,39 @@ children <- children |>
 
 ### Missing values
 
-```{r}
-n <- nrow(children)
+A function that computes the numbers and percentages of missing values per variable:
 
-children |> 
-  select(- group) |> 
-  map_dfr(~ sum(is.na(.x))) |> 
-  pivot_longer(! ParNo, names_to = "variable", values_to = "number_of_NA") |> 
-  mutate(percentage_of_NA = round(100 * number_of_NA / n)) |> 
-  select(- ParNo) |>
+```{r}
+number_of_NA <- function(x) {
+  x |> 
+    select(- group) |> 
+    map_dfr(~ sum(is.na(.x))) |> 
+    pivot_longer(! ParNo, names_to = "variable", values_to = "number_of_NA") |> 
+    mutate(percentage_of_NA = round(100 * number_of_NA / n)) |> 
+    select(- ParNo)
+}
+```
+
+Let's look at the missing values among cases:
+
+```{r}
+cases <- filter(children, group == "HFMD")
+n <- nrow(cases)
+
+cases |> 
+  number_of_NA() |> 
+  print(n = Inf)
+```
+
+And among controls:
+
+```{r}
+controls <- filter(children, group == "control")
+n <- nrow(controls)
+
+controls |> 
+  number_of_NA() |> 
+  filter(percentage_of_NA < 100) |> 
   print(n = Inf)
 ```
 
