@@ -543,37 +543,7 @@ children <- selection02EI |>
 
 ### Stunt and waste
 
-```{r include=FALSE, eval=FALSE}
-children <- children |> 
-  mutate(age = DateEnrol - DateBirth,
-         z   = anthro::anthro_zscores(c(male = 1, female = 2)[Gender],
-                                      as.numeric(age),
-                                      weight = weigh,
-                                      lenhei = height)[c("zlen", "zwfl")]) |> 
-  unnest(z) |> 
-  mutate(stunting = zlen < -2,
-         wasting  = ifelse(zwfl < -3, "severe",
-                           ifelse(zwfl < -2, "moderate", "no"))) |> 
-  select(- zlen, - zwfl)
-```
-
 A function that computes stunt and waste variable from weight and height variables:
-
-```{r include=FALSE, eval=FALSE}
-stunt_waste <- function(x, weight, height) {
-  x |> 
-    mutate(age = DateEnrol - DateBirth,
-           z   = anthro::anthro_zscores(c(male = 1, female = 2)[Gender],
-                                        as.numeric(age),
-                                        weight = {{ weight }},
-                                        lenhei = {{ height }})[c("zlen", "zwfl")]) |> 
-    unnest(z) |> 
-    mutate(stunting = zlen < -2,
-           wasting  = ifelse(zwfl < -3, "severe",
-                             ifelse(zwfl < -2, "moderate", "no"))) |> 
-    select(-c(zlen, zwfl))
-}
-```
 
 ```{r}
 stunt_waste <- function(x, weight, height) {
