@@ -32,6 +32,9 @@ par2 <- function(...) par(..., mgp = c(1.5, .5, 0), bty = "n")
 knitr::knit_hooks$set(
   margin1 = function(before, options, envir) {
     if (before) par2(plt = c(.105, .97, .15, .95)) else NULL
+  },
+  margin2 = function(before, options, envir) {
+    if (before) par2(plt = c(.105, .97, .25, .95)) else NULL
   })
 
 eps <- 1
@@ -260,6 +263,43 @@ Shortcut to `magrittr::extract2(...)`:
 
 ```{r}
 mextract2 <- function(...) magrittr::extract2(...)
+```
+
+A function that pads density coordinates with y zero value points:
+
+```{r}
+pad_density <- function(x) {
+  tmp <- x$x
+  x$x <- c(tmp[1], tmp, last(tmp))
+  x$y <- c(0, x$y, 0)
+  x
+}
+```
+
+A tuning of the `density()` function:
+
+```{r}
+density2 <- function(...) {
+  density(...) |> 
+    pad_density()
+}
+```
+
+A tuning of the `polygon()` function:
+
+```{r}
+polygon2 <- function(...) polygon(..., border = NA)
+```
+
+A function that computes the range of a variable `var` across a list `x` of data
+frames:
+
+```{r}
+range2 <- function(x, var) {
+  x |> 
+    map(mextract2, var) |> 
+    range()
+}
 ```
 
 
@@ -1138,3 +1178,184 @@ moderate imbalance. Values above 0.2 are a problem.
 than 50% of original sample size).
 * effective sample size should not be lower than the number treated.
 * max weight should not be much higher than 10 to 20 times the median weight.
+
+### Responses
+
+A function that plots the density of the response for a given data set (where the
+response is the first variable of input `x` data frame):
+
+```{r}
+plot_density1 <- function(x) {
+  x |> 
+    pull(1) |> 
+    density2() |> 
+    (\(x) {
+      plot(x, type = "n", xlab = "response", ylab = "density")
+      polygon2(x, col = 4)
+    })()
+}
+```
+
+This function splits the response (i.e. first variable) of the `x` data frame into
+control and disease:
+
+```{r}
+split2control_disease <- function(x) {
+  c("control", "HFMD") |> 
+    set_names() |> 
+    map(~ x |> filter(group == .x) |> pull(1))
+}
+```
+
+This function does the same as `plot_density1()` but for the control and infected
+separately:
+
+```{r}
+plot_density2 <- function(x) {
+  x |> 
+    split2control_disease() |> 
+    map(density2) |> 
+    (\(x) {
+      plot(NA, xlim = range2(x, "x"), ylim = range2(x, "y"),
+           xlab = "response", ylab = "density")
+      walk2(x, adjustcolor(c(4, 2), .2), ~ polygon2(.x, col = .y))
+    })()
+}
+```
+
+Let's look at the distribution of the responses:
+
+```{r fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
+opar <- par(mfrow = c(6, 4))
+output |> 
+  pull(dataset) |> 
+  walk(plot_density1)
+par(opar)
+```
+
+Let's look at the distribution of the responses, distinguishing control (in blue) and
+infected patients (red):
+
+```{r fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
+opar <- par(mfrow = c(6, 4))
+output |> 
+  pull(dataset) |> 
+  walk(plot_density2)
+par(opar)
+```
+
+
+### Plot effects
+
+The methods and their color code:
+
+```{r}
+methods <- c("l0", "l1", "ow", "tw", "t2")
+cols <- RColorBrewer::brewer.pal(length(methods), "Set1")
+```
+
+The variables that have only 1 time point:
+
+```{r}
+(var1timepoint <- output |> 
+  group_by(response) |> 
+  tally() |> 
+  filter_out(n > 1) |> 
+  pull(response))
+```
+
+And this time point is 18 months:
+
+```{r}
+output |> 
+  filter(response %in% var1timepoint) |> 
+  pull(timepoint) |> 
+  unique()
+```
+
+A function that adds the legend to a plot:
+
+```{r}
+add_legend <- function() {
+  legend("topright", legend = methods, col = cols, lwd = 1, pch = 19, bty = "n")
+}
+```
+
+The function that plots the effects of disease on the scores:
+
+```{r}
+plot_effects <- function(x) {
+  x |>
+    map2(seq(-.2, .2, .1), ~ mutate(.x, x = x + .y)) |> 
+    map2(cols, ~ mutate(.x, col = .y)) |> 
+    bind_rows() |> 
+    with({
+      plot(x, y, ylim = c(min(l), max(u)), col = col, axes = FALSE, xlab = NA,
+           pch = 19, ylab = "effect of disease on score")
+      abline(h = 0)
+      arrows(x, l, x, u, .05, 90, 3, col)
+      })
+  axis(2)
+}
+```
+
+Plotting the variables that are available at 18 months only:
+
+```{r}
+prepare_data1 <- function(method, data) {
+  data |> 
+    select(response, ends_with(method), -starts_with(c("p", "m"))) |> 
+    mutate(x = 1:n()) |> 
+    setNames(c("response", "y", "l", "u", "x"))
+}
+
+methods |> 
+  map(prepare_data1, filter(output, response %in% var1timepoint)) |> 
+  plot_effects()
+
+add_legend()
+mtext(var1timepoint, 1, at = seq_along(var1timepoint))
+```
+
+The time points:
+
+```{r}
+timepoints <- c("enrollment", "6 months", "18 months")
+```
+
+The function that plots 3 time points for 1 variables, and 5 methods:
+
+```{r}
+prepare_data2 <- function(method, data) {
+  data |> 
+    select(timepoint, ends_with(method), -starts_with(c("p", "m"))) |> 
+    mutate(x = 1:n()) |> 
+    setNames(c("timepoint", "y", "l", "u", "x"))
+}
+
+plot_1_variable <- function(var) {
+  methods |> 
+    map(prepare_data2, filter(output, response == var)) |> 
+    plot_effects()
+
+  mtext(var, line = -1, at = 1.5)
+  mtext(timepoints, 1, at = seq_along(timepoints), cex = 2 / 3)
+}
+```
+
+Plotting the other variables:
+
+```{r  fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
+opar <- par(mfrow = c(3, 2))
+output |> 
+  pull(response) |> 
+  unique() |> 
+  setdiff(var1timepoint) |> 
+  walk(plot_1_variable)
+add_legend()
+par(opar)
+```
+
+
+
+
