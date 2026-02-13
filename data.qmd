@@ -543,7 +543,7 @@ children <- selection02EI |>
 
 ### Stunt and waste
 
-```{r}
+```{r include=FALSE, eval=FALSE}
 children <- children |> 
   mutate(age = DateEnrol - DateBirth,
          z   = anthro::anthro_zscores(c(male = 1, female = 2)[Gender],
@@ -556,6 +556,49 @@ children <- children |>
                            ifelse(zwfl < -2, "moderate", "no"))) |> 
   select(- zlen, - zwfl)
 ```
+
+A function that computes stunt and waste variable from weight and height variables:
+
+```{r include=FALSE, eval=FALSE}
+stunt_waste <- function(x, weight, height) {
+  x |> 
+    mutate(age = DateEnrol - DateBirth,
+           z   = anthro::anthro_zscores(c(male = 1, female = 2)[Gender],
+                                        as.numeric(age),
+                                        weight = {{ weight }},
+                                        lenhei = {{ height }})[c("zlen", "zwfl")]) |> 
+    unnest(z) |> 
+    mutate(stunting = zlen < -2,
+           wasting  = ifelse(zwfl < -3, "severe",
+                             ifelse(zwfl < -2, "moderate", "no"))) |> 
+    select(-c(zlen, zwfl))
+}
+```
+
+```{r}
+stunt_waste <- function(x, weight, height) {
+  x |> 
+    mutate(age = DateEnrol - DateBirth,
+           z   = anthro::anthro_zscores(c(male = 1, female = 2)[Gender],
+                                        as.numeric(age),
+                                        weight = {{ weight }},
+                                        lenhei = {{ height }})[c("zlen", "zwfl")]) |> 
+    unnest(z) |> 
+    mutate(stunting = zlen < -2,
+           wasting  = case_when(is.na(zwfl) ~ NA_character_,
+                                zwfl < -3 ~ "severe",
+                                zwfl < -2 ~ "moderate",
+                                .default = "no")) |> 
+    select(-c(zlen, zwfl))
+}
+```
+
+Adding stunt and waste data to the `children` data frame:
+
+```{r}
+children <- stunt_waste(children, weigh, height)
+```
+
 
 ### Missing values
 
@@ -627,7 +670,7 @@ plot_comp <- function(...) {
 }
 ```
 
-Comparing height data:
+Comparing height and weight data:
 
 ```{r fig_comparisons, fig.width = 6, fig.height = 3}
 opar <- par(mfrow = 1:2, pty = "s", plt = rep(c(.2, .93), 2), bty = "o")
@@ -645,6 +688,17 @@ mtext("weights (kg)", line = .2)
 par(opar)
 ```
 
+Comparing stunt data:
+
+```{r}
+comparing_data |> 
+  mutate(across(stunt, ~ .x == "Stunt")) |> 
+  filter_out(is.na(stunting)) |> 
+  group_by(stunting, stunt) |> 
+  tally() |> 
+  ungroup() |> 
+  setNames(c("CRF", "Saras'", "n"))
+```
 
 
 ## M-ABC data
