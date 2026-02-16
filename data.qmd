@@ -1370,9 +1370,6 @@ infected patients (red):
 
 ```{r fig_responses_distribution2, fig.width = 7, fig.height = 10}
 opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
-#output |> 
-#  pull(dataset) |> 
-#  walk(plot_density2)
 
 output |>
   select(dataset, response, timepoint) |> 
