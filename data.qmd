@@ -307,6 +307,12 @@ A tuning of the `mtext()` function:
 mtext2 <- function(...) mtext(..., cex = 2 / 3)
 ```
 
+A tuning of the `hist()` function:
+
+```{r}
+hist2 <- function(x, ...) hist(x, function(x) min(x):max(x), ...)
+```
+
 
 ## Saras' CSV file
 
@@ -1327,6 +1333,18 @@ plot_density1 <- function(dataset, response, timepoint) {
 }
 ```
 
+The same function as above but with a histogram:
+
+```{r}
+plot_histogram1 <- function(dataset, response, timepoint) {
+  dataset |> 
+    pull(1) |> 
+    hist2(col = 4, border = NA, main = NA,
+          xlab = paste(response, "score"), ylab = "probability")
+  mtext(timepoint, cex = 2 / 3)
+}
+```
+
 This function splits the response (i.e. first variable) of the `x` data frame into
 control and disease:
 
@@ -1355,6 +1373,23 @@ plot_density2 <- function(dataset, response, timepoint) {
 }
 ```
 
+The histogram version:
+
+```{r}
+plot_histogram2 <- function(dataset, response, timepoint) {
+  dataset |> 
+    split2control_disease() |> 
+    map(hist2, plot = FALSE) |> 
+    (\(x) {
+      plot(NA, xlim = range2(x, "breaks"), ylim = range2(x, "density"),
+           xlab = paste(response, "score"), ylab = "probability")
+      walk2(x, adjustcolor(c(4, 2), .2),
+            ~ plot(.x, col = .y, freq = FALSE, border = NA, add = TRUE))
+    })()
+  mtext(timepoint, cex = 2 / 3)
+}
+```
+
 Let's look at the distribution of the responses:
 
 ```{r fig_responses_distribution1, fig.width = 7, fig.height = 10}
@@ -1362,6 +1397,16 @@ opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
 output |>
   select(dataset, response, timepoint) |> 
   pwalk(plot_density1)
+par(opar)
+```
+
+The histogram version:
+
+```{r fig_responses_distribution1h, fig.width = 7, fig.height = 10}
+opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
+output |>
+  select(dataset, response, timepoint) |> 
+  pwalk(plot_histogram1)
 par(opar)
 ```
 
@@ -1374,6 +1419,24 @@ opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
 output |>
   select(dataset, response, timepoint) |> 
   pwalk(plot_density2)
+
+plot(1, type = "n", ann = FALSE, axes = FALSE)
+add_legend1("center")
+
+par(opar)
+```
+
+The histogram version:
+
+```{r fig_responses_distribution2h, fig.width = 7, fig.height = 10}
+opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
+
+output |>
+  select(dataset, response, timepoint) |> 
+  pwalk(plot_histogram2)
+
+plot(1, type = "n", ann = FALSE, axes = FALSE)
+add_legend1("center")
 
 par(opar)
 ```
@@ -1442,14 +1505,18 @@ Let's plot the effect for all the score, time points and methods:
 
 ```{r fig_Bayley, fig.width = 7, fig.height = 25 / 3}
 opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+
+plot(1, type = "n", ann = FALSE, axes = FALSE)
+legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
+       legend = c("no correction", "multivariate model", "PS by logistic regression",
+                  "PS by gradient boosting, default",
+                  "PS by gradient boosting, Saras'"))
+
 output |> 
   pull(response) |> 
   unique() |> 
   walk(plot_1_variable)
-plot(1, type = "n", ann = FALSE, axes = FALSE)
-legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
-       legend = c("no correction", "multivariate model", "PS by logistic regression",
-                  "PS by GB default", "PS by GB Saras'"))
+
 par(opar)
 ```
 
