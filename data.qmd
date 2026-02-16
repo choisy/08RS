@@ -1520,8 +1520,44 @@ output |>
 par(opar)
 ```
 
+## EV-A71 and severe cases
 
+The various PCR results:
 
+```{r}
+sort(unique(children$PCR))
+```
+
+Severity vs EV71:
+
+```{r}
+children |> 
+  filter(group == "HFMD") |>
+  mutate(EV71 = str_detect(PCR, "EV-A71")) |> 
+  with(table(HFMD, EV71))
+```
+
+## HERE
+
+```{r}
+plot_effects_all <- function(x) {
+  plot(1, type = "n", ann = FALSE, axes = FALSE)
+  legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
+         legend = c("no correction", "multivariate model", "PS by logistic regression",
+                    "PS by gradient boosting, default",
+                    "PS by gradient boosting, Saras'"))
+  x |> 
+    pull(response) |> 
+    unique() |> 
+    walk(plot_1_variable)
+}
+```
+
+```{r fig_Bayley2, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output)
+par(opar)
+```
 
 
 
