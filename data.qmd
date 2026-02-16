@@ -36,12 +36,15 @@ knitr::knit_hooks$set(
     if (before) par2(plt = c(.105, .97, .15, .95)) else NULL
   })
 
-eps <- 1
-knitr::opts_chunk$set(margin    = TRUE,
+figw <- 7  # default is 7
+figh <- 5  # default is 5
+eps <- .7
+
+knitr::opts_chunk$set(margin     = TRUE,
                       fig.retina = 2,
                       fig.align  = "center",
-                      fig.height = eps * 5, # default is 5
-                      fig.width  = eps * 7) # default is 7
+                      fig.width  = eps * figw,
+                      fig.height = eps * figh) 
 ```
 
 
@@ -278,10 +281,7 @@ pad_density <- function(x) {
 A tuning of the `density()` function:
 
 ```{r}
-density2 <- function(...) {
-  density(...) |> 
-    pad_density()
-}
+density2 <- function(...) pad_density(density(...))
 ```
 
 A tuning of the `polygon()` function:
@@ -300,6 +300,13 @@ range2 <- function(x, var) {
     range()
 }
 ```
+
+A tuning of the `mtext()` function:
+
+```{r}
+mtext2 <- function(...) mtext(..., cex = 2 / 3)
+```
+
 
 ## Saras' CSV file
 
@@ -896,7 +903,7 @@ heatmap2 <- function(x, nbrow = 45, nb_wc = 2,
                      col_Bayley = adjustcolor("red", .3),
                      col_ABC    = adjustcolor("blue", .3),
                      col_NA     = adjustcolor("white", 0),
-                     col_lines  = "white") {
+                     col_lines  = "white", cx = .5) {
 # plotting M-ABC data:
   tmp <- x |> 
     select(-Date_Bayley) |> 
@@ -924,23 +931,35 @@ heatmap2 <- function(x, nbrow = 45, nb_wc = 2,
   nbcol <- ncol_tmp / by
   xs <- rep(seq(1, ncol_tmp, by), each = nbrow)[sel]
   ys <- rep(rev(1:nbrow - .5), nbcol)[sel]
-  text(xs, ys, ids)
+  text(xs, ys, ids, cex = cx)
 
 # adding time points:
   xx <- seq(1 + nb_wc, ncol_tmp, by) - .5
-  mtext(rep(c("e", "1", "2"), nbcol)[sel], at = sort(c(xx, xx + 1, xx + 2)))
+  mtext(rep(c("e", "1", "2"), nbcol)[sel], at = sort(c(xx, xx + 1, xx + 2)), cex = cx)
 }
 ```
 
 An overview of the M-ABC and Bayley data for all the children and the 3 time points:
 
-```{r fig_followup_data_availability, fig.height = 11, fig.width  = 14}
+```{r fig_followup_data_availability, fig.width  = 7, fig.height = 5.5}
+opar <- par(plt = c(.07, .97, .07, .95))
+
 expand_grid(ParNo      = unique(followups$ParNo),
             time_point = c("enrollment", "6 months", "18 months")) |> 
   left_join(followups, c("ParNo", "time_point")) |> 
   select(ParNo, time_point, starts_with("Date")) |> 
   mutate(across(starts_with("Date"), ~ as.numeric(! is.na(.x)) + 1)) |> 
   heatmap2()
+
+color_codes <- rgb(c(255, 191, 192),
+                   c(193, 194, 147),
+                   c(193, 255, 213), names = c("m-abc", "bayley", "both"), max = 255)
+
+usr <- par("usr")
+legend(usr[1] + mean(usr[1:2]), usr[3] - 2, legend = c("M-ABC", "Bayley", "both"),
+       fill = color_codes, bty = "n", horiz = TRUE, xpd = TRUE, xjust = .5, yjust = .5)
+
+par(opar)
 ```
 
 where blue is where the Bayley data are available, red is where the M-ABC data are
@@ -980,7 +999,7 @@ add_legend1 <- function(where = "topright") {
 
 Let's look at the age distribution of the controls and HFMD cases:
 
-```{r fig_age_distribution}
+```{r fig_age_distribution, fig.width = eps * figw, fig.height = eps * figh}
 tmp <- children |>
   mutate(across(age, ~ as.numeric(.x) / 30)) |> 
   group_by(group) |> 
@@ -1000,7 +1019,7 @@ add_legend1()
 
 Let's now look at the level of the mother's education:
 
-```{r fig_mom_edu}
+```{r fig_mom_edu, fig.width = eps * figw, fig.height = eps * figh}
 edu_order <- c("Never been to school", "Attended some primary school",
                "Completed primary school (5th gr)",
                "Completed lower secondary school (9th gr)",
@@ -1012,14 +1031,14 @@ children |>
   prop.table(2) %>%
   `[`(edu_order, ) |> 
   t() |> 
-  barplot2(c("none", "some", "5th grd", "9th grd", "12th grd", "college", "postgrad"))
+  barplot2(c("none", "some", "5th g", "9th g", "12th g", "collg", "postg"))
 
 add_legend1()
 ```
 
 Stunt and gender:
 
-```{r fig_sex_stunt}
+```{r fig_sex_stunt, fig.width = eps * figw, fig.height = eps * figh}
 children |> 
   select(group, Gender, stunting) |> 
   na.exclude() |> 
@@ -1034,7 +1053,7 @@ children |>
   `[`(2:1, ) |> 
   barplot2(rep(c("female", "male"), each = 2))
 
-mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = c(2, 5, 8, 11))
+mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = seq(2, 11, 3))
 add_legend1()
 ```
 
@@ -1296,14 +1315,15 @@ A function that plots the density of the response for a given data set (where th
 response is the first variable of input `x` data frame):
 
 ```{r}
-plot_density1 <- function(x) {
-  x |> 
+plot_density1 <- function(dataset, response, timepoint) {
+  dataset |> 
     pull(1) |> 
     density2() |> 
     (\(x) {
-      plot(x, type = "n", xlab = "response", ylab = "density")
+      plot(x, type = "n", xlab = paste(response, "score"), ylab = "density")
       polygon2(x, col = 4)
     })()
+  mtext(timepoint, cex = 2 / 3)
 }
 ```
 
@@ -1322,41 +1342,47 @@ This function does the same as `plot_density1()` but for the control and infecte
 separately:
 
 ```{r}
-plot_density2 <- function(x) {
-  x |> 
+plot_density2 <- function(dataset, response, timepoint) {
+  dataset |> 
     split2control_disease() |> 
     map(density2) |> 
     (\(x) {
       plot(NA, xlim = range2(x, "x"), ylim = range2(x, "y"),
-           xlab = "response", ylab = "density")
+           xlab = paste(response, "score"), ylab = "density")
       walk2(x, adjustcolor(c(4, 2), .2), ~ polygon2(.x, col = .y))
     })()
+  mtext(timepoint, cex = 2 / 3)
 }
 ```
 
 Let's look at the distribution of the responses:
 
-```{r fig_responses_distribution1, fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
-opar <- par(mfrow = c(6, 4))
-output |> 
-  pull(dataset) |> 
-  walk(plot_density1)
+```{r fig_responses_distribution1, fig.width = 7, fig.height = 10}
+opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
+output |>
+  select(dataset, response, timepoint) |> 
+  pwalk(plot_density1)
 par(opar)
 ```
 
 Let's look at the distribution of the responses, distinguishing control (in blue) and
 infected patients (red):
 
-```{r fig_responses_distribution2, fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
-opar <- par(mfrow = c(6, 4))
-output |> 
-  pull(dataset) |> 
-  walk(plot_density2)
+```{r fig_responses_distribution2, fig.width = 7, fig.height = 10}
+opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
+#output |> 
+#  pull(dataset) |> 
+#  walk(plot_density2)
+
+output |>
+  select(dataset, response, timepoint) |> 
+  pwalk(plot_density2)
+
 par(opar)
 ```
 
 
-### Ploting effects
+### Plotting effects
 
 The methods and their color code:
 
@@ -1365,34 +1391,26 @@ methods <- c("l0", "l1", "ow", "tw", "t2")
 cols <- RColorBrewer::brewer.pal(length(methods), "Set1")
 ```
 
-The variables that have only 1 time point:
+The time points:
 
 ```{r}
-(var1timepoint <- output |> 
-  group_by(response) |> 
-  tally() |> 
-  filter_out(n > 1) |> 
-  pull(response))
+timepoints <- c("enrollment", "6 months", "18 months")
+template <- tibble(timepoint = timepoints)
 ```
 
-And this time point is 18 months:
+A function that prepares the data:
 
 ```{r}
-output |> 
-  filter(response %in% var1timepoint) |> 
-  pull(timepoint) |> 
-  unique()
-```
-
-A function that adds the legend to a plot:
-
-```{r}
-add_legend2 <- function() {
-  legend("topright", legend = methods, col = cols, lwd = 1, pch = 19, bty = "n")
+prepare_data <- function(method, data) {
+  data |> 
+    select(timepoint, ends_with(method), -starts_with(c("p", "m"))) |> 
+    left_join(template, y = _, "timepoint") |> 
+    mutate(x = 1:n()) |> 
+    setNames(c("timepoint", "y", "l", "u", "x"))
 }
 ```
 
-The function that plots the effects of disease on the scores:
+A function that plots the effect for 1 score, for the 3 time points and the 5 methods:
 
 ```{r}
 plot_effects <- function(x) {
@@ -1401,71 +1419,44 @@ plot_effects <- function(x) {
     map2(cols, ~ mutate(.x, col = .y)) |> 
     bind_rows() |> 
     with({
-      plot(x, y, ylim = c(min(l), max(u)), col = col, axes = FALSE, xlab = NA,
-           pch = 19, ylab = "effect of disease on score")
+      plot(x, y, ylim = c(min(l, na.rm = TRUE), max(u, na.rm = TRUE)), col = col,
+           axes = FALSE, xlab = NA, pch = 19, ylab = "effect of disease on score")
       abline(h = 0)
-      arrows(x, l, x, u, .05, 90, 3, col)
+      arrows(x, l, x, u, .03, 90, 3, col)
       })
   axis(2)
 }
 ```
 
-Plotting the variables that are available at 18 months only:
-
-```{r fig_M_ABC}
-prepare_data1 <- function(method, data) {
-  data |> 
-    select(response, ends_with(method), -starts_with(c("p", "m"))) |> 
-    mutate(x = 1:n()) |> 
-    setNames(c("response", "y", "l", "u", "x"))
-}
-
-methods |> 
-  map(prepare_data1, filter(output, response %in% var1timepoint)) |> 
-  plot_effects()
-
-add_legend2()
-mtext(var1timepoint, 1, at = seq_along(var1timepoint))
-```
-
-The time points:
+A function that combines `prepare_data()` and `plot_effects()`:
 
 ```{r}
-timepoints <- c("enrollment", "6 months", "18 months")
-```
-
-The function that plots 3 time points for 1 variables, and 5 methods:
-
-```{r}
-prepare_data2 <- function(method, data) {
-  data |> 
-    select(timepoint, ends_with(method), -starts_with(c("p", "m"))) |> 
-    mutate(x = 1:n()) |> 
-    setNames(c("timepoint", "y", "l", "u", "x"))
-}
-
 plot_1_variable <- function(var) {
   methods |> 
-    map(prepare_data2, filter(output, response == var)) |> 
+    map(prepare_data, filter(output, response == var)) |> 
     plot_effects()
 
-  mtext(var, line = -1, at = 1.5)
-  mtext(timepoints, 1, at = seq_along(timepoints), cex = 2 / 3)
+  mtext2(var)
+  mtext2(timepoints, 1, at = seq_along(timepoints))
 }
 ```
 
-Plotting the other variables:
+Let's plot the effect for all the score, time points and methods:
 
-```{r fig_Bayley, fig.width = 7, fig.height = 7.5, margin1 = FALSE, margin2 = TRUE}
-opar <- par(mfrow = c(3, 2))
+```{r fig_Bayley, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
 output |> 
   pull(response) |> 
   unique() |> 
-  setdiff(var1timepoint) |> 
   walk(plot_1_variable)
-add_legend2()
+plot(1, type = "n", ann = FALSE, axes = FALSE)
+legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
+       legend = c("no correction", "multivariate model", "PS by logistic regression",
+                  "PS by GB default", "PS by GB Saras'"))
 par(opar)
 ```
+
+
 
 
 
