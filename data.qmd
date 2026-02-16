@@ -1433,7 +1433,7 @@ plot_1_variable <- function(var) {
     map(prepare_data, filter(output, response == var)) |> 
     plot_effects()
 
-  mtext2(var)
+  mtext2(paste(var, "score"))
   mtext2(timepoints, 1, at = seq_along(timepoints))
 }
 ```
