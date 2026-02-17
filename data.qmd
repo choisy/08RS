@@ -1081,8 +1081,8 @@ A function that generates a data set for a given response variable at a given ti
 point:
 
 ```{r}
-make_data <- function(response, timepoint) {
-  followups |> 
+make_data <- function(data, response, timepoint) {
+  data |> 
     filter(time_point == timepoint) |> 
     select(ParNo, all_of(response)) |> 
     na.exclude() |> 
@@ -1090,6 +1090,23 @@ make_data <- function(response, timepoint) {
     select(-ParNo) |> 
     select(all_of(response), group, everything()) |> 
     na.exclude()
+}
+```
+
+A function that prepares the follow-up data:
+
+```{r}
+prepare_fu_data <- function(data = followups, min_nb = 4) {
+  expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
+                            "BAL1ISS", "BAL2ISS", "BAL3ISS",
+                            "CS", "RC", "EC", "FM", "GM"),
+              timepoint = c("enrollment", "6 months", "18 months")) |> 
+    mutate(dataset = map2(response, timepoint, ~ make_data(data, .x, .y)),
+           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
+    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+    unnest_wider(ctable) |> 
+    filter(HFMD > min_nb)
 }
 ```
 
@@ -1195,13 +1212,13 @@ process_model <- function(x, model, nm) {
 
 The pipeline:
 
-```{r}
-pipeline <- function() {
+```{r include=FALSE, eval=FALSE}
+pipeline0 <- function(data = followups) {
   expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
                             "BAL1ISS", "BAL2ISS", "BAL3ISS",
                             "CS", "RC", "EC", "FM", "GM"),
               timepoint = c("enrollment", "6 months", "18 months")) |> 
-    mutate(dataset = map2(response, timepoint, ~ make_data(.x, .y)),
+    mutate(dataset = map2(response, timepoint, ~ make_data(data, .x, .y)),
            ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
     filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
     mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
@@ -1227,6 +1244,33 @@ pipeline <- function() {
 # 6 - TMLE:           
     mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
     unnest_wider(tmle)
+}
+```
+
+```{r}
+pipeline <- function(data = followups, min_nb = 4) {
+  data |> 
+    prepare_fu_data(min_nb) |> 
+    mutate(dataset = map(dataset,
+                         ~ mutate(.x, ow = logistic_ps(pick(everything())),
+                                      tw = twang_ps(pick(everything())),
+                                      t2 = twang_ps(pick(everything()),
+                                                    n.trees = 5000,
+                                                    interaction.depth = 2))),
+           formula = map(response, ~ reformulate("group", .x)),
+           glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
+           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
+           m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
+           m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
+           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2))) |> 
+    process_model(glm0, "l0") |> 
+    process_model(glm1, "l1") |> 
+    process_model(m_ow, "ow") |> 
+    process_model(m_tw, "tw") |> 
+    process_model(m_t2, "t2") #|> 
+# 6 - TMLE:           
+#    mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
+#    unnest_wider(tmle)
 }
 ```
 
@@ -1491,13 +1535,30 @@ plot_effects <- function(x) {
 A function that combines `prepare_data()` and `plot_effects()`:
 
 ```{r}
-plot_1_variable <- function(var) {
+plot_1_variable <- function(var, data) {
   methods |> 
-    map(prepare_data, filter(output, response == var)) |> 
+    map(prepare_data, filter(data, response == var)) |> 
     plot_effects()
 
   mtext2(paste(var, "score"))
   mtext2(timepoints, 1, at = seq_along(timepoints))
+}
+```
+
+The function that plots the effects for all the scores, for all time points and
+methods:
+
+```{r}
+plot_effects_all <- function(x) {
+  plot(1, type = "n", ann = FALSE, axes = FALSE)
+  legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
+         legend = c("no correction", "multivariate model", "PS by logistic regression",
+                    "PS by gradient boosting, default",
+                    "PS by gradient boosting, Saras'"))
+  x |> 
+    pull(response) |> 
+    unique() |> 
+    walk(plot_1_variable, x)
 }
 ```
 
@@ -1506,16 +1567,18 @@ Let's plot the effect for all the score, time points and methods:
 ```{r fig_Bayley, fig.width = 7, fig.height = 25 / 3}
 opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
 
-plot(1, type = "n", ann = FALSE, axes = FALSE)
-legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
-       legend = c("no correction", "multivariate model", "PS by logistic regression",
-                  "PS by gradient boosting, default",
-                  "PS by gradient boosting, Saras'"))
+plot_effects_all(output)
 
-output |> 
-  pull(response) |> 
-  unique() |> 
-  walk(plot_1_variable)
+#plot(1, type = "n", ann = FALSE, axes = FALSE)
+#legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
+#       legend = c("no correction", "multivariate model", "PS by logistic regression",
+#                  "PS by gradient boosting, default",
+#                  "PS by gradient boosting, Saras'"))
+#
+#output |> 
+#  pull(response) |> 
+#  unique() |> 
+#  walk(plot_1_variable, output)
 
 par(opar)
 ```
@@ -1537,27 +1600,45 @@ children |>
   with(table(HFMD, EV71))
 ```
 
-## HERE
+A function that filters the patients in the `followups` data frame according to some
+rules on the variables on the `children` data frame:
 
 ```{r}
-plot_effects_all <- function(x) {
-  plot(1, type = "n", ann = FALSE, axes = FALSE)
-  legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
-         legend = c("no correction", "multivariate model", "PS by logistic regression",
-                    "PS by gradient boosting, default",
-                    "PS by gradient boosting, Saras'"))
-  x |> 
-    pull(response) |> 
-    unique() |> 
-    walk(plot_1_variable)
+filter_patients <- function(...) {
+  sel <- children |> 
+    filter(...) |> 
+    pull(ParNo)
+  filter(followups, ParNo %in% sel)
 }
 ```
 
-```{r fig_Bayley2, fig.width = 7, fig.height = 25 / 3}
+Running the pipeline on the severe cases only:
+
+```{r eval = FALSE}
+output_sev <- filter_patients(group == "control" |
+                                !(HFMD %in% c("grade 2a", "Not Applicable"))) |> 
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_sev.rds")) {
+  output_sev <- readRDScache("output_sev.rds")
+} else {
+  output_sev <- filter_patients(group == "control" |
+                                  !(HFMD %in% c("grade 2a", "Not Applicable"))) |> 
+    pipeline()
+  saveRDScache(output_sev, "output_sev.rds")
+}
+```
+
+Looking at the HFMD effects:
+
+```{r fig_Bayley_sev, fig.width = 7, fig.height = 25 / 3}
 opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output)
+plot_effects_all(output_sev)
 par(opar)
 ```
+
 
 
 
