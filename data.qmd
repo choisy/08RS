@@ -1612,6 +1612,8 @@ filter_patients <- function(...) {
 }
 ```
 
+### Severe cases
+
 Running the pipeline on the severe cases only:
 
 ```{r eval = FALSE}
@@ -1647,6 +1649,8 @@ plot_effects_all(output_sev)
 par(opar)
 ```
 
+### EV71 cases
+
 Running the pipeline on the EV71 cases only:
 
 ```{r eval = FALSE}
@@ -1677,6 +1681,45 @@ Looking at the HFMD effects:
 ```{r fig_Bayley_ev71, fig.width = 7, fig.height = 25 / 3}
 opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
 plot_effects_all(output_ev71)
+par(opar)
+```
+
+### Severe EV71 cases
+
+Running the pipeline on the EV71 cases only:
+
+```{r eval = FALSE}
+output_sev71 <- filter_patients(group == "control" |
+                                  (str_detect(PCR, "EV-A71") &
+                                     !(HFMD %in% c("grade 2a", "Not Applicable")))) |> 
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_sev71.rds")) {
+  output_sev71 <- readRDScache("output_sev71.rds")
+} else {
+  output_sev71 <- filter_patients(group == "control" |
+                                    (str_detect(PCR, "EV-A71") &
+                                       !(HFMD %in% c("grade 2a", "Not Applicable")))) |> 
+    pipeline()
+  saveRDScache(output_sev71, "output_sev71.rds")
+}
+```
+
+The number of data points:
+
+```{r}
+output_sev71 |> 
+  select(response, timepoint, control, HFMD) |> 
+  print(n = Inf)
+```
+
+Looking at the HFMD effects:
+
+```{r fig_Bayley_sev71, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_sev71)
 par(opar)
 ```
 

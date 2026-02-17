@@ -116,7 +116,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#responses" id="toc-responses" class="nav-link" data-scroll-target="#responses"><span class="header-section-number">10.3</span> Responses</a></li>
   <li><a href="#plotting-effects" id="toc-plotting-effects" class="nav-link" data-scroll-target="#plotting-effects"><span class="header-section-number">10.4</span> Plotting effects</a></li>
   </ul></li>
-  <li><a href="#ev-a71-and-severe-cases" id="toc-ev-a71-and-severe-cases" class="nav-link" data-scroll-target="#ev-a71-and-severe-cases"><span class="header-section-number">11</span> EV-A71 and severe cases</a></li>
+  <li><a href="#ev-a71-and-severe-cases" id="toc-ev-a71-and-severe-cases" class="nav-link" data-scroll-target="#ev-a71-and-severe-cases"><span class="header-section-number">11</span> EV-A71 and severe cases</a>
+  <ul>
+  <li><a href="#severe-cases" id="toc-severe-cases" class="nav-link" data-scroll-target="#severe-cases"><span class="header-section-number">11.1</span> Severe cases</a></li>
+  <li><a href="#ev71-cases" id="toc-ev71-cases" class="nav-link" data-scroll-target="#ev71-cases"><span class="header-section-number">11.2</span> EV71 cases</a></li>
+  <li><a href="#severe-ev71-cases" id="toc-severe-ev71-cases" class="nav-link" data-scroll-target="#severe-ev71-cases"><span class="header-section-number">11.3</span> Severe EV71 cases</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -1803,6 +1808,8 @@ HFMD             FALSE TRUE
 <span id="cb140-5"><a href="#cb140-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(followups, ParNo <span class="sc">%in%</span> sel)</span>
 <span id="cb140-6"><a href="#cb140-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<section id="severe-cases" class="level3" data-number="11.1">
+<h3 data-number="11.1" class="anchored" data-anchor-id="severe-cases"><span class="header-section-number">11.1</span> Severe cases</h3>
 <p>Running the pipeline on the severe cases only:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb141"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a>output_sev <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span></span>
@@ -1856,6 +1863,9 @@ HFMD             FALSE TRUE
 </div>
 </div>
 </div>
+</section>
+<section id="ev71-cases" class="level3" data-number="11.2">
+<h3 data-number="11.2" class="anchored" data-anchor-id="ev71-cases"><span class="header-section-number">11.2</span> EV71 cases</h3>
 <p>Running the pipeline on the EV71 cases only:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb145"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
@@ -1908,6 +1918,64 @@ HFMD             FALSE TRUE
 </div>
 </div>
 </div>
+</section>
+<section id="severe-ev71-cases" class="level3" data-number="11.3">
+<h3 data-number="11.3" class="anchored" data-anchor-id="severe-ev71-cases"><span class="header-section-number">11.3</span> Severe EV71 cases</h3>
+<p>Running the pipeline on the EV71 cases only:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb149"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb149-1"><a href="#cb149-1" aria-hidden="true" tabindex="-1"></a>output_sev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span></span>
+<span id="cb149-2"><a href="#cb149-2" aria-hidden="true" tabindex="-1"></a>                                  (<span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>) <span class="sc">&amp;</span></span>
+<span id="cb149-3"><a href="#cb149-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="sc">!</span>(HFMD <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"grade 2a"</span>, <span class="st">"Not Applicable"</span>)))) <span class="sc">|&gt;</span> </span>
+<span id="cb149-4"><a href="#cb149-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The number of data points:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb150"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb150-1"><a href="#cb150-1" aria-hidden="true" tabindex="-1"></a>output_sev71 <span class="sc">|&gt;</span> </span>
+<span id="cb150-2"><a href="#cb150-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb150-3"><a href="#cb150-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 23 × 4
+   response timepoint  control  HFMD
+   &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt;
+ 1 MD1ISS   18 months       69    12
+ 2 MD2ISS   18 months       69    11
+ 3 MD3ISS   18 months       69    12
+ 4 AC1ISS   18 months       69    11
+ 5 AC2ISS   18 months       69    11
+ 6 BAL1ISS  18 months       69    11
+ 7 BAL2ISS  18 months       69    11
+ 8 BAL3ISS  18 months       67    11
+ 9 CS       enrollment     248    29
+10 CS       6 months       202    26
+11 CS       18 months      161    14
+12 RC       enrollment     248    29
+13 RC       6 months       202    26
+14 RC       18 months      161    14
+15 EC       enrollment     248    29
+16 EC       6 months       201    26
+17 EC       18 months      161    14
+18 FM       enrollment     248    29
+19 FM       6 months       202    26
+20 FM       18 months      161    14
+21 GM       enrollment     248    29
+22 GM       6 months       201    26
+23 GM       18 months      161    14</code></pre>
+</div>
+</div>
+<p>Looking at the HFMD effects:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb152"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
+<span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev71)</span>
+<span id="cb152-3"><a href="#cb152-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/fig_Bayley_sev71-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
 </section>
 
 </main>
