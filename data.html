@@ -1809,15 +1809,101 @@ HFMD             FALSE TRUE
 <span id="cb141-2"><a href="#cb141-2" aria-hidden="true" tabindex="-1"></a>                                <span class="sc">!</span>(HFMD <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"grade 2a"</span>, <span class="st">"Not Applicable"</span>))) <span class="sc">|&gt;</span> </span>
 <span id="cb141-3"><a href="#cb141-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>The number of data points:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb142"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a>output_sev <span class="sc">|&gt;</span> </span>
+<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb142-3"><a href="#cb142-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 23 × 4
+   response timepoint  control  HFMD
+   &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt;
+ 1 MD1ISS   18 months       69    21
+ 2 MD2ISS   18 months       69    20
+ 3 MD3ISS   18 months       69    21
+ 4 AC1ISS   18 months       69    20
+ 5 AC2ISS   18 months       69    19
+ 6 BAL1ISS  18 months       69    19
+ 7 BAL2ISS  18 months       69    18
+ 8 BAL3ISS  18 months       67    19
+ 9 CS       enrollment     248    92
+10 CS       6 months       202    84
+11 CS       18 months      161    63
+12 RC       enrollment     248    91
+13 RC       6 months       202    82
+14 RC       18 months      161    63
+15 EC       enrollment     248    92
+16 EC       6 months       201    82
+17 EC       18 months      161    63
+18 FM       enrollment     248    92
+19 FM       6 months       202    83
+20 FM       18 months      161    63
+21 GM       enrollment     248    91
+22 GM       6 months       201    84
+23 GM       18 months      161    63</code></pre>
+</div>
+</div>
 <p>Looking at the HFMD effects:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb142"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb142-1"><a href="#cb142-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
-<span id="cb142-2"><a href="#cb142-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev)</span>
-<span id="cb142-3"><a href="#cb142-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb144"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb144-1"><a href="#cb144-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
+<span id="cb144-2"><a href="#cb144-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev)</span>
+<span id="cb144-3"><a href="#cb144-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="data_files/figure-html/fig_Bayley_sev-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Running the pipeline on the EV71 cases only:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb145"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb145-2"><a href="#cb145-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The number of data points:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb146"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb146-1"><a href="#cb146-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="sc">|&gt;</span> </span>
+<span id="cb146-2"><a href="#cb146-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb146-3"><a href="#cb146-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 23 × 4
+   response timepoint  control  HFMD
+   &lt;chr&gt;    &lt;chr&gt;        &lt;int&gt; &lt;int&gt;
+ 1 MD1ISS   18 months       69    16
+ 2 MD2ISS   18 months       69    15
+ 3 MD3ISS   18 months       69    16
+ 4 AC1ISS   18 months       69    15
+ 5 AC2ISS   18 months       69    15
+ 6 BAL1ISS  18 months       69    15
+ 7 BAL2ISS  18 months       69    15
+ 8 BAL3ISS  18 months       67    15
+ 9 CS       enrollment     248    41
+10 CS       6 months       202    36
+11 CS       18 months      161    20
+12 RC       enrollment     248    41
+13 RC       6 months       202    36
+14 RC       18 months      161    20
+15 EC       enrollment     248    41
+16 EC       6 months       201    36
+17 EC       18 months      161    20
+18 FM       enrollment     248    41
+19 FM       6 months       202    36
+20 FM       18 months      161    20
+21 GM       enrollment     248    40
+22 GM       6 months       201    36
+23 GM       18 months      161    20</code></pre>
+</div>
+</div>
+<p>Looking at the HFMD effects:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb148"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb148-1"><a href="#cb148-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
+<span id="cb148-2"><a href="#cb148-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_ev71)</span>
+<span id="cb148-3"><a href="#cb148-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/fig_Bayley_ev71-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
 </figure>
 </div>
 </div>
