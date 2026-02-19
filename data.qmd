@@ -1093,13 +1093,18 @@ make_data <- function(data, response, timepoint) {
 }
 ```
 
+The scores:
+
+```{r}
+scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
+            "BAL3ISS", "CS", "RC", "EC", "FM", "GM")
+```
+
 A function that prepares the follow-up data:
 
 ```{r}
 prepare_fu_data <- function(data = followups, min_nb = 4) {
-  expand_grid(response  = c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS",
-                            "BAL1ISS", "BAL2ISS", "BAL3ISS",
-                            "CS", "RC", "EC", "FM", "GM"),
+  expand_grid(response  = scores,
               timepoint = c("enrollment", "6 months", "18 months")) |> 
     mutate(dataset = map2(response, timepoint, ~ make_data(data, .x, .y)),
            ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
@@ -1562,24 +1567,19 @@ plot_effects_all <- function(x) {
 }
 ```
 
+The number of data points:
+
+```{r}
+output |> 
+  select(response, timepoint, control, HFMD) |> 
+  print(n = Inf)
+```
+
 Let's plot the effect for all the score, time points and methods:
 
 ```{r fig_Bayley, fig.width = 7, fig.height = 25 / 3}
 opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-
 plot_effects_all(output)
-
-#plot(1, type = "n", ann = FALSE, axes = FALSE)
-#legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
-#       legend = c("no correction", "multivariate model", "PS by logistic regression",
-#                  "PS by gradient boosting, default",
-#                  "PS by gradient boosting, Saras'"))
-#
-#output |> 
-#  pull(response) |> 
-#  unique() |> 
-#  walk(plot_1_variable, output)
-
 par(opar)
 ```
 
@@ -1721,6 +1721,61 @@ Looking at the HFMD effects:
 opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
 plot_effects_all(output_sev71)
 par(opar)
+```
+
+
+## Individual longitudinal
+
+A function that summarizes the number of patients available for various longitudinal
+schemes:
+
+```{r}
+longitudinal_summary <- function(x) {
+  x <- x |>
+    group_by(ParNo, time_point) |> 
+    tally() |> 
+    na.exclude() |> 
+    pivot_wider(names_from = time_point, values_from = n)
+  out <- c("3 time points" = nrow(na.exclude(x)),
+           "at least first 2 time points" = nrow(na.exclude(select(x, -`18 months`))),
+           "at least last 2 time points" = nrow(na.exclude(select(x, -enrollment))),
+           "at least the first and last time points" =
+             nrow(na.exclude(select(x, - `6 months`))))
+  tibble(condition            = names(out), 
+         "number of patients" = out)
+}
+```
+
+A function that runs `longitudinal_summary()` on all the scores of a follow-up data
+frame `df`:
+
+```{r}
+lsummary <- function(df) {
+  scores |> 
+    set_names() |>
+    map(~ longitudinal_summary(df[! is.na(df[[.x]]), ])) |> 
+    bind_rows(.id = "score")
+}
+```
+
+The patients ID of the HFMD cases:
+
+```{r}
+HFMDcases <- children |> 
+  filter(group == "HFMD") |> 
+  pull(ParNo)
+```
+
+Looking that the number of case and control patients for which we have longitudinal
+data:
+
+```{r}
+left_join(rename(lsummary(filter(followups, ParNo %in% HFMDcases)),
+                 HFMD = `number of patients`),
+          rename(lsummary(filter_out(followups, ParNo %in% HFMDcases)),
+                 control = `number of patients`), c("score", "condition")) |> 
+  filter(HFMD > 5) |> 
+  print(n = Inf)
 ```
 
 
