@@ -13,16 +13,26 @@ editor_options:
 ---
 
 ```{r include = FALSE, eval = FALSE}
-knitr::purl("data.qmd", "tmp.R", documentation = FALSE)
-source("tmp.R")
-file.remove("tmp.R")
+# The code that adds the .nojekyll file to the GitHub repository:
+file <- ".nojekyll"
+file.create(file)
+gert::git_add(file)
+gert::git_commit("Adding the .nojekyll file")
+gert::git_push()
+rm(file)
+```
 
-add_nojekyll <- function() {
-  file <- ".nojekyll"
-  file.create(file)
-  gert::git_add(file)
-  gert::git_commit("Adding the .nojekyll file")
-  gert::git_push()
+```{r include = FALSE, eval = FALSE}
+run_all <- function() {
+  knitr::purl("data.qmd", "tmp.R", documentation = FALSE)
+  source("tmp.R")
+  file.remove("tmp.R")  
+}
+
+rerun_all <- function() {
+  rm(list  = grep("run_all", ls(envir = .GlobalEnv), value = TRUE, invert = TRUE),
+     envir = .GlobalEnv)
+  run_all()
 }
 ```
 
@@ -491,10 +501,10 @@ Second recoding of variables:
 ```{r}
 recoding2 <- function(x) {
   x |>
-    mutate(across(HFMD, ~ CRF_dict$disc$GradeHFMD[.x]),
-           across(MomEdu, ~ CRF_dict$devsocsed$MomEdu[.x]),
-           across(Toilet, ~ CRF_dict$devsocsed$Toilet[.x]),
-           across(Water, ~ CRF_dict$devsocsed$Water[.x]),
+    mutate(across(HFMD,    ~ CRF_dict$disc$GradeHFMD[.x]),
+           across(MomEdu,  ~ CRF_dict$devsocsed$MomEdu[.x]),
+           across(Toilet,  ~ CRF_dict$devsocsed$Toilet[.x]),
+           across(Water,   ~ CRF_dict$devsocsed$Water[.x]),
            across(Outcome, ~ CRF_dict$disc$Outcome[.x]))
 }
 ```
@@ -624,17 +634,26 @@ controls |>
 Retrieving the height, weight and stunt data from Saras' CSV file:
 
 ```{r}
+#saras_stunt <- saras |> 
+#  select(code, WEIGHT, HEIGHT, headCircumference, stunt, waste) |> 
+#  unique() |> 
+#  mutate(ParNo = paste0(ifelse(code < 923, "03-", "05-"), sprintf("%03d", code)))
+```
+
+```{r}
 saras_stunt <- saras |> 
   select(code, WEIGHT, HEIGHT, headCircumference, stunt, waste) |> 
   unique() |> 
-  mutate(ParNo = paste0(ifelse(code < 923, "03-", "05-"), sprintf("%03d", code)))
+  rename(ParNo = code,
+         headCircumference_S = headCircumference) |> 
+  mutate(across(ParNo, ~ paste0(ifelse(.x < 923, "03-", "05-"), sprintf("%03d", .x))))
 ```
 
 Merging with our children data frame:
 
 ```{r}
 comparing_data <- children |> 
-  select(ParNo, height, weigh, stunting) |> 
+  select(ParNo, headCircumference, height, weigh, stunting, wasting) |> 
   left_join(saras_stunt, "ParNo")
 ```
 
@@ -644,6 +663,8 @@ Checking that children codes match:
 setdiff(saras_stunt$ParNo, comparing_data$ParNo)
 setdiff(comparing_data$ParNo, saras_stunt$ParNo)
 ```
+
+A function that plots the values from the two data sources:
 
 ```{r}
 plot_comp <- function(...) {
@@ -671,6 +692,17 @@ mtext("weights (kg)", line = .2)
 par(opar)
 ```
 
+Checking whether there are any missing values in Saras' file that are not missing in
+the CRF:
+
+```{r}
+filter(comparing_data, is.na(headCircumference_S), ! is.na(headCircumference))
+filter(comparing_data, is.na(HEIGHT),              ! is.na(height))
+filter(comparing_data, is.na(WEIGHT),              ! is.na(weigh))
+filter(comparing_data, is.na(stunt),               ! is.na(stunting))
+filter(comparing_data, is.na(waste),               ! is.na(wasting))
+```
+
 Comparing stunt data:
 
 ```{r}
@@ -687,11 +719,32 @@ Patching the `children` data frame with Saras' CSV file for weight, height, stun
 waste, and recomputing our stunting and wasting data:
 
 ```{r}
+children0 <- children
+
 children <- children |> 
   left_join(saras_stunt, "ParNo") |> 
   mutate(across(stunt, ~ .x == "Stunt"),
-         across(waste, ~ .x == "Waste")) |> 
-  stunt_waste(WEIGHT, HEIGHT)
+         across(waste, ~ .x == "Waste"))
+```
+
+Comparing the missing values in the CRF and in Saras' CSV file:
+
+```{r}
+cases <- filter(children, group == "HFMD")
+n <- nrow(cases)
+
+cases |> 
+  number_of_NA() |> 
+  filter(variable %in% c("headCircumference", "height", "weigh", "stunting", "wasting",
+                         "headCircumference_S", "HEIGHT", "WEIGHT", "stunt", "waste"))
+```
+
+Recomputing `stunting` and `wasting` from `WEIGHT` and `HEIGHT`:
+
+```{r}
+children <- children |> 
+  stunt_waste(WEIGHT, HEIGHT) |> 
+  select(-stunt, -waste)
 ```
 
 
