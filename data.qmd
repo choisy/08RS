@@ -1174,7 +1174,8 @@ prepare_fu_data <- function(data = followups, min_nb = 4) {
 }
 ```
 
-A function that generates weights from a logistic regression:
+A function that generates ATT (Average Treatment effect on Treated) weights from a
+logistic regression:
 
 ```{r}
 logistic_ps <- function(data) {
@@ -1183,7 +1184,7 @@ logistic_ps <- function(data) {
            weights = ps_formula |>
              glm(binomial, data = pick(everything())) |> 
              predict(type = "response") %>%
-             { ifelse(group, 1, . / (1 - .)) }) |> 
+             { ifelse(group, 1, . / (1 - .)) }) |>  # ATT 
     pull(weights)
 }
 ```
