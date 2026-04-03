@@ -451,7 +451,14 @@ selection02EI <- list(Demo  = c("studyCode", "height", "weight"),
 PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
   read_excel2("08RS") |> 
   select(ID, `OUCRU RESULT`) |> 
-  mutate(across(ID, as.numeric)) |> 
+  mutate(across(ID, as.numeric),
+         across(`OUCRU RESULT`,
+                ~ case_when(.x == "EV-A71 B5"     ~ "EV-A71/CV-B5",
+                            .x == "EV-A71/ RhiA"  ~ "EV-A71/RhiA",
+                            .x == "EV-A71/CV A24" ~ "EV-A71/CV-A24",
+                            .x == "neg"           ~ "negative",
+                            .x == "CV-A8/EV-A71"  ~ "EV-A71/CV-A8",
+                            .default = .x))) |>
   na.exclude()
 ```
 
@@ -1234,15 +1241,15 @@ bal_tab <- function(data, w) {
 }
 ```
 
-A function that retrieve the balance adjustments for diagnostic of the propensity
+A function that retrieves the balance adjustments for diagnostic of the propensity
 scores:
 
 ```{r}
 get_diff <- function(x) x$Balance$Diff.Adj
 ```
 
-A function that produce the maximum values of the balance adjustments for diagnostic of
-the propensity scores:
+A function that produces the maximum values of the balance adjustments for diagnostic
+of the propensity scores:
 
 ```{r}
 get_max_diff <- function(data, w) {
@@ -1253,7 +1260,7 @@ get_max_diff <- function(data, w) {
 }
 ```
 
-A function that generate the formula of the model with the response `y`:
+A function that generates the formula of the model with the response `y`:
 
 ```{r}
 reformulate2 <- function(y) {

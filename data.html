@@ -471,8 +471,15 @@ Not Wasted      Waste
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>PCR <span class="ot">&lt;-</span> <span class="st">"03EI-08RS PCR-Seq result.xlsx"</span> <span class="sc">|&gt;</span></span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel2</span>(<span class="st">"08RS"</span>) <span class="sc">|&gt;</span> </span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ID, <span class="st">`</span><span class="at">OUCRU RESULT</span><span class="st">`</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ID, as.numeric)) <span class="sc">|&gt;</span> </span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(ID, as.numeric),</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(<span class="st">`</span><span class="at">OUCRU RESULT</span><span class="st">`</span>,</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>                <span class="sc">~</span> <span class="fu">case_when</span>(.x <span class="sc">==</span> <span class="st">"EV-A71 B5"</span>     <span class="sc">~</span> <span class="st">"EV-A71/CV-B5"</span>,</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>                            .x <span class="sc">==</span> <span class="st">"EV-A71/ RhiA"</span>  <span class="sc">~</span> <span class="st">"EV-A71/RhiA"</span>,</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>                            .x <span class="sc">==</span> <span class="st">"EV-A71/CV A24"</span> <span class="sc">~</span> <span class="st">"EV-A71/CV-A24"</span>,</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>                            .x <span class="sc">==</span> <span class="st">"neg"</span>           <span class="sc">~</span> <span class="st">"negative"</span>,</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>                            .x <span class="sc">==</span> <span class="st">"CV-A8/EV-A71"</span>  <span class="sc">~</span> <span class="st">"EV-A71/CV-A8"</span>,</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>                            <span class="at">.default =</span> .x))) <span class="sc">|&gt;</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="mri-data" class="level3" data-number="5.4">
@@ -1357,7 +1364,7 @@ Not Wasted      Waste
 <span id="cb119-9"><a href="#cb119-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(HFMD <span class="sc">&gt;</span> min_nb)</span>
 <span id="cb119-10"><a href="#cb119-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>A function that generates weights from a logistic regression:</p>
+<p>A function that generates ATT (Average Treatment effect on Treated) weights from a logistic regression:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb120"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" aria-hidden="true" tabindex="-1"></a>logistic_ps <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
 <span id="cb120-2"><a href="#cb120-2" aria-hidden="true" tabindex="-1"></a>  data <span class="sc">|&gt;</span></span>
@@ -1365,7 +1372,7 @@ Not Wasted      Waste
 <span id="cb120-4"><a href="#cb120-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">weights =</span> ps_formula <span class="sc">|&gt;</span></span>
 <span id="cb120-5"><a href="#cb120-5" aria-hidden="true" tabindex="-1"></a>             <span class="fu">glm</span>(binomial, <span class="at">data =</span> <span class="fu">pick</span>(<span class="fu">everything</span>())) <span class="sc">|&gt;</span> </span>
 <span id="cb120-6"><a href="#cb120-6" aria-hidden="true" tabindex="-1"></a>             <span class="fu">predict</span>(<span class="at">type =</span> <span class="st">"response"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb120-7"><a href="#cb120-7" aria-hidden="true" tabindex="-1"></a>             { <span class="fu">ifelse</span>(group, <span class="dv">1</span>, . <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> .)) }) <span class="sc">|&gt;</span> </span>
+<span id="cb120-7"><a href="#cb120-7" aria-hidden="true" tabindex="-1"></a>             { <span class="fu">ifelse</span>(group, <span class="dv">1</span>, . <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> .)) }) <span class="sc">|&gt;</span>  <span class="co"># ATT </span></span>
 <span id="cb120-8"><a href="#cb120-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(weights)</span>
 <span id="cb120-9"><a href="#cb120-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -1408,11 +1415,11 @@ Not Wasted      Waste
 <span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bal.tab</span>(ps_formula, <span class="at">data =</span> _, <span class="at">weights =</span> w, <span class="at">s.d.denom =</span> <span class="st">"treated"</span>)</span>
 <span id="cb123-5"><a href="#cb123-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>A function that retrieve the balance adjustments for diagnostic of the propensity scores:</p>
+<p>A function that retrieves the balance adjustments for diagnostic of the propensity scores:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a>get_diff <span class="ot">&lt;-</span> <span class="cf">function</span>(x) x<span class="sc">$</span>Balance<span class="sc">$</span>Diff.Adj</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>A function that produce the maximum values of the balance adjustments for diagnostic of the propensity scores:</p>
+<p>A function that produces the maximum values of the balance adjustments for diagnostic of the propensity scores:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb125"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a>get_max_diff <span class="ot">&lt;-</span> <span class="cf">function</span>(data, w) {</span>
 <span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a>  data <span class="sc">|&gt;</span> </span>
@@ -1421,7 +1428,7 @@ Not Wasted      Waste
 <span id="cb125-5"><a href="#cb125-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">max</span>()</span>
 <span id="cb125-6"><a href="#cb125-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>A function that generate the formula of the model with the response <code>y</code>:</p>
+<p>A function that generates the formula of the model with the response <code>y</code>:</p>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb126"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb126-1"><a href="#cb126-1" aria-hidden="true" tabindex="-1"></a>reformulate2 <span class="ot">&lt;-</span> <span class="cf">function</span>(y) {</span>
 <span id="cb126-2"><a href="#cb126-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reformulate</span>(<span class="fu">c</span>(<span class="st">"Gender"</span>, <span class="st">"age"</span>, <span class="st">"MomEdu"</span>, <span class="st">"stunting"</span>, <span class="st">"group"</span>), y)</span>
@@ -1960,12 +1967,12 @@ Not Wasted      Waste
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(<span class="fu">unique</span>(children<span class="sc">$</span>PCR))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> [1] "CV-A10"        "CV-A12"        "CV-A16"        "CV-A2"        
- [5] "CV-A4"         "CV-A6"         "CV-A8"         "CV-A8/EV-A71" 
- [9] "CV-B1"         "CV-B4"         "CV-B5"         "E-11"         
-[13] "E-14"          "E-30"          "E-9"           "EV"           
-[17] "EV-A71"        "EV-A71 B5"     "EV-A71/ RhiA"  "EV-A71/CV A24"
-[21] "EV-A71/CV-A6"  "EV-A71/RhiA"   "EV-C96"        "neg"          
-[25] "PV2"           "RhiA"         </code></pre>
+ [5] "CV-A4"         "CV-A6"         "CV-A8"         "CV-B1"        
+ [9] "CV-B4"         "CV-B5"         "E-11"          "E-14"         
+[13] "E-30"          "E-9"           "EV"            "EV-A71"       
+[17] "EV-A71/CV-A24" "EV-A71/CV-A6"  "EV-A71/CV-A8"  "EV-A71/CV-B5" 
+[21] "EV-A71/RhiA"   "EV-C96"        "negative"      "PV2"          
+[25] "RhiA"         </code></pre>
 </div>
 </div>
 <p>Severity vs EV71:</p>
