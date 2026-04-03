@@ -1655,7 +1655,19 @@ par(opar)
 The various PCR results:
 
 ```{r}
-sort(unique(children$PCR))
+children |> 
+  group_by(PCR) |> 
+  count() |> 
+  print(n = Inf)
+```
+
+Severity:
+
+```{r}
+children |> 
+  filter(group == "HFMD") |> 
+  group_by(HFMD) |> 
+  count()
 ```
 
 Severity vs EV71:
@@ -1665,6 +1677,68 @@ children |>
   filter(group == "HFMD") |>
   mutate(EV71 = str_detect(PCR, "EV-A71")) |> 
   with(table(HFMD, EV71))
+```
+
+Severity vs EV71 when defining a `grade 1` category:
+
+```{r}
+children |> 
+  filter(group == "HFMD") |> 
+  mutate(EV71 = str_detect(PCR, "EV-A71"),
+         across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
+                                  .x == "Not Applicable" ~ "grade 1",
+                                  .default = .x))) |> 
+  with(table(HFMD, EV71))
+```
+
+A function that plots the proportion of `TRUE` in the variable `y` of the data frame
+`x` as a function of severity grade:
+
+```{r}
+plot_severity <- function(x) {
+  x |> 
+    mutate(across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
+                                    .x == "Not Applicable" ~ "grade 1",
+                                    .default = .x))) |> 
+    group_by(HFMD, y) |> 
+    count() |> 
+    ungroup() |> 
+    na.exclude() |> 
+    pivot_wider(names_from = y, values_from = n) |>
+    mutate(across(everything(), ~ replace_na(.x, 0))) |> 
+    rename(x = `TRUE`) |>
+    mutate(at         = as.numeric(as.factor(HFMD)),
+           n          = x + `FALSE`,
+           binom_test = map2(x, n, binom.test),
+           estimate   = map_dbl(binom_test, ~ .x$estimate),
+           confint    = map(binom_test, ~ setNames(.x$conf.int, c("lb", "ub")))) |> 
+    unnest_wider(confint) |> 
+    with({
+      plot(at, estimate, ylim = 0:1, pch = 19, xaxt = "n", col = 4,
+           xlab = "severity grade", ylab = "proportion of MRI")
+      arrows(at, lb, at, ub, .1, 90, 3, col = 4, lwd = 2)
+      axis(1, at, str_remove(HFMD, "grade "))
+    })
+}
+```
+
+The proportion of EV71 as a function of the severity grade:
+
+```{r}
+children |> 
+#  filter(group == "HFMD") |> 
+  mutate(y = str_detect(PCR, "EV-A71")) |> 
+  plot_severity()
+```
+
+The proportion of the presence of lesions observed by MRI as a function of the severity
+grade:
+
+```{r}
+children |> 
+#  filter_out(is.na(Final)) |> 
+  rename(y = Final) |> 
+  plot_severity()
 ```
 
 A function that filters the patients in the `followups` data frame according to some
@@ -1678,6 +1752,31 @@ filter_patients <- function(...) {
   filter(followups, ParNo %in% sel)
 }
 ```
+
+### MRI
+
+```{r}
+children |> 
+  select(Final, Acute) |> 
+  na.exclude() |> 
+  group_by(Final, Acute) |> 
+  count()
+```
+
+```{r}
+children |> 
+  group_by(is.na(Final), is.na(Acute)) |> 
+  count()
+```
+
+```{r}
+children |> 
+  filter_out(is.na(Final)) |> 
+  select(Final, PCR) |> 
+  mutate(EV71 = str_detect(PCR, "EV-A71")) |> 
+  with(table(Final, EV71))
+```
+
 
 ### Severe cases
 
