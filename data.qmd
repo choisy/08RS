@@ -743,8 +743,6 @@ Patching the `children` data frame with Saras' CSV file for weight, height, stun
 waste, and recomputing our stunting and wasting data:
 
 ```{r}
-children0 <- children
-
 children <- children |> 
   left_join(select(saras_stunt, -c(stunt, waste)), "ParNo") |> 
   mutate(weigh             = WEIGHT,
