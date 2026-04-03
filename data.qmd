@@ -1726,7 +1726,6 @@ The proportion of EV71 as a function of the severity grade:
 
 ```{r}
 children |> 
-#  filter(group == "HFMD") |> 
   mutate(y = str_detect(PCR, "EV-A71")) |> 
   plot_severity()
 ```
@@ -1736,7 +1735,6 @@ grade:
 
 ```{r}
 children |> 
-#  filter_out(is.na(Final)) |> 
   rename(y = Final) |> 
   plot_severity()
 ```
