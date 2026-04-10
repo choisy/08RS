@@ -903,15 +903,13 @@ Not Wasted      Waste
 </div>
 <p>Patching the <code>children</code> data frame with Saras’ CSV file for weight, height, stunt and waste, and recomputing our stunting and wasting data:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>children0 <span class="ot">&lt;-</span> children</span>
-<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>children <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
-<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(saras_stunt, <span class="sc">-</span><span class="fu">c</span>(stunt, waste)), <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">weigh             =</span> WEIGHT,</span>
-<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">height            =</span> HEIGHT,</span>
-<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">headCircumference =</span> headCircumference_S) <span class="sc">|&gt;</span> </span>
-<span id="cb86-8"><a href="#cb86-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(WEIGHT, HEIGHT, headCircumference_S)) <span class="sc">|&gt;</span> </span>
-<span id="cb86-9"><a href="#cb86-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stunt_waste</span>(weigh, height)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>children <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(saras_stunt, <span class="sc">-</span><span class="fu">c</span>(stunt, waste)), <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">weigh             =</span> WEIGHT,</span>
+<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">height            =</span> HEIGHT,</span>
+<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">headCircumference =</span> headCircumference_S) <span class="sc">|&gt;</span> </span>
+<span id="cb86-6"><a href="#cb86-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(WEIGHT, HEIGHT, headCircumference_S)) <span class="sc">|&gt;</span> </span>
+<span id="cb86-7"><a href="#cb86-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stunt_waste</span>(weigh, height)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Here is the new situation regarding missing values:</p>
 <div class="cell" data-layout-align="center">
@@ -1963,71 +1961,80 @@ Not Wasted      Waste
 </section>
 <section id="ev-a71-and-severe-cases" class="level2" data-number="11">
 <h2 data-number="11" class="anchored" data-anchor-id="ev-a71-and-severe-cases"><span class="header-section-number">11</span> EV-A71 and severe cases</h2>
+<p>A function that computes a summary table of HFMD cases according to the variable <code>var</code>:</p>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a>make_table <span class="ot">&lt;-</span> <span class="cf">function</span>(df, var) {</span>
+<span id="cb158-2"><a href="#cb158-2" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span> </span>
+<span id="cb158-3"><a href="#cb158-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb158-4"><a href="#cb158-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>({{ var }}) <span class="sc">|&gt;</span> </span>
+<span id="cb158-5"><a href="#cb158-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb158-6"><a href="#cb158-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb158-7"><a href="#cb158-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="st">`</span><span class="at">p (%)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> n <span class="sc">/</span> <span class="fu">sum</span>(n)))</span>
+<span id="cb158-8"><a href="#cb158-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 <p>The various PCR results:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb158-2"><a href="#cb158-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(PCR) <span class="sc">|&gt;</span> </span>
-<span id="cb158-3"><a href="#cb158-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb158-4"><a href="#cb158-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb159"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a>virus_table_all <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span></span>
+<span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make_table</span>(PCR) <span class="sc">|&gt;</span> </span>
+<span id="cb159-3"><a href="#cb159-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">virus =</span> PCR)</span>
+<span id="cb159-4"><a href="#cb159-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb159-5"><a href="#cb159-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(virus_table_all, <span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 26 × 2
-# Groups:   PCR [26]
-   PCR               n
-   &lt;chr&gt;         &lt;int&gt;
- 1 CV-A10           27
- 2 CV-A12            9
- 3 CV-A16            7
- 4 CV-A2             8
- 5 CV-A4             6
- 6 CV-A6            44
- 7 CV-A8             4
- 8 CV-B1             2
- 9 CV-B4             1
-10 CV-B5             1
-11 E-11              2
-12 E-14              2
-13 E-30              1
-14 E-9               1
-15 EV               24
-16 EV-A71           31
-17 EV-A71/CV-A24     1
-18 EV-A71/CV-A6      2
-19 EV-A71/CV-A8      1
-20 EV-A71/CV-B5      7
-21 EV-A71/RhiA       2
-22 EV-C96            1
-23 PV2               1
-24 RhiA              2
-25 negative         55
-26 &lt;NA&gt;            295</code></pre>
+<pre><code># A tibble: 26 × 3
+   virus             n `p (%)`
+   &lt;chr&gt;         &lt;int&gt;   &lt;dbl&gt;
+ 1 CV-A10           27      11
+ 2 CV-A12            9       4
+ 3 CV-A16            7       3
+ 4 CV-A2             8       3
+ 5 CV-A4             6       2
+ 6 CV-A6            44      18
+ 7 CV-A8             4       2
+ 8 CV-B1             2       1
+ 9 CV-B4             1       0
+10 CV-B5             1       0
+11 E-11              2       1
+12 E-14              2       1
+13 E-30              1       0
+14 E-9               1       0
+15 EV               24      10
+16 EV-A71           31      13
+17 EV-A71/CV-A24     1       0
+18 EV-A71/CV-A6      2       1
+19 EV-A71/CV-A8      1       0
+20 EV-A71/CV-B5      7       3
+21 EV-A71/RhiA       2       1
+22 EV-C96            1       0
+23 PV2               1       0
+24 RhiA              2       1
+25 negative         55      23
+26 &lt;NA&gt;              1       0</code></pre>
 </div>
 </div>
 <p>Severity:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb160"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb160-1"><a href="#cb160-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb160-2"><a href="#cb160-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb160-3"><a href="#cb160-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(HFMD) <span class="sc">|&gt;</span> </span>
-<span id="cb160-4"><a href="#cb160-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb161"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb161-1"><a href="#cb161-1" aria-hidden="true" tabindex="-1"></a>(severity_table_all <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span></span>
+<span id="cb161-2"><a href="#cb161-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make_table</span>(HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb161-3"><a href="#cb161-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">severity =</span> HFMD))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 7 × 2
-# Groups:   HFMD [7]
-  HFMD               n
-  &lt;chr&gt;          &lt;int&gt;
-1 Not Applicable    53
-2 grade 2a          87
-3 grade 2b(1)       52
-4 grade 2b(2)        6
-5 grade 3           27
-6 grade 4            2
-7 &lt;NA&gt;              16</code></pre>
+<pre><code># A tibble: 7 × 3
+  severity           n `p (%)`
+  &lt;chr&gt;          &lt;int&gt;   &lt;dbl&gt;
+1 Not Applicable    53      22
+2 grade 2a          87      36
+3 grade 2b(1)       52      21
+4 grade 2b(2)        6       2
+5 grade 3           27      11
+6 grade 4            2       1
+7 &lt;NA&gt;              16       7</code></pre>
 </div>
 </div>
 <p>Severity vs EV71:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb162"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb162-1"><a href="#cb162-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb162-2"><a href="#cb162-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb162-3"><a href="#cb162-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EV71 =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb162-4"><a href="#cb162-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">table</span>(HFMD, EV71))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb163"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb163-2"><a href="#cb163-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb163-3"><a href="#cb163-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EV71 =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb163-4"><a href="#cb163-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">table</span>(HFMD, EV71))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                EV71
 HFMD             FALSE TRUE
@@ -2041,13 +2048,13 @@ HFMD             FALSE TRUE
 </div>
 <p>Severity vs EV71 when defining a <code>grade 1</code> category:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb164"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb164-1"><a href="#cb164-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb164-2"><a href="#cb164-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb164-3"><a href="#cb164-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EV71 =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>),</span>
-<span id="cb164-4"><a href="#cb164-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(HFMD, <span class="sc">~</span> <span class="fu">case_when</span>(<span class="fu">is.na</span>(.x) <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
-<span id="cb164-5"><a href="#cb164-5" aria-hidden="true" tabindex="-1"></a>                                  .x <span class="sc">==</span> <span class="st">"Not Applicable"</span> <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
-<span id="cb164-6"><a href="#cb164-6" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">.default =</span> .x))) <span class="sc">|&gt;</span> </span>
-<span id="cb164-7"><a href="#cb164-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">table</span>(HFMD, EV71))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb165"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb165-1"><a href="#cb165-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb165-2"><a href="#cb165-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb165-3"><a href="#cb165-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EV71 =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>),</span>
+<span id="cb165-4"><a href="#cb165-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(HFMD, <span class="sc">~</span> <span class="fu">case_when</span>(<span class="fu">is.na</span>(.x) <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
+<span id="cb165-5"><a href="#cb165-5" aria-hidden="true" tabindex="-1"></a>                                  .x <span class="sc">==</span> <span class="st">"Not Applicable"</span> <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
+<span id="cb165-6"><a href="#cb165-6" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">.default =</span> .x))) <span class="sc">|&gt;</span> </span>
+<span id="cb165-7"><a href="#cb165-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">table</span>(HFMD, EV71))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>             EV71
 HFMD          FALSE TRUE
@@ -2061,77 +2068,229 @@ HFMD          FALSE TRUE
 </div>
 <p>A function that plots the proportion of <code>TRUE</code> in the variable <code>y</code> of the data frame <code>x</code> as a function of severity grade:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb166"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb166-1"><a href="#cb166-1" aria-hidden="true" tabindex="-1"></a>plot_severity <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb166-2"><a href="#cb166-2" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span> </span>
-<span id="cb166-3"><a href="#cb166-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(HFMD, <span class="sc">~</span> <span class="fu">case_when</span>(<span class="fu">is.na</span>(.x) <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
-<span id="cb166-4"><a href="#cb166-4" aria-hidden="true" tabindex="-1"></a>                                    .x <span class="sc">==</span> <span class="st">"Not Applicable"</span> <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
-<span id="cb166-5"><a href="#cb166-5" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">.default =</span> .x))) <span class="sc">|&gt;</span> </span>
-<span id="cb166-6"><a href="#cb166-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(HFMD, y) <span class="sc">|&gt;</span> </span>
-<span id="cb166-7"><a href="#cb166-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb166-8"><a href="#cb166-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb166-9"><a href="#cb166-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb166-10"><a href="#cb166-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> y, <span class="at">values_from =</span> n) <span class="sc">|&gt;</span></span>
-<span id="cb166-11"><a href="#cb166-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">replace_na</span>(.x, <span class="dv">0</span>))) <span class="sc">|&gt;</span> </span>
-<span id="cb166-12"><a href="#cb166-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">TRUE</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
-<span id="cb166-13"><a href="#cb166-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">at         =</span> <span class="fu">as.numeric</span>(<span class="fu">as.factor</span>(HFMD)),</span>
-<span id="cb166-14"><a href="#cb166-14" aria-hidden="true" tabindex="-1"></a>           <span class="at">n          =</span> x <span class="sc">+</span> <span class="st">`</span><span class="at">FALSE</span><span class="st">`</span>,</span>
-<span id="cb166-15"><a href="#cb166-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">binom_test =</span> <span class="fu">map2</span>(x, n, binom.test),</span>
-<span id="cb166-16"><a href="#cb166-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">estimate   =</span> <span class="fu">map_dbl</span>(binom_test, <span class="sc">~</span> .x<span class="sc">$</span>estimate),</span>
-<span id="cb166-17"><a href="#cb166-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">confint    =</span> <span class="fu">map</span>(binom_test, <span class="sc">~</span> <span class="fu">setNames</span>(.x<span class="sc">$</span>conf.int, <span class="fu">c</span>(<span class="st">"lb"</span>, <span class="st">"ub"</span>)))) <span class="sc">|&gt;</span> </span>
-<span id="cb166-18"><a href="#cb166-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(confint) <span class="sc">|&gt;</span> </span>
-<span id="cb166-19"><a href="#cb166-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">with</span>({</span>
-<span id="cb166-20"><a href="#cb166-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(at, estimate, <span class="at">ylim =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">xaxt =</span> <span class="st">"n"</span>, <span class="at">col =</span> <span class="dv">4</span>,</span>
-<span id="cb166-21"><a href="#cb166-21" aria-hidden="true" tabindex="-1"></a>           <span class="at">xlab =</span> <span class="st">"severity grade"</span>, <span class="at">ylab =</span> <span class="st">"proportion of MRI"</span>)</span>
-<span id="cb166-22"><a href="#cb166-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrows</span>(at, lb, at, ub, .<span class="dv">1</span>, <span class="dv">90</span>, <span class="dv">3</span>, <span class="at">col =</span> <span class="dv">4</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
-<span id="cb166-23"><a href="#cb166-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">axis</span>(<span class="dv">1</span>, at, <span class="fu">str_remove</span>(HFMD, <span class="st">"grade "</span>))</span>
-<span id="cb166-24"><a href="#cb166-24" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb166-25"><a href="#cb166-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb167"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb167-1"><a href="#cb167-1" aria-hidden="true" tabindex="-1"></a>plot_severity <span class="ot">&lt;-</span> <span class="cf">function</span>(df, ...) {</span>
+<span id="cb167-2"><a href="#cb167-2" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span> </span>
+<span id="cb167-3"><a href="#cb167-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(HFMD, <span class="sc">~</span> <span class="fu">case_when</span>(<span class="fu">is.na</span>(.x) <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
+<span id="cb167-4"><a href="#cb167-4" aria-hidden="true" tabindex="-1"></a>                                    .x <span class="sc">==</span> <span class="st">"Not Applicable"</span> <span class="sc">~</span> <span class="st">"grade 1"</span>,</span>
+<span id="cb167-5"><a href="#cb167-5" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">.default =</span> .x))) <span class="sc">|&gt;</span> </span>
+<span id="cb167-6"><a href="#cb167-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(HFMD, y) <span class="sc">|&gt;</span> </span>
+<span id="cb167-7"><a href="#cb167-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb167-8"><a href="#cb167-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb167-9"><a href="#cb167-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb167-10"><a href="#cb167-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> y, <span class="at">values_from =</span> n) <span class="sc">|&gt;</span></span>
+<span id="cb167-11"><a href="#cb167-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span> <span class="fu">replace_na</span>(.x, <span class="dv">0</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb167-12"><a href="#cb167-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">TRUE</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb167-13"><a href="#cb167-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">at         =</span> <span class="fu">as.numeric</span>(<span class="fu">as.factor</span>(HFMD)),</span>
+<span id="cb167-14"><a href="#cb167-14" aria-hidden="true" tabindex="-1"></a>           <span class="at">n          =</span> x <span class="sc">+</span> <span class="st">`</span><span class="at">FALSE</span><span class="st">`</span>,</span>
+<span id="cb167-15"><a href="#cb167-15" aria-hidden="true" tabindex="-1"></a>           <span class="at">binom_test =</span> <span class="fu">map2</span>(x, n, binom.test),</span>
+<span id="cb167-16"><a href="#cb167-16" aria-hidden="true" tabindex="-1"></a>           <span class="at">estimate   =</span> <span class="fu">map_dbl</span>(binom_test, <span class="sc">~</span> .x<span class="sc">$</span>estimate),</span>
+<span id="cb167-17"><a href="#cb167-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">confint    =</span> <span class="fu">map</span>(binom_test, <span class="sc">~</span> <span class="fu">setNames</span>(.x<span class="sc">$</span>conf.int, <span class="fu">c</span>(<span class="st">"lb"</span>, <span class="st">"ub"</span>)))) <span class="sc">|&gt;</span> </span>
+<span id="cb167-18"><a href="#cb167-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest_wider</span>(confint) <span class="sc">|&gt;</span> </span>
+<span id="cb167-19"><a href="#cb167-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">with</span>({</span>
+<span id="cb167-20"><a href="#cb167-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">plot</span>(at, estimate, <span class="at">ylim =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">1</span>, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">xlab =</span> <span class="st">"severity grade"</span>,</span>
+<span id="cb167-21"><a href="#cb167-21" aria-hidden="true" tabindex="-1"></a>           <span class="at">type =</span> <span class="st">"n"</span>, ...)</span>
+<span id="cb167-22"><a href="#cb167-22" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb167-23"><a href="#cb167-23" aria-hidden="true" tabindex="-1"></a>      v <span class="ot">&lt;-</span> <span class="fu">na.exclude</span>(df<span class="sc">$</span>y)</span>
+<span id="cb167-24"><a href="#cb167-24" aria-hidden="true" tabindex="-1"></a>      btest <span class="ot">&lt;-</span> <span class="fu">binom.test</span>(<span class="fu">sum</span>(v), <span class="fu">length</span>(v))</span>
+<span id="cb167-25"><a href="#cb167-25" aria-hidden="true" tabindex="-1"></a>      confint <span class="ot">&lt;-</span> btest<span class="sc">$</span>conf.int</span>
+<span id="cb167-26"><a href="#cb167-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rect</span>(<span class="fu">min</span>(at) <span class="sc">-</span> <span class="dv">1</span>, confint[<span class="dv">1</span>], <span class="fu">max</span>(at) <span class="sc">+</span> <span class="dv">1</span>, confint[<span class="dv">2</span>], <span class="at">col =</span> <span class="st">"lightgrey"</span>,</span>
+<span id="cb167-27"><a href="#cb167-27" aria-hidden="true" tabindex="-1"></a>           <span class="at">border =</span> <span class="cn">NA</span>)</span>
+<span id="cb167-28"><a href="#cb167-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">abline</span>(<span class="at">h =</span> btest<span class="sc">$</span>estimate, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>)</span>
+<span id="cb167-29"><a href="#cb167-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb167-30"><a href="#cb167-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">points</span>(at, estimate, <span class="at">pch =</span> <span class="dv">19</span>, <span class="at">col =</span> <span class="dv">4</span>)</span>
+<span id="cb167-31"><a href="#cb167-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrows</span>(at, lb, at, ub, .<span class="dv">1</span>, <span class="dv">90</span>, <span class="dv">3</span>, <span class="at">col =</span> <span class="dv">4</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb167-32"><a href="#cb167-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">axis</span>(<span class="dv">1</span>, at, <span class="fu">str_remove</span>(HFMD, <span class="st">"grade "</span>))</span>
+<span id="cb167-33"><a href="#cb167-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">axis</span>(<span class="dv">2</span>)</span>
+<span id="cb167-34"><a href="#cb167-34" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb167-35"><a href="#cb167-35" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb168"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb168-1"><a href="#cb168-1" aria-hidden="true" tabindex="-1"></a>virusXseverity <span class="ot">&lt;-</span> <span class="cf">function</span>(virus) {</span>
+<span id="cb168-2"><a href="#cb168-2" aria-hidden="true" tabindex="-1"></a>  children <span class="sc">|&gt;</span> </span>
+<span id="cb168-3"><a href="#cb168-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> <span class="co"># (not necessary)</span></span>
+<span id="cb168-4"><a href="#cb168-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">y =</span> <span class="fu">str_detect</span>(PCR, virus)) <span class="sc">|&gt;</span> </span>
+<span id="cb168-5"><a href="#cb168-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot_severity</span>(<span class="at">ylab =</span> <span class="fu">paste</span>(<span class="st">"proportion of"</span>, virus))</span>
+<span id="cb168-6"><a href="#cb168-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The proportion of EV71 as a function of the severity grade:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb167"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb167-1"><a href="#cb167-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb167-2"><a href="#cb167-2" aria-hidden="true" tabindex="-1"></a><span class="co">#  filter(group == "HFMD") |&gt; </span></span>
-<span id="cb167-3"><a href="#cb167-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">y =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb167-4"><a href="#cb167-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_severity</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb169"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb169-1"><a href="#cb169-1" aria-hidden="true" tabindex="-1"></a><span class="fu">virusXseverity</span>(<span class="st">"EV-A71"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-125-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+<p><img src="data_files/figure-html/unnamed-chunk-127-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb170"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb170-1"><a href="#cb170-1" aria-hidden="true" tabindex="-1"></a><span class="fu">virusXseverity</span>(<span class="st">"EV"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-128-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb171"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb171-1"><a href="#cb171-1" aria-hidden="true" tabindex="-1"></a><span class="fu">virusXseverity</span>(<span class="st">"EV$"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-129-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb172"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a><span class="fu">virusXseverity</span>(<span class="st">"CV-A6"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-130-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb173"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb173-1"><a href="#cb173-1" aria-hidden="true" tabindex="-1"></a><span class="fu">virusXseverity</span>(<span class="st">"CV-A10"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-131-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>The proportion of the presence of lesions observed by MRI as a function of the severity grade:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb168"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb168-1"><a href="#cb168-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb168-2"><a href="#cb168-2" aria-hidden="true" tabindex="-1"></a><span class="co">#  filter_out(is.na(Final)) |&gt; </span></span>
-<span id="cb168-3"><a href="#cb168-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">y =</span> Final) <span class="sc">|&gt;</span> </span>
-<span id="cb168-4"><a href="#cb168-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_severity</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb174"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb174-2"><a href="#cb174-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">y =</span> Final) <span class="sc">|&gt;</span> </span>
+<span id="cb174-3"><a href="#cb174-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_severity</span>(<span class="at">ylab =</span> <span class="st">"proportion of MRI with lesions"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-126-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+<p><img src="data_files/figure-html/unnamed-chunk-132-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>A function that filters the patients in the <code>followups</code> data frame according to some rules on the variables on the <code>children</code> data frame:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb169"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb169-1"><a href="#cb169-1" aria-hidden="true" tabindex="-1"></a>filter_patients <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
-<span id="cb169-2"><a href="#cb169-2" aria-hidden="true" tabindex="-1"></a>  sel <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
-<span id="cb169-3"><a href="#cb169-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(...) <span class="sc">|&gt;</span> </span>
-<span id="cb169-4"><a href="#cb169-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(ParNo)</span>
-<span id="cb169-5"><a href="#cb169-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(followups, ParNo <span class="sc">%in%</span> sel)</span>
-<span id="cb169-6"><a href="#cb169-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb175"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb175-1"><a href="#cb175-1" aria-hidden="true" tabindex="-1"></a>filter_patients <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb175-2"><a href="#cb175-2" aria-hidden="true" tabindex="-1"></a>  sel <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
+<span id="cb175-3"><a href="#cb175-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(...) <span class="sc">|&gt;</span> </span>
+<span id="cb175-4"><a href="#cb175-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(ParNo)</span>
+<span id="cb175-5"><a href="#cb175-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(followups, ParNo <span class="sc">%in%</span> sel)</span>
+<span id="cb175-6"><a href="#cb175-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="mri" class="level3" data-number="11.1">
 <h3 data-number="11.1" class="anchored" data-anchor-id="mri"><span class="header-section-number">11.1</span> MRI</h3>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb170"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb170-1"><a href="#cb170-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb170-2"><a href="#cb170-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Final, Acute) <span class="sc">|&gt;</span> </span>
-<span id="cb170-3"><a href="#cb170-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb170-4"><a href="#cb170-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Final, Acute) <span class="sc">|&gt;</span> </span>
-<span id="cb170-5"><a href="#cb170-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb176"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb176-1"><a href="#cb176-1" aria-hidden="true" tabindex="-1"></a>virus_table_mri <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
+<span id="cb176-2"><a href="#cb176-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter_out</span>(<span class="fu">is.na</span>(Final)) <span class="sc">|&gt;</span></span>
+<span id="cb176-3"><a href="#cb176-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make_table</span>(PCR) <span class="sc">|&gt;</span> </span>
+<span id="cb176-4"><a href="#cb176-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">virus =</span> PCR)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb177"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a>virus_table <span class="ot">&lt;-</span> <span class="fu">left_join</span>(virus_table_all, virus_table_mri, <span class="at">by =</span> <span class="st">"virus"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span><span class="fu">replace_na</span>(.x, <span class="dv">0</span>)))</span>
+<span id="cb177-3"><a href="#cb177-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb177-4"><a href="#cb177-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(virus_table, <span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 26 × 5
+   virus           n.x `p (%).x`   n.y `p (%).y`
+   &lt;chr&gt;         &lt;int&gt;     &lt;dbl&gt; &lt;int&gt;     &lt;dbl&gt;
+ 1 CV-A10           27        11     7         8
+ 2 CV-A12            9         4     1         1
+ 3 CV-A16            7         3     2         2
+ 4 CV-A2             8         3     2         2
+ 5 CV-A4             6         2     1         1
+ 6 CV-A6            44        18    13        15
+ 7 CV-A8             4         2     0         0
+ 8 CV-B1             2         1     1         1
+ 9 CV-B4             1         0     1         1
+10 CV-B5             1         0     1         1
+11 E-11              2         1     2         2
+12 E-14              2         1     0         0
+13 E-30              1         0     0         0
+14 E-9               1         0     0         0
+15 EV               24        10    16        18
+16 EV-A71           31        13    18        20
+17 EV-A71/CV-A24     1         0     0         0
+18 EV-A71/CV-A6      2         1     2         2
+19 EV-A71/CV-A8      1         0     0         0
+20 EV-A71/CV-B5      7         3     2         2
+21 EV-A71/RhiA       2         1     1         1
+22 EV-C96            1         0     1         1
+23 PV2               1         0     0         0
+24 RhiA              2         1     0         0
+25 negative         55        23    16        18
+26 &lt;NA&gt;              1         0     1         1</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb179"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(virus_table, <span class="fu">plot</span>(n.x, n.y))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-136-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb180"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb180-1"><a href="#cb180-1" aria-hidden="true" tabindex="-1"></a>severity_table_mri <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span></span>
+<span id="cb180-2"><a href="#cb180-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter_out</span>(<span class="fu">is.na</span>(Final)) <span class="sc">|&gt;</span></span>
+<span id="cb180-3"><a href="#cb180-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">make_table</span>(HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb180-4"><a href="#cb180-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">severity =</span> HFMD)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb181"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb181-1"><a href="#cb181-1" aria-hidden="true" tabindex="-1"></a>(severity_table <span class="ot">&lt;-</span> <span class="fu">left_join</span>(severity_table_all, severity_table_mri,</span>
+<span id="cb181-2"><a href="#cb181-2" aria-hidden="true" tabindex="-1"></a>                             <span class="at">by =</span> <span class="st">"severity"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb181-3"><a href="#cb181-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span><span class="fu">replace_na</span>(.x, <span class="dv">0</span>))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 7 × 5
+  severity         n.x `p (%).x`   n.y `p (%).y`
+  &lt;chr&gt;          &lt;int&gt;     &lt;dbl&gt; &lt;int&gt;     &lt;dbl&gt;
+1 Not Applicable    53        22     8         9
+2 grade 2a          87        36    21        24
+3 grade 2b(1)       52        21    24        27
+4 grade 2b(2)        6         2     3         3
+5 grade 3           27        11    19        22
+6 grade 4            2         1     2         2
+7 &lt;NA&gt;              16         7    11        12</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb183"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb183-1"><a href="#cb183-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span></span>
+<span id="cb183-2"><a href="#cb183-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb183-3"><a href="#cb183-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Final, PCR, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb183-4"><a href="#cb183-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(Final, <span class="sc">~</span> <span class="sc">!</span> <span class="fu">is.na</span>(.x)),</span>
+<span id="cb183-5"><a href="#cb183-5" aria-hidden="true" tabindex="-1"></a>         <span class="fu">across</span>(HFMD, <span class="sc">~</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(.x) <span class="sc">|</span> .x <span class="sc">==</span> <span class="st">"Not Applicable"</span>, <span class="st">"grade 1"</span>, .))) <span class="sc">|&gt;</span> </span>
+<span id="cb183-6"><a href="#cb183-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span></span>
+<span id="cb184-2"><a href="#cb184-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb184-3"><a href="#cb184-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Final, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb184-4"><a href="#cb184-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">y =</span> <span class="sc">!</span> <span class="fu">is.na</span>(Final)) <span class="sc">|&gt;</span> </span>
+<span id="cb184-5"><a href="#cb184-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_severity</span>(<span class="at">ylab =</span> <span class="st">"proportion of MRI done"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-140-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb185"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb185-2"><a href="#cb185-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Final, Acute) <span class="sc">|&gt;</span> </span>
+<span id="cb185-3"><a href="#cb185-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb185-4"><a href="#cb185-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Final, Acute) <span class="sc">|&gt;</span> </span>
+<span id="cb185-5"><a href="#cb185-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 3
 # Groups:   Final, Acute [3]
@@ -2143,9 +2302,9 @@ HFMD          FALSE TRUE
 </div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb172"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb172-2"><a href="#cb172-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="fu">is.na</span>(Final), <span class="fu">is.na</span>(Acute)) <span class="sc">|&gt;</span> </span>
-<span id="cb172-3"><a href="#cb172-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb187"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb187-1"><a href="#cb187-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb187-2"><a href="#cb187-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="fu">is.na</span>(Final), <span class="fu">is.na</span>(Acute)) <span class="sc">|&gt;</span> </span>
+<span id="cb187-3"><a href="#cb187-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 2 × 3
 # Groups:   is.na(Final), is.na(Acute) [2]
@@ -2156,11 +2315,11 @@ HFMD          FALSE TRUE
 </div>
 </div>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb174"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
-<span id="cb174-2"><a href="#cb174-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter_out</span>(<span class="fu">is.na</span>(Final)) <span class="sc">|&gt;</span> </span>
-<span id="cb174-3"><a href="#cb174-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Final, PCR) <span class="sc">|&gt;</span> </span>
-<span id="cb174-4"><a href="#cb174-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EV71 =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb174-5"><a href="#cb174-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">table</span>(Final, EV71))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb189"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a>children <span class="sc">|&gt;</span> </span>
+<span id="cb189-2"><a href="#cb189-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter_out</span>(<span class="fu">is.na</span>(Final)) <span class="sc">|&gt;</span> </span>
+<span id="cb189-3"><a href="#cb189-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Final, PCR) <span class="sc">|&gt;</span> </span>
+<span id="cb189-4"><a href="#cb189-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EV71 =</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb189-5"><a href="#cb189-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">table</span>(Final, EV71))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       EV71
 Final   FALSE TRUE
@@ -2173,15 +2332,15 @@ Final   FALSE TRUE
 <h3 data-number="11.2" class="anchored" data-anchor-id="severe-cases"><span class="header-section-number">11.2</span> Severe cases</h3>
 <p>Running the pipeline on the severe cases only:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb176"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb176-1"><a href="#cb176-1" aria-hidden="true" tabindex="-1"></a>output_sev <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span></span>
-<span id="cb176-2"><a href="#cb176-2" aria-hidden="true" tabindex="-1"></a>                                <span class="sc">!</span>(HFMD <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"grade 2a"</span>, <span class="st">"Not Applicable"</span>))) <span class="sc">|&gt;</span> </span>
-<span id="cb176-3"><a href="#cb176-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb191"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb191-1"><a href="#cb191-1" aria-hidden="true" tabindex="-1"></a>output_sev <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span></span>
+<span id="cb191-2"><a href="#cb191-2" aria-hidden="true" tabindex="-1"></a>                                <span class="sc">!</span>(HFMD <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"grade 2a"</span>, <span class="st">"Not Applicable"</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb191-3"><a href="#cb191-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The number of data points:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb177"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a>output_sev <span class="sc">|&gt;</span> </span>
-<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
-<span id="cb177-3"><a href="#cb177-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb192"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a>output_sev <span class="sc">|&gt;</span> </span>
+<span id="cb192-2"><a href="#cb192-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb192-3"><a href="#cb192-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 23 × 4
    response timepoint  control  HFMD
@@ -2213,9 +2372,9 @@ Final   FALSE TRUE
 </div>
 <p>Looking at the HFMD effects:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb179"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
-<span id="cb179-2"><a href="#cb179-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev)</span>
-<span id="cb179-3"><a href="#cb179-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb194"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
+<span id="cb194-2"><a href="#cb194-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev)</span>
+<span id="cb194-3"><a href="#cb194-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -2229,14 +2388,14 @@ Final   FALSE TRUE
 <h3 data-number="11.3" class="anchored" data-anchor-id="ev71-cases"><span class="header-section-number">11.3</span> EV71 cases</h3>
 <p>Running the pipeline on the EV71 cases only:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb180"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb180-1"><a href="#cb180-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb180-2"><a href="#cb180-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb195"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb195-1"><a href="#cb195-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span> <span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb195-2"><a href="#cb195-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The number of data points:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb181"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb181-1"><a href="#cb181-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="sc">|&gt;</span> </span>
-<span id="cb181-2"><a href="#cb181-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
-<span id="cb181-3"><a href="#cb181-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb196"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb196-1"><a href="#cb196-1" aria-hidden="true" tabindex="-1"></a>output_ev71 <span class="sc">|&gt;</span> </span>
+<span id="cb196-2"><a href="#cb196-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb196-3"><a href="#cb196-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 23 × 4
    response timepoint  control  HFMD
@@ -2268,9 +2427,9 @@ Final   FALSE TRUE
 </div>
 <p>Looking at the HFMD effects:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb183"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb183-1"><a href="#cb183-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
-<span id="cb183-2"><a href="#cb183-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_ev71)</span>
-<span id="cb183-3"><a href="#cb183-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb198"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb198-1"><a href="#cb198-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
+<span id="cb198-2"><a href="#cb198-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_ev71)</span>
+<span id="cb198-3"><a href="#cb198-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -2284,16 +2443,16 @@ Final   FALSE TRUE
 <h3 data-number="11.4" class="anchored" data-anchor-id="severe-ev71-cases"><span class="header-section-number">11.4</span> Severe EV71 cases</h3>
 <p>Running the pipeline on the EV71 cases only:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a>output_sev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span></span>
-<span id="cb184-2"><a href="#cb184-2" aria-hidden="true" tabindex="-1"></a>                                  (<span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>) <span class="sc">&amp;</span></span>
-<span id="cb184-3"><a href="#cb184-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="sc">!</span>(HFMD <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"grade 2a"</span>, <span class="st">"Not Applicable"</span>)))) <span class="sc">|&gt;</span> </span>
-<span id="cb184-4"><a href="#cb184-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb199"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb199-1"><a href="#cb199-1" aria-hidden="true" tabindex="-1"></a>output_sev71 <span class="ot">&lt;-</span> <span class="fu">filter_patients</span>(group <span class="sc">==</span> <span class="st">"control"</span> <span class="sc">|</span></span>
+<span id="cb199-2"><a href="#cb199-2" aria-hidden="true" tabindex="-1"></a>                                  (<span class="fu">str_detect</span>(PCR, <span class="st">"EV-A71"</span>) <span class="sc">&amp;</span></span>
+<span id="cb199-3"><a href="#cb199-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="sc">!</span>(HFMD <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"grade 2a"</span>, <span class="st">"Not Applicable"</span>)))) <span class="sc">|&gt;</span> </span>
+<span id="cb199-4"><a href="#cb199-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The number of data points:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb185"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>output_sev71 <span class="sc">|&gt;</span> </span>
-<span id="cb185-2"><a href="#cb185-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
-<span id="cb185-3"><a href="#cb185-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb200"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb200-1"><a href="#cb200-1" aria-hidden="true" tabindex="-1"></a>output_sev71 <span class="sc">|&gt;</span> </span>
+<span id="cb200-2"><a href="#cb200-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(response, timepoint, control, HFMD) <span class="sc">|&gt;</span> </span>
+<span id="cb200-3"><a href="#cb200-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 23 × 4
    response timepoint  control  HFMD
@@ -2325,9 +2484,9 @@ Final   FALSE TRUE
 </div>
 <p>Looking at the HFMD effects:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb187"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb187-1"><a href="#cb187-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
-<span id="cb187-2"><a href="#cb187-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev71)</span>
-<span id="cb187-3"><a href="#cb187-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb202"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb202-1"><a href="#cb202-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">15</span>, .<span class="dv">97</span>, .<span class="dv">15</span>, .<span class="dv">9</span>))</span>
+<span id="cb202-2"><a href="#cb202-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_effects_all</span>(output_sev71)</span>
+<span id="cb202-3"><a href="#cb202-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -2342,44 +2501,44 @@ Final   FALSE TRUE
 <h2 data-number="12" class="anchored" data-anchor-id="individual-longitudinal"><span class="header-section-number">12</span> Individual longitudinal</h2>
 <p>A function that summarizes the number of patients available for various longitudinal schemes:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb188"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb188-1"><a href="#cb188-1" aria-hidden="true" tabindex="-1"></a>longitudinal_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb188-2"><a href="#cb188-2" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
-<span id="cb188-3"><a href="#cb188-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(ParNo, time_point) <span class="sc">|&gt;</span> </span>
-<span id="cb188-4"><a href="#cb188-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tally</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb188-5"><a href="#cb188-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb188-6"><a href="#cb188-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> time_point, <span class="at">values_from =</span> n)</span>
-<span id="cb188-7"><a href="#cb188-7" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"3 time points"</span> <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(x)),</span>
-<span id="cb188-8"><a href="#cb188-8" aria-hidden="true" tabindex="-1"></a>           <span class="st">"at least first 2 time points"</span> <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(<span class="fu">select</span>(x, <span class="sc">-</span><span class="st">`</span><span class="at">18 months</span><span class="st">`</span>))),</span>
-<span id="cb188-9"><a href="#cb188-9" aria-hidden="true" tabindex="-1"></a>           <span class="st">"at least last 2 time points"</span> <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(<span class="fu">select</span>(x, <span class="sc">-</span>enrollment))),</span>
-<span id="cb188-10"><a href="#cb188-10" aria-hidden="true" tabindex="-1"></a>           <span class="st">"at least the first and last time points"</span> <span class="ot">=</span></span>
-<span id="cb188-11"><a href="#cb188-11" aria-hidden="true" tabindex="-1"></a>             <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(<span class="fu">select</span>(x, <span class="sc">-</span> <span class="st">`</span><span class="at">6 months</span><span class="st">`</span>))))</span>
-<span id="cb188-12"><a href="#cb188-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">condition            =</span> <span class="fu">names</span>(out), </span>
-<span id="cb188-13"><a href="#cb188-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">"number of patients"</span> <span class="ot">=</span> out)</span>
-<span id="cb188-14"><a href="#cb188-14" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb203"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb203-1"><a href="#cb203-1" aria-hidden="true" tabindex="-1"></a>longitudinal_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb203-2"><a href="#cb203-2" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
+<span id="cb203-3"><a href="#cb203-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(ParNo, time_point) <span class="sc">|&gt;</span> </span>
+<span id="cb203-4"><a href="#cb203-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tally</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb203-5"><a href="#cb203-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb203-6"><a href="#cb203-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> time_point, <span class="at">values_from =</span> n)</span>
+<span id="cb203-7"><a href="#cb203-7" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"3 time points"</span> <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(x)),</span>
+<span id="cb203-8"><a href="#cb203-8" aria-hidden="true" tabindex="-1"></a>           <span class="st">"at least first 2 time points"</span> <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(<span class="fu">select</span>(x, <span class="sc">-</span><span class="st">`</span><span class="at">18 months</span><span class="st">`</span>))),</span>
+<span id="cb203-9"><a href="#cb203-9" aria-hidden="true" tabindex="-1"></a>           <span class="st">"at least last 2 time points"</span> <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(<span class="fu">select</span>(x, <span class="sc">-</span>enrollment))),</span>
+<span id="cb203-10"><a href="#cb203-10" aria-hidden="true" tabindex="-1"></a>           <span class="st">"at least the first and last time points"</span> <span class="ot">=</span></span>
+<span id="cb203-11"><a href="#cb203-11" aria-hidden="true" tabindex="-1"></a>             <span class="fu">nrow</span>(<span class="fu">na.exclude</span>(<span class="fu">select</span>(x, <span class="sc">-</span> <span class="st">`</span><span class="at">6 months</span><span class="st">`</span>))))</span>
+<span id="cb203-12"><a href="#cb203-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">condition            =</span> <span class="fu">names</span>(out), </span>
+<span id="cb203-13"><a href="#cb203-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">"number of patients"</span> <span class="ot">=</span> out)</span>
+<span id="cb203-14"><a href="#cb203-14" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>A function that runs <code>longitudinal_summary()</code> on all the scores of a follow-up data frame <code>df</code>:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb189"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a>lsummary <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
-<span id="cb189-2"><a href="#cb189-2" aria-hidden="true" tabindex="-1"></a>  scores <span class="sc">|&gt;</span> </span>
-<span id="cb189-3"><a href="#cb189-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set_names</span>() <span class="sc">|&gt;</span></span>
-<span id="cb189-4"><a href="#cb189-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">longitudinal_summary</span>(df[<span class="sc">!</span> <span class="fu">is.na</span>(df[[.x]]), ])) <span class="sc">|&gt;</span> </span>
-<span id="cb189-5"><a href="#cb189-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bind_rows</span>(<span class="at">.id =</span> <span class="st">"score"</span>)</span>
-<span id="cb189-6"><a href="#cb189-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb204"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb204-1"><a href="#cb204-1" aria-hidden="true" tabindex="-1"></a>lsummary <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb204-2"><a href="#cb204-2" aria-hidden="true" tabindex="-1"></a>  scores <span class="sc">|&gt;</span> </span>
+<span id="cb204-3"><a href="#cb204-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set_names</span>() <span class="sc">|&gt;</span></span>
+<span id="cb204-4"><a href="#cb204-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map</span>(<span class="sc">~</span> <span class="fu">longitudinal_summary</span>(df[<span class="sc">!</span> <span class="fu">is.na</span>(df[[.x]]), ])) <span class="sc">|&gt;</span> </span>
+<span id="cb204-5"><a href="#cb204-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bind_rows</span>(<span class="at">.id =</span> <span class="st">"score"</span>)</span>
+<span id="cb204-6"><a href="#cb204-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The patients ID of the HFMD cases:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb190"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb190-1"><a href="#cb190-1" aria-hidden="true" tabindex="-1"></a>HFMDcases <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
-<span id="cb190-2"><a href="#cb190-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb190-3"><a href="#cb190-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(ParNo)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb205"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb205-1"><a href="#cb205-1" aria-hidden="true" tabindex="-1"></a>HFMDcases <span class="ot">&lt;-</span> children <span class="sc">|&gt;</span> </span>
+<span id="cb205-2"><a href="#cb205-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"HFMD"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb205-3"><a href="#cb205-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(ParNo)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Looking that the number of case and control patients for which we have longitudinal data:</p>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb191"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb191-1"><a href="#cb191-1" aria-hidden="true" tabindex="-1"></a><span class="fu">left_join</span>(<span class="fu">rename</span>(<span class="fu">lsummary</span>(<span class="fu">filter</span>(followups, ParNo <span class="sc">%in%</span> HFMDcases)),</span>
-<span id="cb191-2"><a href="#cb191-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">HFMD =</span> <span class="st">`</span><span class="at">number of patients</span><span class="st">`</span>),</span>
-<span id="cb191-3"><a href="#cb191-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">rename</span>(<span class="fu">lsummary</span>(<span class="fu">filter_out</span>(followups, ParNo <span class="sc">%in%</span> HFMDcases)),</span>
-<span id="cb191-4"><a href="#cb191-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">control =</span> <span class="st">`</span><span class="at">number of patients</span><span class="st">`</span>), <span class="fu">c</span>(<span class="st">"score"</span>, <span class="st">"condition"</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb191-5"><a href="#cb191-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(HFMD <span class="sc">&gt;</span> <span class="dv">5</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb191-6"><a href="#cb191-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb206"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb206-1"><a href="#cb206-1" aria-hidden="true" tabindex="-1"></a><span class="fu">left_join</span>(<span class="fu">rename</span>(<span class="fu">lsummary</span>(<span class="fu">filter</span>(followups, ParNo <span class="sc">%in%</span> HFMDcases)),</span>
+<span id="cb206-2"><a href="#cb206-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">HFMD =</span> <span class="st">`</span><span class="at">number of patients</span><span class="st">`</span>),</span>
+<span id="cb206-3"><a href="#cb206-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">rename</span>(<span class="fu">lsummary</span>(<span class="fu">filter_out</span>(followups, ParNo <span class="sc">%in%</span> HFMDcases)),</span>
+<span id="cb206-4"><a href="#cb206-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">control =</span> <span class="st">`</span><span class="at">number of patients</span><span class="st">`</span>), <span class="fu">c</span>(<span class="st">"score"</span>, <span class="st">"condition"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb206-5"><a href="#cb206-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(HFMD <span class="sc">&gt;</span> <span class="dv">5</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb206-6"><a href="#cb206-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 28 × 4
    score   condition                                HFMD control

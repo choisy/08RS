@@ -1650,22 +1650,35 @@ par(opar)
 
 ## EV-A71 and severe cases
 
+A function that computes a summary table of HFMD cases according to the variable `var`:
+
+```{r}
+make_table <- function(df, var) {
+  df |> 
+    filter(group == "HFMD") |> 
+    group_by({{ var }}) |> 
+    count() |> 
+    ungroup() |> 
+    mutate(`p (%)` = round(100 * n / sum(n)))
+}
+```
+
 The various PCR results:
 
 ```{r}
-children |> 
-  group_by(PCR) |> 
-  count() |> 
-  print(n = Inf)
+virus_table_all <- children |>
+  make_table(PCR) |> 
+  rename(virus = PCR)
+
+print(virus_table_all, n = Inf)
 ```
 
 Severity:
 
 ```{r}
-children |> 
-  filter(group == "HFMD") |> 
-  group_by(HFMD) |> 
-  count()
+(severity_table_all <- children |>
+  make_table(HFMD) |> 
+  rename(severity = HFMD))
 ```
 
 Severity vs EV71:
@@ -1693,8 +1706,8 @@ A function that plots the proportion of `TRUE` in the variable `y` of the data f
 `x` as a function of severity grade:
 
 ```{r}
-plot_severity <- function(x) {
-  x |> 
+plot_severity <- function(df, ...) {
+  df |> 
     mutate(across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
                                     .x == "Not Applicable" ~ "grade 1",
                                     .default = .x))) |> 
@@ -1712,20 +1725,53 @@ plot_severity <- function(x) {
            confint    = map(binom_test, ~ setNames(.x$conf.int, c("lb", "ub")))) |> 
     unnest_wider(confint) |> 
     with({
-      plot(at, estimate, ylim = 0:1, pch = 19, xaxt = "n", col = 4,
-           xlab = "severity grade", ylab = "proportion of MRI")
+      plot(at, estimate, ylim = 0:1, axes = FALSE, xlab = "severity grade",
+           type = "n", ...)
+      
+      v <- na.exclude(df$y)
+      btest <- binom.test(sum(v), length(v))
+      confint <- btest$conf.int
+      rect(min(at) - 1, confint[1], max(at) + 1, confint[2], col = "lightgrey",
+           border = NA)
+      abline(h = btest$estimate, lty = 2, lwd = 2, col = "grey")
+
+      points(at, estimate, pch = 19, col = 4)
       arrows(at, lb, at, ub, .1, 90, 3, col = 4, lwd = 2)
       axis(1, at, str_remove(HFMD, "grade "))
+      axis(2)
     })
+}
+```
+
+```{r}
+virusXseverity <- function(virus) {
+  children |> 
+    filter(group == "HFMD") |> # (not necessary)
+    mutate(y = str_detect(PCR, virus)) |> 
+    plot_severity(ylab = paste("proportion of", virus))
 }
 ```
 
 The proportion of EV71 as a function of the severity grade:
 
 ```{r}
-children |> 
-  mutate(y = str_detect(PCR, "EV-A71")) |> 
-  plot_severity()
+virusXseverity("EV-A71")
+```
+
+```{r}
+virusXseverity("EV")
+```
+
+```{r}
+virusXseverity("EV$")
+```
+
+```{r}
+virusXseverity("CV-A6")
+```
+
+```{r}
+virusXseverity("CV-A10")
 ```
 
 The proportion of the presence of lesions observed by MRI as a function of the severity
@@ -1734,7 +1780,7 @@ grade:
 ```{r}
 children |> 
   rename(y = Final) |> 
-  plot_severity()
+  plot_severity(ylab = "proportion of MRI with lesions")
 ```
 
 A function that filters the patients in the `followups` data frame according to some
@@ -1750,6 +1796,58 @@ filter_patients <- function(...) {
 ```
 
 ### MRI
+
+```{r}
+virus_table_mri <- children |> 
+  filter_out(is.na(Final)) |>
+  make_table(PCR) |> 
+  rename(virus = PCR)
+```
+
+```{r}
+virus_table <- left_join(virus_table_all, virus_table_mri, by = "virus") |> 
+  mutate(across(where(is.numeric), ~replace_na(.x, 0)))
+
+print(virus_table, n = Inf)
+```
+
+```{r}
+with(virus_table, plot(n.x, n.y))
+```
+
+```{r}
+severity_table_mri <- children |>
+  filter_out(is.na(Final)) |>
+  make_table(HFMD) |> 
+  rename(severity = HFMD)
+```
+
+```{r}
+(severity_table <- left_join(severity_table_all, severity_table_mri,
+                             by = "severity") |> 
+  mutate(across(where(is.numeric), ~replace_na(.x, 0))))
+```
+
+```{r}
+tmp <- children |>
+  filter(group == "HFMD") |> 
+  select(Final, PCR, HFMD) |> 
+  mutate(across(Final, ~ ! is.na(.x)),
+         across(HFMD, ~ ifelse(is.na(.x) | .x == "Not Applicable", "grade 1", .))) |> 
+  na.exclude()
+```
+
+```{r}
+children |>
+  filter(group == "HFMD") |> 
+  select(Final, HFMD) |> 
+  mutate(y = ! is.na(Final)) |> 
+  plot_severity(ylab = "proportion of MRI done")
+```
+
+
+
+
 
 ```{r}
 children |> 
