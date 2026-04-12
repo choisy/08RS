@@ -1851,8 +1851,7 @@ children |>
   select(Final, PCR, HFMD) |> 
   mutate(across(Final, ~ ! is.na(.x)),
          across(PCR, ~ str_detect(.x, "EV-A71")),
-         across(HFMD, ~ ifelse(is.na(.x) | .x == "Not Applicable", "grade 1", .)) |> 
-           ) |> 
+         across(HFMD, ~ ifelse(is.na(.x) | .x == "Not Applicable", "grade 1", .x))) |> 
   na.exclude()
 ```
 
