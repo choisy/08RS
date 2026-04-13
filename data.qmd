@@ -520,12 +520,18 @@ Selecting and recoding the variables from the 08RS CRF, and assigning to case or
 control:
 
 ```{r}
+# because we recode grade:
+CRF_dict0 <- CRF_dict
+grade <- CRF_dict$disc$GradeHFMD
+CRF_dict$disc$GradeHFMD <- c(last(grade), head(grade, -1))
+
 children <- selection08RS |> 
   remove_slots("ABC") |> 
   get_vars(CRF08RS) |> 
   reduce(left_join, by = "ParNo") |> 
   rowwise() |> 
-  mutate(HFMD = max(across(c(HFMDToday, HFMDAdmitted, GradeHFMD)))) |> #takes max grade
+  mutate(across(contains("HFMD"), ~ c(1:6, 0)[.x] + 1),                # recode grade
+         HFMD = max(across(c(HFMDToday, HFMDAdmitted, GradeHFMD)), na.rm = TRUE)) |>
   ungroup() |> 
   recoding1() |> 
   recoding2() |>
@@ -534,10 +540,21 @@ children <- selection08RS |>
   left_join(MRI, "ID") |> 
   left_join(PCR, "ID") |> 
   rename(PCR = `OUCRU RESULT`) |> 
-  select(-HFMDToday, -HFMDAdmitted, -GradeHFMD, -ID) |> 
+#  select(-HFMDToday, -HFMDAdmitted, -GradeHFMD, -ID) |> 
   select(ParNo, Gender, DateBirth, DateIllness, DateAdmHosp,
          DateAdmHTD, DateEnrol, DateDisc, everything()) |> 
   arrange(ParNo)
+
+# undoing the change on the dictionary done at the top of the chunk
+CRF_dict <- CRF_dict0
+rm(CRF_dict0)
+```
+
+```{r}
+#children |> 
+#  filter(group == "HFMD") |> 
+#  select(ParNo, contains("HFMD")) |> 
+#  filter(is.na(HFMD))
 ```
 
 ### Patching 02EI CRF
@@ -1693,13 +1710,13 @@ children |>
 Severity vs EV71 when defining a `grade 1` category:
 
 ```{r}
-children |> 
-  filter(group == "HFMD") |> 
-  mutate(EV71 = str_detect(PCR, "EV-A71"),
-         across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
-                                  .x == "Not Applicable" ~ "grade 1",
-                                  .default = .x))) |> 
-  with(table(HFMD, EV71))
+#children |> 
+#  filter(group == "HFMD") |> 
+#  mutate(EV71 = str_detect(PCR, "EV-A71"),
+#         across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
+#                                  .x == "Not Applicable" ~ "grade 1",
+#                                  .default = .x))) |> 
+#  with(table(HFMD, EV71))
 ```
 
 A function that plots the proportion of `TRUE` in the variable `y` of the data frame
@@ -1708,9 +1725,9 @@ A function that plots the proportion of `TRUE` in the variable `y` of the data f
 ```{r}
 plot_severity <- function(df, ...) {
   df |> 
-    mutate(across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
-                                    .x == "Not Applicable" ~ "grade 1",
-                                    .default = .x))) |> 
+#    mutate(across(HFMD, ~ case_when(is.na(.x) ~ "grade 1",
+#                                    .x == "Not Applicable" ~ "grade 1",
+#                                    .default = .x))) |> 
     group_by(HFMD, y) |> 
     count() |> 
     ungroup() |> 
