@@ -1059,8 +1059,8 @@ are available.
 ### HFMD vs controls
 
 From here we work with 2 data frames: `children` that contains the children
-information, and `followups` that contains the follow-up data. Note that height and
-weight (and consequently stunting) is missing for about 22% of children:
+information, and `followups` that contains the follow-up data. Number of missing data
+points:
 
 ```{r}
 children |> 
@@ -1194,6 +1194,10 @@ prepare_fu_data <- function(data = followups, min_nb = 4) {
     unnest_wider(ctable) |> 
     filter(HFMD > min_nb)
 }
+```
+
+```{r}
+data <- followups
 ```
 
 A function that generates ATT (Average Treatment effect on Treated) weights from a
@@ -1446,6 +1450,87 @@ than 50% of original sample size).
 * effective sample size should not be lower than the number treated.
 * max weight should not be much higher than 10 to 20 times the median weight.
 
+### Propensity scores v2
+
+```{r}
+covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+```{r}
+covariables_sev <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(HFMD == "grade 2a", "control", "HFMD")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+```{r}
+covariables_EV71 <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(str_detect(PCR, "EV-A71"), "HFMD", "control")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+```{r}
+covariables_MRI <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(Final, "HFMD", "control")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+```{r}
+make_data2 <- function(data, response, timepoint, covariab = covariables) {
+  data |> 
+    filter(time_point == timepoint) |> 
+    select(ParNo, all_of(response)) |> 
+    na.exclude() |> 
+    left_join(covariab, "ParNo") |> 
+    select(-ParNo) |> 
+    select(all_of(response), group, everything()) |> 
+    na.exclude()
+}
+```
+
+```{r}
+prepare_fu_data2 <- function(data = followups, min_nb = 4, covariab = covariables) {
+  expand_grid(response  = scores,
+              timepoint = c("enrollment", "6 months", "18 months")) |> 
+    mutate(dataset = map2(response, timepoint, ~ make_data2(data, .x, .y, covariab)),
+           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
+    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+    unnest_wider(ctable) |> 
+    filter(HFMD > min_nb)
+}
+```
+
+```{r}
+pipeline2 <- function(data = followups, min_nb = 4, covariab = covariables) {
+  data |> 
+    prepare_fu_data2(min_nb, covariab) |> 
+    mutate(dataset = map(dataset,
+                         ~ mutate(.x, ow = logistic_ps(pick(everything())),
+                                      tw = twang_ps(pick(everything())),
+                                      t2 = twang_ps(pick(everything()),
+                                                    n.trees = 5000,
+                                                    interaction.depth = 2))),
+           formula = map(response, ~ reformulate("group", .x)),
+           glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
+           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
+           m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
+           m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
+           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2))) |> 
+    process_model(glm0, "l0") |> 
+    process_model(glm1, "l1") |> 
+    process_model(m_ow, "ow") |> 
+    process_model(m_tw, "tw") |> 
+    process_model(m_t2, "t2") #|> 
+# 6 - TMLE:           
+#    mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
+#    unnest_wider(tmle)
+}
+```
+
+
 ### Responses
 
 A function that plots the density of the response for a given data set (where the
@@ -1665,6 +1750,218 @@ plot_effects_all(output)
 par(opar)
 ```
 
+## Running the pipeline
+
+All cases vs controls:
+
+```{r}
+#output <- pipeline()
+#output_all_cont <- pipeline()
+```
+
+Severe cases vs controls:
+
+```{r eval = FALSE}
+output_sev_cont <- filter_patients(group == "control" |
+                                     !(is.na(HFMD) | HFMD == "grade 2a")) |> 
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_sev_cont.rds")) {
+  output_sev_cont <- readRDScache("output_sev_cont.rds")
+} else {
+  output_sev_cont <- filter_patients(group == "control" |
+                                       !(is.na(HFMD) | HFMD == "grade 2a")) |> 
+  pipeline()
+  saveRDScache(output_sev_cont, "output_sev_cont.rds")
+}
+```
+
+```{r fig_sev_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_sev_cont)
+par(opar)
+```
+
+Non severe cases vs controls:
+
+```{r eval = FALSE}
+output_nonsev_cont <- filter_patients(group == "control" |
+                                        !(is.na(HFMD) | HFMD != "grade 2a")) |> 
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_nonsev_cont.rds")) {
+  output_nonsev_cont <- readRDScache("output_nonsev_cont.rds")
+} else {
+  output_nonsev_cont <- filter_patients(group == "control" |
+                                          !(is.na(HFMD) | HFMD != "grade 2a")) |> 
+    pipeline()
+  saveRDScache(output_nonsev_cont, "output_nonsev_cont.rds")
+}
+```
+
+```{r fig_nonsev_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_nonsev_cont)
+par(opar)
+```
+
+Severe vs non-severe (considered as controls):
+
+```{r eval = FALSE}
+output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
+  pipeline2(covariab = covariables_sev)
+```
+
+```{r include = FALSE}
+if (file_exists("output_sev_nonsev.rds")) {
+  output_sev_nonsev <- readRDScache("output_sev_nonsev.rds")
+} else {
+  output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
+    pipeline2(covariab = covariables_sev)
+  saveRDScache(output_sev_nonsev, "output_sev_nonsev.rds")
+}
+```
+
+```{r fig_sev_nonsev, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_sev_nonsev)
+par(opar)
+```
+
+EV-A71 vs controls:
+
+```{r eval = FALSE}
+output_EV71_cont <- filter_patients(group == "control" |
+                                      !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_EV71_cont.rds")) {
+  output_EV71_cont <- readRDScache("output_EV71_cont.rds")
+} else {
+  output_EV71_cont <- filter_patients(group == "control" |
+                                        !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
+    pipeline()
+  saveRDScache(output_EV71_cont, "output_EV71_cont.rds")
+}
+```
+
+```{r fig_EV71_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_EV71_cont)
+par(opar)
+```
+
+Non EV-A71 vs controls:
+
+```{r eval = FALSE}
+output_nonEV71_cont <- filter_patients(group == "control" |
+                                         !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_nonEV71_cont.rds")) {
+  output_nonEV71_cont <- readRDScache("output_nonEV71_cont.rds")
+} else {
+  output_nonEV71_cont <- filter_patients(group == "control" |
+                                           !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
+    pipeline()
+  saveRDScache(output_nonEV71_cont, "output_nonEV71_cont.rds")
+}
+```
+
+```{r fig_nonEV71_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_nonEV71_cont)
+par(opar)
+```
+
+EV-A71 vs non-EV-A71 (considered as controls):
+
+```{r eval = FALSE}
+output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
+  pipeline2(covariab = covariables_EV71)
+```
+
+```{r include = FALSE}
+if (file_exists("output_EV71_nonEV71.rds")) {
+  output_EV71_nonEV71 <- readRDScache("output_EV71_nonEV71.rds")
+} else {
+  output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
+    pipeline2(covariab = covariables_EV71)
+  saveRDScache(output_EV71_nonEV71, "output_EV71_nonEV71.rds")
+}
+```
+
+```{r fig_EV71_nonEV71, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_EV71_nonEV71)
+par(opar)
+```
+
+Lesions on MRI vs controls:
+
+```{r eval = FALSE}
+output_lesions_cont <- filter_patients(group == "control" |
+                                         ! (is.na(Final) | ! Final)) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_lesions_cont.rds")) {
+  output_lesions_cont <- readRDScache("output_lesions_cont.rds")
+} else {
+  output_lesions_cont <- filter_patients(group == "control" |
+                                           ! (is.na(Final) | ! Final)) |>
+    pipeline()
+  saveRDScache(output_lesions_cont, "output_lesions_cont.rds")
+}
+```
+
+```{r fig_lesions_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_lesions_cont)
+par(opar)
+```
+
+No lesions on MRI vs controls:
+
+```{r eval = FALSE}
+output_nolesions_cont <- filter_patients(group == "control" |
+                                         ! (is.na(Final) | Final)) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_nolesions_cont.rds")) {
+  output_nolesions_cont <- readRDScache("output_nolesions_cont.rds")
+} else {
+  output_nolesions_cont <- filter_patients(group == "control" |
+                                             ! (is.na(Final) | Final)) |>
+    pipeline()
+  saveRDScache(output_nolesions_cont, "output_nolesions_cont.rds")
+}
+```
+
+```{r fig_nolesions_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_nolesions_cont)
+par(opar)
+```
+
+MRI lesions vs no MRI lesions (considered as controls):
+
+```{r}
+#output_lesions_nolesions <- filter_patients(group == "HFMD", !is.na(Final)) |> 
+#  pipeline2(covariab = covariables_MRI)
+```
+
 ## EV-A71 and severe cases
 
 A function that computes a summary table of HFMD cases according to the variable `var`:
@@ -1771,30 +2068,30 @@ virusXseverity <- function(virus) {
 
 The proportion of EV71 as a function of the severity grade:
 
-```{r}
+```{r fig_EV71_severity}
 virusXseverity("EV-A71")
 ```
 
-```{r}
+```{r fig_EV_severity}
 virusXseverity("EV")
 ```
 
-```{r}
+```{r fig_EV$_severity}
 virusXseverity("EV$")
 ```
 
-```{r}
+```{r fig_CVA6_severity}
 virusXseverity("CV-A6")
 ```
 
-```{r}
+```{r fig_CVA10_severity}
 virusXseverity("CV-A10")
 ```
 
 The proportion of the presence of lesions observed by MRI as a function of the severity
 grade:
 
-```{r}
+```{r fig_lesions_severity}
 children |> 
   rename(y = Final) |> 
   plot_severity(ylab = "proportion of MRI with lesions")
@@ -1828,7 +2125,7 @@ virus_table <- left_join(virus_table_all, virus_table_mri, by = "virus") |>
 print(virus_table, n = Inf)
 ```
 
-```{r}
+```{r fig_MRI_nonMRI}
 with(virus_table, plot(n.x, n.y))
 ```
 
@@ -1854,7 +2151,7 @@ tmp <- children |>
   na.exclude()
 ```
 
-```{r}
+```{r fig_probaMRI_severity}
 children |>
   filter(group == "HFMD") |> 
   select(Final, HFMD) |> 
