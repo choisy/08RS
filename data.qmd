@@ -2304,6 +2304,39 @@ left_join(rename(lsummary(filter(followups, ParNo %in% HFMDcases)),
   print(n = Inf)
 ```
 
+```{r}
+hash <- c(enrollment = 1, `6 months` = 2, `18 months` = 3)
+
+followups2 <- followups |> 
+  mutate(x = hash[time_point]) |> 
+  left_join(select(children, ParNo, group), "ParNo")
+
+ids <- followups2 |> 
+  filter_out(is.na(CS)) |> 
+  group_by(ParNo) |> 
+  tally() |> 
+  filter(n > 2) |> 
+  pull(ParNo)
+
+followups3 <- followups2 |> 
+  filter_out(is.na(CS)) |> 
+  select(ParNo, time_point, x, CS, group) |> 
+  filter(ParNo %in% ids) |> 
+  arrange(ParNo, time_point)
+
+with(followups3, plot(x, CS))
+
+followups3 |> 
+  mutate(col = c(HFMD = "red", control = "blue")[group]) |> 
+  group_by(ParNo) |> 
+  group_split() |> 
+  sample() |> 
+  walk(~ with(.x, lines(x, CS, col = col)))
+
+followups3 |> 
+  pivot_wider(names_from = )
+
+```
 
 
 
