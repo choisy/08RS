@@ -2333,9 +2333,31 @@ followups3 |>
   sample() |> 
   walk(~ with(.x, lines(x, CS, col = col)))
 
-followups3 |> 
-  pivot_wider(names_from = )
+fu4 <- followups3 |>
+  pivot_wider(id_cols = -x, names_from = time_point, values_from = CS) |> 
+  mutate(col = c(HFMD = "red", control = "blue")[group]) |> 
+  select(-c(ParNo, group))
 
+fu4 |> 
+  select(-`18 months`) |> 
+  group_by(across(everything())) |> 
+  summarise(n = sqrt(n())) |> 
+  with(plot(enrollment, `6 months`, cex = n, col = col))
+  
+
+fu4 |> 
+with(plot(jitter(enrollment), jitter(`6 months`)))
+```
+
+```{r}
+tmp <- select(followups, ends_with("ISS"), "CS", "RC", "EC", "FM", "GM")
+
+tmp |> 
+  pull(1) |> 
+  na.exclude() |> 
+  hist()
+
+walk(tmp, ~ hist(na.exclude(.x)))
 ```
 
 
