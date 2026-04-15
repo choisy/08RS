@@ -2360,6 +2360,12 @@ tmp |>
 walk(tmp, ~ hist(na.exclude(.x)))
 ```
 
+## Ranges of scores
+
+```{r}
+
+```
+
 
 
 
