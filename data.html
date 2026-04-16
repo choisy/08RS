@@ -2912,6 +2912,9 @@ Final   FALSE TRUE
 </div>
 </div>
 </div>
+</section>
+<section id="ranges-of-scores" class="level2" data-number="14">
+<h2 data-number="14" class="anchored" data-anchor-id="ranges-of-scores"><span class="header-section-number">14</span> Ranges of scores</h2>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb240"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb240-1"><a href="#cb240-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">select</span>(followups, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>), <span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span>
 <span id="cb240-2"><a href="#cb240-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -3020,9 +3023,6 @@ Final   FALSE TRUE
 </div>
 </div>
 </section>
-<section id="ranges-of-scores" class="level2" data-number="14">
-<h2 data-number="14" class="anchored" data-anchor-id="ranges-of-scores"><span class="header-section-number">14</span> Ranges of scores</h2>
-</section>
 <section id="age-distributions" class="level2" data-number="15">
 <h2 data-number="15" class="anchored" data-anchor-id="age-distributions"><span class="header-section-number">15</span> Age distributions</h2>
 <div class="cell" data-layout-align="center">
@@ -3036,11 +3036,13 @@ Final   FALSE TRUE
 </div>
 <div class="cell" data-layout-align="center">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb243"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb243-1"><a href="#cb243-1" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">1</span>), <span class="at">cex =</span> <span class="dv">1</span>)</span>
-<span id="cb243-2"><a href="#cb243-2" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(<span class="fu">c</span>(<span class="st">"enrollment"</span>, <span class="st">"6 months"</span>, <span class="st">"18 months"</span>),</span>
-<span id="cb243-3"><a href="#cb243-3" aria-hidden="true" tabindex="-1"></a>     <span class="sc">~</span> <span class="fu">filter</span>(ages, time_point <span class="sc">==</span> .x) <span class="sc">|&gt;</span> </span>
+<span id="cb243-2"><a href="#cb243-2" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(<span class="fu">c</span>(<span class="st">"enrollment"</span>, <span class="st">"6 months"</span>, <span class="st">"18 months"</span>), <span class="sc">~</span> {</span>
+<span id="cb243-3"><a href="#cb243-3" aria-hidden="true" tabindex="-1"></a>       <span class="fu">filter</span>(ages, time_point <span class="sc">==</span> .x) <span class="sc">|&gt;</span> </span>
 <span id="cb243-4"><a href="#cb243-4" aria-hidden="true" tabindex="-1"></a>       <span class="fu">pull</span>(age) <span class="sc">|&gt;</span> </span>
 <span id="cb243-5"><a href="#cb243-5" aria-hidden="true" tabindex="-1"></a>       <span class="fu">hist</span>(<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">6</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">135</span>), <span class="at">main =</span> <span class="cn">NA</span>, <span class="at">yaxs =</span> <span class="st">"i"</span>,</span>
-<span id="cb243-6"><a href="#cb243-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">xlab =</span> <span class="st">"age (years)"</span>, <span class="at">ylab =</span> <span class="st">"counts"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb243-6"><a href="#cb243-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">xlab =</span> <span class="st">"age (years)"</span>, <span class="at">ylab =</span> <span class="st">"counts"</span>)</span>
+<span id="cb243-7"><a href="#cb243-7" aria-hidden="true" tabindex="-1"></a>       <span class="fu">text</span>(<span class="dv">3</span>, <span class="dv">130</span>, .x)</span>
+<span id="cb243-8"><a href="#cb243-8" aria-hidden="true" tabindex="-1"></a>  })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">

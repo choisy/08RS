@@ -2350,6 +2350,9 @@ fu4 |>
 with(plot(jitter(enrollment), jitter(`6 months`)))
 ```
 
+
+## Ranges of scores
+
 ```{r}
 tmp <- select(followups, ends_with("ISS"), "CS", "RC", "EC", "FM", "GM")
 
@@ -2361,7 +2364,6 @@ tmp |>
 walk(tmp, ~ hist(na.exclude(.x)))
 ```
 
-## Ranges of scores
 
 ## Age distributions
 
@@ -2377,11 +2379,13 @@ ages <- followups |>
 
 ```{r fig_age_distributions, fig.height = 3 * eps * figh}
 opar <- par(mfrow = c(3, 1), cex = 1)
-walk(c("enrollment", "6 months", "18 months"),
-     ~ filter(ages, time_point == .x) |> 
+walk(c("enrollment", "6 months", "18 months"), ~ {
+       filter(ages, time_point == .x) |> 
        pull(age) |> 
        hist(xlim = c(0, 6), ylim = c(0, 135), main = NA, yaxs = "i",
-            xlab = "age (years)", ylab = "counts"))
+            xlab = "age (years)", ylab = "counts")
+       text(3, 130, .x)
+  })
 par(opar)
 ```
 
