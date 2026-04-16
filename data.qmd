@@ -84,7 +84,7 @@ Required packages:
 
 ```{r}
 required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
-              "cobalt", "survey", "tmle", "RColorBrewer")
+              "cobalt", "survey", "tmle", "RColorBrewer", "lubridate")
 ```
 
 Installing those that are not installed yet:
@@ -105,6 +105,7 @@ library(twang)
 library(cobalt)
 library(survey)
 library(tmle)
+library(lubridate)
 ```
 
 
@@ -2365,10 +2366,6 @@ walk(tmp, ~ hist(na.exclude(.x)))
 ## Age distributions
 
 ```{r}
-library(lubridate)
-```
-
-```{r}
 ages <- followups |> 
   left_join(select(children, ParNo, DateBirth), "ParNo") |> 
   mutate(age_ABC = time_length(Date_ABC - DateBirth, "year"),
@@ -2377,6 +2374,19 @@ ages <- followups |>
   select(ParNo, time_point, age) |> 
   na.exclude()
 ```
+
+```{r fig_age_distributions, fig.height = 3 * eps * figh}
+opar <- par(mfrow = c(3, 1), cex = 1)
+walk(c("enrollment", "6 months", "18 months"),
+     ~ filter(ages, time_point == .x) |> 
+       pull(age) |> 
+       hist(xlim = c(0, 6), ylim = c(0, 135), main = NA, yaxs = "i",
+            xlab = "age (years)", ylab = "counts"))
+par(opar)
+```
+
+
+## Timings of followups
 
 ```{r}
 btw_fup <- ages |> 
