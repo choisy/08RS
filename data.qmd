@@ -2353,15 +2353,15 @@ with(plot(jitter(enrollment), jitter(`6 months`)))
 
 ## Ranges of scores
 
-```{r}
-tmp <- select(followups, ends_with("ISS"), "CS", "RC", "EC", "FM", "GM")
-
-tmp |> 
-  pull(1) |> 
-  na.exclude() |> 
-  hist()
-
-walk(tmp, ~ hist(na.exclude(.x)))
+```{r fig_score_distributions, fig.height = 5 * figh / 3, fig.width = figw}
+opar <- par(mfrow = c(5, 3), cex = 1, plt = c(.2, .95, .3, .96))
+followups |>
+  select(ends_with("ISS"), "CS", "RC", "EC", "FM", "GM") |> 
+  iwalk(~ {
+    hist(.x, main = NA, xlab = paste(.y, "score"), ylab = "density", freq = FALSE)
+    lines(density(na.exclude(.x)), col = 2, lwd = 2)
+  })
+par(opar)
 ```
 
 

@@ -2916,108 +2916,27 @@ Final   FALSE TRUE
 <section id="ranges-of-scores" class="level2" data-number="14">
 <h2 data-number="14" class="anchored" data-anchor-id="ranges-of-scores"><span class="header-section-number">14</span> Ranges of scores</h2>
 <div class="cell" data-layout-align="center">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb240"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb240-1"><a href="#cb240-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">select</span>(followups, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>), <span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span>
-<span id="cb240-2"><a href="#cb240-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb240-3"><a href="#cb240-3" aria-hidden="true" tabindex="-1"></a>tmp <span class="sc">|&gt;</span> </span>
-<span id="cb240-4"><a href="#cb240-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(<span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
-<span id="cb240-5"><a href="#cb240-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb240-6"><a href="#cb240-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hist</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb240"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb240-1"><a href="#cb240-1" aria-hidden="true" tabindex="-1"></a><span class="do">##opar &lt;- par(mfrow = c(5, 3), cex = 1, plt = c(.13, .97, .17, .93))</span></span>
+<span id="cb240-2"><a href="#cb240-2" aria-hidden="true" tabindex="-1"></a><span class="co">#opar &lt;- par(mfrow = c(5, 3), cex = 1, plt = c(.2, .95, .3, .96))</span></span>
+<span id="cb240-3"><a href="#cb240-3" aria-hidden="true" tabindex="-1"></a><span class="co">#followups |&gt;</span></span>
+<span id="cb240-4"><a href="#cb240-4" aria-hidden="true" tabindex="-1"></a><span class="co">#  select(ends_with("ISS"), "CS", "RC", "EC", "FM", "GM") |&gt; </span></span>
+<span id="cb240-5"><a href="#cb240-5" aria-hidden="true" tabindex="-1"></a><span class="co">#  iwalk(~ hist(.x, main = NA, xlab = paste(.y, "score"), ylab = "counts", yaxs = "i"))</span></span>
+<span id="cb240-6"><a href="#cb240-6" aria-hidden="true" tabindex="-1"></a><span class="co">#par(opar)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb241"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb241-1"><a href="#cb241-1" aria-hidden="true" tabindex="-1"></a><span class="co">#opar &lt;- par(mfrow = c(5, 3), cex = 1, plt = c(.13, .97, .17, .93))</span></span>
+<span id="cb241-2"><a href="#cb241-2" aria-hidden="true" tabindex="-1"></a>opar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">3</span>), <span class="at">cex =</span> <span class="dv">1</span>, <span class="at">plt =</span> <span class="fu">c</span>(.<span class="dv">2</span>, .<span class="dv">95</span>, .<span class="dv">3</span>, .<span class="dv">96</span>))</span>
+<span id="cb241-3"><a href="#cb241-3" aria-hidden="true" tabindex="-1"></a>followups <span class="sc">|&gt;</span></span>
+<span id="cb241-4"><a href="#cb241-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">ends_with</span>(<span class="st">"ISS"</span>), <span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb241-5"><a href="#cb241-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">iwalk</span>(<span class="sc">~</span> {</span>
+<span id="cb241-6"><a href="#cb241-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">hist</span>(.x, <span class="at">main =</span> <span class="cn">NA</span>, <span class="at">xlab =</span> <span class="fu">paste</span>(.y, <span class="st">"score"</span>), <span class="at">ylab =</span> <span class="st">"density"</span>, <span class="at">freq =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb241-7"><a href="#cb241-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">lines</span>(<span class="fu">density</span>(<span class="fu">na.exclude</span>(.x)), <span class="at">col =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb241-8"><a href="#cb241-8" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb241-9"><a href="#cb241-9" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(opar)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb241"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb241-1"><a href="#cb241-1" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(tmp, <span class="sc">~</span> <span class="fu">hist</span>(<span class="fu">na.exclude</span>(.x)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-4.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-5.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-6.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-7.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-8.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-9.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-10.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-11.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-12.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-13.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="data_files/figure-html/unnamed-chunk-175-14.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+<p><img src="data_files/figure-html/fig_score_distributions-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></p>
 </figure>
 </div>
 </div>
