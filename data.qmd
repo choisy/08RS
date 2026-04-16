@@ -2362,10 +2362,42 @@ walk(tmp, ~ hist(na.exclude(.x)))
 
 ## Ranges of scores
 
-```{r}
+## Age distributions
 
+```{r}
+library(lubridate)
 ```
 
+```{r}
+ages <- followups |> 
+  left_join(select(children, ParNo, DateBirth), "ParNo") |> 
+  mutate(age_ABC = time_length(Date_ABC - DateBirth, "year"),
+         age_Bayley = time_length(Date_Bayley - DateBirth, "year"),
+         age = ifelse(is.na(age_ABC), age_Bayley, age_ABC)) |> 
+  select(ParNo, time_point, age) |> 
+  na.exclude()
+```
 
+```{r}
+btw_fup <- ages |> 
+  pivot_wider(names_from = time_point, values_from = age) |> 
+  mutate(fu1 = 12 * (`6 months` - enrollment),
+         fu2 = 12 * (`18 months` - enrollment),
+         fu3 = 12 * (`18 months` - `6 months`))
+```
 
+```{r timings_followups}
+fuh <- btw_fup |> 
+  select(starts_with("fu")) |> 
+  map(hist, plot = FALSE)
+
+plot(fuh[[1]], xlab = "timing of follow-up (months)", ylab = "counts", main = NA,
+     xlim = c(0, max(unlist(map(fuh, "breaks")))), yaxs = "i", col = 4,
+     ylim = c(0, 1.04 * max(unlist(map(fuh, "counts")))))
+plot(fuh[[2]], col = 4, add = TRUE)
+abline(v = c(6, 18), col = 2, lwd = 3)
+
+plot(fuh[[3]], add = TRUE)
+abline(v = 12, lwd = 3)
+```
 

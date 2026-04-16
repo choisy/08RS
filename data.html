@@ -126,6 +126,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#severe-ev71-cases" id="toc-severe-ev71-cases" class="nav-link" data-scroll-target="#severe-ev71-cases"><span class="header-section-number">12.4</span> Severe EV71 cases</a></li>
   </ul></li>
   <li><a href="#individual-longitudinal" id="toc-individual-longitudinal" class="nav-link" data-scroll-target="#individual-longitudinal"><span class="header-section-number">13</span> Individual longitudinal</a></li>
+  <li><a href="#ranges-of-scores" id="toc-ranges-of-scores" class="nav-link" data-scroll-target="#ranges-of-scores"><span class="header-section-number">14</span> Ranges of scores</a></li>
+  <li><a href="#age-distributions" id="toc-age-distributions" class="nav-link" data-scroll-target="#age-distributions"><span class="header-section-number">15</span> Age distributions</a></li>
   </ul>
 </nav>
 </div>
@@ -2836,6 +2838,238 @@ Final   FALSE TRUE
 26 GM      at least first 2 time points              195     188
 27 GM      at least last 2 time points               149     154
 28 GM      at least the first and last time points   147     152</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb236"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb236-1"><a href="#cb236-1" aria-hidden="true" tabindex="-1"></a>hash <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">enrollment =</span> <span class="dv">1</span>, <span class="st">`</span><span class="at">6 months</span><span class="st">`</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">`</span><span class="at">18 months</span><span class="st">`</span> <span class="ot">=</span> <span class="dv">3</span>)</span>
+<span id="cb236-2"><a href="#cb236-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb236-3"><a href="#cb236-3" aria-hidden="true" tabindex="-1"></a>followups2 <span class="ot">&lt;-</span> followups <span class="sc">|&gt;</span> </span>
+<span id="cb236-4"><a href="#cb236-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">x =</span> hash[time_point]) <span class="sc">|&gt;</span> </span>
+<span id="cb236-5"><a href="#cb236-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(children, ParNo, group), <span class="st">"ParNo"</span>)</span>
+<span id="cb236-6"><a href="#cb236-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb236-7"><a href="#cb236-7" aria-hidden="true" tabindex="-1"></a>ids <span class="ot">&lt;-</span> followups2 <span class="sc">|&gt;</span> </span>
+<span id="cb236-8"><a href="#cb236-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter_out</span>(<span class="fu">is.na</span>(CS)) <span class="sc">|&gt;</span> </span>
+<span id="cb236-9"><a href="#cb236-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ParNo) <span class="sc">|&gt;</span> </span>
+<span id="cb236-10"><a href="#cb236-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tally</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb236-11"><a href="#cb236-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">2</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb236-12"><a href="#cb236-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(ParNo)</span>
+<span id="cb236-13"><a href="#cb236-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb236-14"><a href="#cb236-14" aria-hidden="true" tabindex="-1"></a>followups3 <span class="ot">&lt;-</span> followups2 <span class="sc">|&gt;</span> </span>
+<span id="cb236-15"><a href="#cb236-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter_out</span>(<span class="fu">is.na</span>(CS)) <span class="sc">|&gt;</span> </span>
+<span id="cb236-16"><a href="#cb236-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, time_point, x, CS, group) <span class="sc">|&gt;</span> </span>
+<span id="cb236-17"><a href="#cb236-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ParNo <span class="sc">%in%</span> ids) <span class="sc">|&gt;</span> </span>
+<span id="cb236-18"><a href="#cb236-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(ParNo, time_point)</span>
+<span id="cb236-19"><a href="#cb236-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb236-20"><a href="#cb236-20" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(followups3, <span class="fu">plot</span>(x, CS))</span>
+<span id="cb236-21"><a href="#cb236-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb236-22"><a href="#cb236-22" aria-hidden="true" tabindex="-1"></a>followups3 <span class="sc">|&gt;</span> </span>
+<span id="cb236-23"><a href="#cb236-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">col =</span> <span class="fu">c</span>(<span class="at">HFMD =</span> <span class="st">"red"</span>, <span class="at">control =</span> <span class="st">"blue"</span>)[group]) <span class="sc">|&gt;</span> </span>
+<span id="cb236-24"><a href="#cb236-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ParNo) <span class="sc">|&gt;</span> </span>
+<span id="cb236-25"><a href="#cb236-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_split</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb236-26"><a href="#cb236-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sample</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb236-27"><a href="#cb236-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">walk</span>(<span class="sc">~</span> <span class="fu">with</span>(.x, <span class="fu">lines</span>(x, CS, <span class="at">col =</span> col)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-174-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb237"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb237-1"><a href="#cb237-1" aria-hidden="true" tabindex="-1"></a>fu4 <span class="ot">&lt;-</span> followups3 <span class="sc">|&gt;</span></span>
+<span id="cb237-2"><a href="#cb237-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="sc">-</span>x, <span class="at">names_from =</span> time_point, <span class="at">values_from =</span> CS) <span class="sc">|&gt;</span> </span>
+<span id="cb237-3"><a href="#cb237-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">col =</span> <span class="fu">c</span>(<span class="at">HFMD =</span> <span class="st">"red"</span>, <span class="at">control =</span> <span class="st">"blue"</span>)[group]) <span class="sc">|&gt;</span> </span>
+<span id="cb237-4"><a href="#cb237-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(ParNo, group))</span>
+<span id="cb237-5"><a href="#cb237-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb237-6"><a href="#cb237-6" aria-hidden="true" tabindex="-1"></a>fu4 <span class="sc">|&gt;</span> </span>
+<span id="cb237-7"><a href="#cb237-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">`</span><span class="at">18 months</span><span class="st">`</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb237-8"><a href="#cb237-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="fu">across</span>(<span class="fu">everything</span>())) <span class="sc">|&gt;</span> </span>
+<span id="cb237-9"><a href="#cb237-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n =</span> <span class="fu">sqrt</span>(<span class="fu">n</span>())) <span class="sc">|&gt;</span> </span>
+<span id="cb237-10"><a href="#cb237-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">with</span>(<span class="fu">plot</span>(enrollment, <span class="st">`</span><span class="at">6 months</span><span class="st">`</span>, <span class="at">cex =</span> n, <span class="at">col =</span> col))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has regrouped the output.
+ℹ Summaries were computed grouped by 6 months, enrollment, and col.
+ℹ Output is grouped by 6 months and enrollment.
+ℹ Use `summarise(.groups = "drop_last")` to silence this message.
+ℹ Use `summarise(.by = c(6 months, enrollment, col))` for per-operation
+  grouping (`?dplyr::dplyr_by`) instead.</code></pre>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-174-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb239"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb239-1"><a href="#cb239-1" aria-hidden="true" tabindex="-1"></a>fu4 <span class="sc">|&gt;</span> </span>
+<span id="cb239-2"><a href="#cb239-2" aria-hidden="true" tabindex="-1"></a><span class="fu">with</span>(<span class="fu">plot</span>(<span class="fu">jitter</span>(enrollment), <span class="fu">jitter</span>(<span class="st">`</span><span class="at">6 months</span><span class="st">`</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-174-3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb240"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb240-1"><a href="#cb240-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">select</span>(followups, <span class="fu">ends_with</span>(<span class="st">"ISS"</span>), <span class="st">"CS"</span>, <span class="st">"RC"</span>, <span class="st">"EC"</span>, <span class="st">"FM"</span>, <span class="st">"GM"</span>)</span>
+<span id="cb240-2"><a href="#cb240-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb240-3"><a href="#cb240-3" aria-hidden="true" tabindex="-1"></a>tmp <span class="sc">|&gt;</span> </span>
+<span id="cb240-4"><a href="#cb240-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(<span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb240-5"><a href="#cb240-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb240-6"><a href="#cb240-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">hist</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb241"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb241-1"><a href="#cb241-1" aria-hidden="true" tabindex="-1"></a><span class="fu">walk</span>(tmp, <span class="sc">~</span> <span class="fu">hist</span>(<span class="fu">na.exclude</span>(.x)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-4.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-5.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-6.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-7.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-8.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-9.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-10.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-11.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-12.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-13.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/unnamed-chunk-175-14.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="ranges-of-scores" class="level2" data-number="14">
+<h2 data-number="14" class="anchored" data-anchor-id="ranges-of-scores"><span class="header-section-number">14</span> Ranges of scores</h2>
+</section>
+<section id="age-distributions" class="level2" data-number="15">
+<h2 data-number="15" class="anchored" data-anchor-id="age-distributions"><span class="header-section-number">15</span> Age distributions</h2>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb242"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb242-1"><a href="#cb242-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'lubridate'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    date, intersect, setdiff, union</code></pre>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb245"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb245-1"><a href="#cb245-1" aria-hidden="true" tabindex="-1"></a>ages <span class="ot">&lt;-</span> followups <span class="sc">|&gt;</span> </span>
+<span id="cb245-2"><a href="#cb245-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(children, ParNo, DateBirth), <span class="st">"ParNo"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb245-3"><a href="#cb245-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">age_ABC =</span> <span class="fu">time_length</span>(Date_ABC <span class="sc">-</span> DateBirth, <span class="st">"year"</span>),</span>
+<span id="cb245-4"><a href="#cb245-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">age_Bayley =</span> <span class="fu">time_length</span>(Date_Bayley <span class="sc">-</span> DateBirth, <span class="st">"year"</span>),</span>
+<span id="cb245-5"><a href="#cb245-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">age =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(age_ABC), age_Bayley, age_ABC)) <span class="sc">|&gt;</span> </span>
+<span id="cb245-6"><a href="#cb245-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ParNo, time_point, age) <span class="sc">|&gt;</span> </span>
+<span id="cb245-7"><a href="#cb245-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">na.exclude</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb246"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb246-1"><a href="#cb246-1" aria-hidden="true" tabindex="-1"></a>btw_fup <span class="ot">&lt;-</span> ages <span class="sc">|&gt;</span> </span>
+<span id="cb246-2"><a href="#cb246-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> time_point, <span class="at">values_from =</span> age) <span class="sc">|&gt;</span> </span>
+<span id="cb246-3"><a href="#cb246-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">fu1 =</span> <span class="dv">12</span> <span class="sc">*</span> (<span class="st">`</span><span class="at">6 months</span><span class="st">`</span> <span class="sc">-</span> enrollment),</span>
+<span id="cb246-4"><a href="#cb246-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">fu2 =</span> <span class="dv">12</span> <span class="sc">*</span> (<span class="st">`</span><span class="at">18 months</span><span class="st">`</span> <span class="sc">-</span> enrollment),</span>
+<span id="cb246-5"><a href="#cb246-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">fu3 =</span> <span class="dv">12</span> <span class="sc">*</span> (<span class="st">`</span><span class="at">18 months</span><span class="st">`</span> <span class="sc">-</span> <span class="st">`</span><span class="at">6 months</span><span class="st">`</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb247"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb247-1"><a href="#cb247-1" aria-hidden="true" tabindex="-1"></a>fuh <span class="ot">&lt;-</span> btw_fup <span class="sc">|&gt;</span> </span>
+<span id="cb247-2"><a href="#cb247-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"fu"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb247-3"><a href="#cb247-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(hist, <span class="at">plot =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb247-4"><a href="#cb247-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb247-5"><a href="#cb247-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fuh[[<span class="dv">1</span>]], <span class="at">xlab =</span> <span class="st">"timing of follow-up (months)"</span>, <span class="at">ylab =</span> <span class="st">"counts"</span>, <span class="at">main =</span> <span class="cn">NA</span>,</span>
+<span id="cb247-6"><a href="#cb247-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fu">max</span>(<span class="fu">unlist</span>(<span class="fu">map</span>(fuh, <span class="st">"breaks"</span>)))), <span class="at">yaxs =</span> <span class="st">"i"</span>, <span class="at">col =</span> <span class="dv">4</span>,</span>
+<span id="cb247-7"><a href="#cb247-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">1.04</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">unlist</span>(<span class="fu">map</span>(fuh, <span class="st">"counts"</span>)))))</span>
+<span id="cb247-8"><a href="#cb247-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fuh[[<span class="dv">2</span>]], <span class="at">col =</span> <span class="dv">4</span>, <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb247-9"><a href="#cb247-9" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">18</span>), <span class="at">col =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">3</span>)</span>
+<span id="cb247-10"><a href="#cb247-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb247-11"><a href="#cb247-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fuh[[<span class="dv">3</span>]], <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb247-12"><a href="#cb247-12" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">12</span>, <span class="at">lwd =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="data_files/figure-html/timings_followups-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="470"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
