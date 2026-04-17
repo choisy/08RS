@@ -1412,7 +1412,8 @@ than 50% of original sample size).
 
 ### Propensity scores v2
 
-Compared to the version 1 the v2 allows to specify the covariables we want to include
+Compared to the version 1 the v2 allows to specify the covariables we want to include.
+In doing so we can redefine the groups (useful to )
 
 ```{r}
 covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
@@ -1445,7 +1446,7 @@ make_data2 <- function(data, response, timepoint, covariab = covariables) {
     filter(time_point == timepoint) |> 
     select(ParNo, all_of(response)) |> 
     na.exclude() |> 
-    left_join(covariab, "ParNo") |> 
+    left_join(covariab, "ParNo") |> # here we can specify the covariables we want
     select(-ParNo) |> 
     select(all_of(response), group, everything()) |> 
     na.exclude()
