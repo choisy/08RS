@@ -2358,8 +2358,11 @@ opar <- par(mfrow = c(5, 3), cex = 1, plt = c(.2, .95, .3, .96))
 followups |>
   select(ends_with("ISS"), "CS", "RC", "EC", "FM", "GM") |> 
   iwalk(~ {
-    hist(.x, main = NA, xlab = paste(.y, "score"), ylab = "density", freq = FALSE)
-    lines(density(na.exclude(.x)), col = 2, lwd = 2)
+    hdata <- hist(.x, plot = FALSE)
+    ddata <- density(na.exclude(.x))
+    plot(hdata, main = NA, freq = FALSE, ylim = c(0, max(hdata$density, ddata$y)),
+         xlab = paste(.y, "score"), ylab = "density")
+    lines(ddata, col = 2, lwd = 2)
   })
 par(opar)
 ```
