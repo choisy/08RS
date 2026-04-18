@@ -1223,10 +1223,41 @@ add_legend1()
 
 ### Propensity scores
 
-The covariates:
+All the covariates when considering the controls as the controls:
 
 ```{r}
-covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
+covariables_all <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The covariates for the HFMD cases only and when considering the grades 2a as the
+controls:
+
+```{r}
+covariables_sev <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(HFMD == "grade 2a", "control", "HFMD")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The covariates for the HFMD cases only and when considering the non EV-A71 as the
+controls:
+
+```{r}
+covariables_EV71 <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(str_detect(PCR, "EV-A71"), "HFMD", "control")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The covariates for the HFMD cases with an MRI only and when considering those without
+any lesions as the controls:
+
+```{r}
+covariables_MRI <- children |>
+#  filter(group == "HFMD") |> 
+  filter_out(is.na(Final)) |> 
+  mutate(group = ifelse(Final, "HFMD", "control")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
 ```
 
 The formula:
@@ -1239,12 +1270,12 @@ A function that generates a data set for a given response variable at a given ti
 point:
 
 ```{r}
-make_data <- function(data, response, timepoint) {
+make_data <- function(data, response, timepoint, covariab = covariables) {
   data |> 
     filter(time_point == timepoint) |> 
     select(ParNo, all_of(response)) |> 
     na.exclude() |> 
-    left_join(covariables, "ParNo") |> 
+    left_join(covariab, "ParNo") |> # here we can specify the covariables we want
     select(-ParNo) |> 
     select(all_of(response), group, everything()) |> 
     na.exclude()
@@ -1261,20 +1292,16 @@ scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2IS
 A function that prepares the follow-up data:
 
 ```{r}
-prepare_fu_data <- function(data = followups, min_nb = 4) {
+prepare_fu_data <- function(data = followups, min_nb = 4, covariab = covariables) {
   expand_grid(response  = scores,
               timepoint = c("enrollment", "6 months", "18 months")) |> 
-    mutate(dataset = map2(response, timepoint, ~ make_data(data, .x, .y)),
+    mutate(dataset = map2(response, timepoint, ~ make_data2(data, .x, .y, covariab)),
            ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
     filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
     mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
     unnest_wider(ctable) |> 
     filter(HFMD > min_nb)
 }
-```
-
-```{r}
-data <- followups
 ```
 
 A function that generates ATT (Average Treatment effect on Treated) weights from a
@@ -1337,6 +1364,16 @@ bal_tab <- function(data, w) {
 }
 ```
 
+A function that computes balance statistics for diagnostic of the propensity scores:
+
+```{r}
+bal_tab <- function(data, w) {
+  data |> 
+    mutate(across(group, ~ .x == "HFMD")) |> 
+    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated")
+}
+```
+
 A function that retrieves the balance adjustments for diagnostic of the propensity
 scores:
 
@@ -1381,9 +1418,9 @@ process_model <- function(x, model, nm) {
 The pipeline:
 
 ```{r}
-pipeline <- function(data = followups, min_nb = 4) {
+pipeline <- function(data = followups, min_nb = 4, covariab = covariables) {
   data |> 
-    prepare_fu_data(min_nb) |> 
+    prepare_fu_data2(min_nb, covariab) |> 
     mutate(dataset = map(dataset,
                          ~ mutate(.x, ow = logistic_ps(pick(everything())),
                                       tw = twang_ps(pick(everything())),
@@ -1491,89 +1528,6 @@ moderate imbalance. Values above 0.2 are a problem.
 than 50% of original sample size).
 * effective sample size should not be lower than the number treated.
 * max weight should not be much higher than 10 to 20 times the median weight.
-
-### Propensity scores v2
-
-Compared to the version 1 the v2 allows to specify the covariables we want to include.
-In doing so we can redefine the groups (useful to )
-
-```{r}
-covariables <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-```{r}
-covariables_sev <- children |>
-  filter(group == "HFMD") |> 
-  mutate(group = ifelse(HFMD == "grade 2a", "control", "HFMD")) |> 
-  select(ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-```{r}
-covariables_EV71 <- children |>
-  filter(group == "HFMD") |> 
-  mutate(group = ifelse(str_detect(PCR, "EV-A71"), "HFMD", "control")) |> 
-  select(ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-```{r}
-covariables_MRI <- children |>
-  filter(group == "HFMD") |> 
-  mutate(group = ifelse(Final, "HFMD", "control")) |> 
-  select(ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-```{r}
-make_data2 <- function(data, response, timepoint, covariab = covariables) {
-  data |> 
-    filter(time_point == timepoint) |> 
-    select(ParNo, all_of(response)) |> 
-    na.exclude() |> 
-    left_join(covariab, "ParNo") |> # here we can specify the covariables we want
-    select(-ParNo) |> 
-    select(all_of(response), group, everything()) |> 
-    na.exclude()
-}
-```
-
-```{r}
-prepare_fu_data2 <- function(data = followups, min_nb = 4, covariab = covariables) {
-  expand_grid(response  = scores,
-              timepoint = c("enrollment", "6 months", "18 months")) |> 
-    mutate(dataset = map2(response, timepoint, ~ make_data2(data, .x, .y, covariab)),
-           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
-    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
-    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
-    unnest_wider(ctable) |> 
-    filter(HFMD > min_nb)
-}
-```
-
-```{r}
-pipeline2 <- function(data = followups, min_nb = 4, covariab = covariables) {
-  data |> 
-    prepare_fu_data2(min_nb, covariab) |> 
-    mutate(dataset = map(dataset,
-                         ~ mutate(.x, ow = logistic_ps(pick(everything())),
-                                      tw = twang_ps(pick(everything())),
-                                      t2 = twang_ps(pick(everything()),
-                                                    n.trees = 5000,
-                                                    interaction.depth = 2))),
-           formula = map(response, ~ reformulate("group", .x)),
-           glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
-           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
-           m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
-           m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
-           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2))) |> 
-    process_model(glm0, "l0") |> 
-    process_model(glm1, "l1") |> 
-    process_model(m_ow, "ow") |> 
-    process_model(m_tw, "tw") |> 
-    process_model(m_t2, "t2") #|> 
-# 6 - TMLE:           
-#    mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
-#    unnest_wider(tmle)
-}
-```
 
 
 ### Responses
