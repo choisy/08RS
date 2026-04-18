@@ -84,7 +84,7 @@ Required packages:
 
 ```{r}
 required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
-              "cobalt", "survey", "tmle", "RColorBrewer", "lubridate")
+              "cobalt", "survey", "tmle", "RColorBrewer", "lubridate", "randomForest")
 ```
 
 Installing those that are not installed yet:
@@ -106,6 +106,7 @@ library(cobalt)
 library(survey)
 library(tmle)
 library(lubridate)
+library(randomForest)
 ```
 
 
