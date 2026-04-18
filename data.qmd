@@ -65,7 +65,7 @@ The path to the data and cache folders on the local computer:
 ```{r}
 if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
   OneDrive <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
-  data_folder  <- paste0(OneDrive, "SharePoint/OUCRU Modelling/08RS/")
+  data_folder  <- paste0(OneDrive, "SharePoint/OUCRU Modelling/08RS/data/")
   cache_folder <- paste0(OneDrive, "GitHub/choisy/08RS/cache/")
 }
 if (! dir.exists(cache_folder)) dir.create(cache_folder)
@@ -188,9 +188,7 @@ read_excel_file <- function(file) {
 A function that removes some slots of a list, by names:
 
 ```{r}
-remove_slots <- function(lst, slt) {
-  lst[setdiff(names(lst), slt)]
-}
+remove_slots <- function(lst, slt) lst[setdiff(names(lst), slt)]
 ```
 
 A function that extracts some variables of some slots of a list `x` of data frames:
@@ -206,17 +204,18 @@ get_vars <- function(sel, x) {
 The variables in questions are defined in the named list `sel` of character vectors.
 The names of this list should be among the names of `x` and the character vectors of
 each slots should be among the names of the columns of the data frames in the
-corresponding slots. A function that patches data values from the data frame `patch`
-into the data frame `df`, using the `key` variable as a common key between the two data
-frames:
+corresponding slots.
+
+A function that patches data values from the data frame `patch_df` into the data frame
+`df`, using the `key` variable as a common key between the two data frames:
 
 ```{r}
-patch <- function(patch, df, key) {
+patch <- function(patch_df, df, key) {
   ref <- df[, key]
-  sel <- df[[key]] %in% patch[[key]]
+  sel <- df[[key]] %in% patch_df[[key]]
   tmp <- df[sel, ]
   tmp_names <- names(tmp)
-  tmp <- bind_cols(patch, tmp[, setdiff(tmp_names, names(patch))])[tmp_names]
+  tmp <- bind_cols(patch_df, tmp[, setdiff(tmp_names, names(patch_df))])[tmp_names]
   df[! sel, ] |> 
     bind_rows(tmp) |> 
     left_join(x = ref, y = _, by = key)
@@ -256,7 +255,7 @@ append_dataframe <- function(x, n = 1, v = 0) {
 
 A function that applies `append_dataframe()` to the last slot of a list `x` of data
 frame so that the number of rows of the data frame in the last slot is equal to the
-number of rows of the data frame in the first lost:
+number of rows of the data frame in the first slost:
 
 ```{r}
 append_last <- function(x, v = 1) {
@@ -276,7 +275,7 @@ A tuning of the `image()` function:
 image2 <- function(x, y, z, ...) image(x, y, t(z[nrow(z):1, ]), ...)
 ```
 
-A function that adds a zero y value to both ends of a data frame with two columns `x`
+A function that adds an y zero value to both ends of a data frame with two columns `x`
 and `y`:
 
 ```{r}
@@ -306,7 +305,7 @@ A tuning of the `confint()` function:
 confint2 <- function(x) as_vector(last(suppressMessages(confint(x))))
 ```
 
-A function that retrieve the p value of the last parameter of a model:
+A function that retrieves the p value of the last parameter of a model:
 
 ```{r}
 get_p <- function(x) last(as.vector(coefficients(summary(x))))
@@ -380,30 +379,47 @@ A tuning of the `hist()` function:
 hist2 <- function(x, ...) hist(x, function(x) min(x):max(x), ...)
 ```
 
+A tuning of the `max()` function:
 
-## Saras' CSV file
-
-```{r, message = FALSE}
-saras <- read_csv2(saras_file)
+```{r}
+max2 <- function(x) {
+  if (all(is.na(x))) return(NA)
+  max(x, na.rm = TRUE)
+}
 ```
+
+
+## Reading data files
+
+### Saras' CSV file
+
+Reading Saras' CSV file:
+
+```{r}
+saras <- read_csv2(saras_file, col_select = -1, show_col_types = FALSE)
+```
+
+An overview of Saras' data:
 
 ```{r}
 select(saras, waste, visitM, ddifENB, ddifEN, FUP, FUP1)
 ```
+
+The waste variable:
 
 ```{r}
 table(saras$waste)
 ```
 
 
-## Raw data
+### Raw data
 
-### 08RS CRF
+#### 08RS CRF
 
 Loading the data from CliRes:
 
 ```{r}
-CRF08RS <- read_excel_file("6-11-2024-CTU08RS_Data.xlsx")
+CRF08RS <- read_excel_file(CRF08RS_file)
 ```
 
 The names of the data frames in CliRes and in Saras' code, with definitions:
@@ -485,10 +501,12 @@ selection08RS <- list(ENROL     = c("ParNo", "DateEnrol", "Gender", "DateBirth")
 ```
 
 
-### 02EI CRF
+#### 02EI CRF
+
+Reading the 02EI data file:
 
 ```{r}
-CRF02EI <- read_excel_file("6-11-2024-CTU02EI_Data.xlsx")
+CRF02EI <- read_excel_file(CRF02EI_file)
 ```
 
 Selection of variables from the 02EI CRF:
@@ -501,10 +519,12 @@ selection02EI <- list(Demo  = c("studyCode", "height", "weight"),
 ```
 
 
-### PCR data
+#### PCR data
 
-```{r message = FALSE}
-PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
+Reading the PCR results data:
+
+```{r}
+PCR <- PCR_file |>
   read_excel2("08RS") |> 
   select(ID, `OUCRU RESULT`) |> 
   mutate(across(ID, as.numeric),
@@ -519,32 +539,76 @@ PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
 ```
 
 
-### MRI data
+#### MRI data
 
-```{r, message = FALSE}
+Reading the MRI data (i.e. lesions visible on the MRI):
+
+```{r}
 MRI <- MRI_file |>
-  read_csv2() |> 
+  read_csv2(col_select = c(code, Final, Acute), show_col_types = FALSE) |> 
   rename(ID = code) |> 
-  select(ID, Final, Acute) |> 
   mutate(across(c("Final", "Acute"), ~ .x == "Yes"))
 ```
 
-What is the difference between `Final` and `Acute`?
+`Final` and `Acute` are not identical but it is `Final` that should be considered for
+the analysis:
 
 ```{r}
 filter(MRI, Final != Acute)
 ```
 
+#### Bayley data
 
-## Children data
-
-### 08RS, PCR, MRI
-
-The case and control groups:
+Loading the data from CliRes:
 
 ```{r}
-groups <- c(rep("HFMD", 299), rep("control", 200),
-            rep("HFMD", 200), rep("control", 299))
+Bayley0 <- read_excel_file(Bayley_file)
+```
+
+The tabs that we are interested in are the following:
+
+* **CS:** cognitive scale
+* **RC:** receptive communication (language scale)
+* **EC:** expressive communication (language scale)
+* **FM:** fine motor (motor scale)
+* **GM:** gross motor (motor scale)
+
+```{r}
+Bayley_tabs <- c("CS", "RC", "EC", "FM", "GM")
+```
+
+Let's generate the data frame from these tabs:
+
+```{r}
+common_variables <- c("PARNO", "DATETESTED")
+
+Bayley <- Bayley_tabs |> 
+  map(~ c(common_variables, "SCALESCORE", .x)) |> 
+  setNames(Bayley_tabs) |> 
+  get_vars(Bayley0) |> 
+  map2(paste0("SCALESCORE_", Bayley_tabs), rename2, "SCALESCORE") |> 
+  reduce(left_join, common_variables) |> 
+  mutate(across(starts_with("DATE"), as.Date)) |> 
+  rename(ParNo = PARNO) |> 
+  mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_")))
+```
+
+
+## Preparing datasets
+
+### Children data
+
+#### 08RS, PCR, MRI
+
+Generating the groups from Saras' CSV file:
+
+```{r}
+groups <- saras |> 
+  select(code, group) |> 
+  rename(ID = code) |> 
+  unique() |> 
+  arrange(ID) |> 
+  mutate(across(group, ~ str_replace(.x, "Control", "control")))
 ```
 
 First recoding of variables:
@@ -572,8 +636,9 @@ recoding2 <- function(x) {
 }
 ```
 
-Selecting and recoding the variables from the 08RS CRF, and assigning to case or
-control:
+In the following code we are selecting and recoding the variables from the 08RS CRF,
+and assigning to case or control. Note that because of the way HFMD are coded and
+because we want the maximum grade, we need to twickle around a little bit:
 
 ```{r}
 # because we recode grade:
@@ -587,27 +652,27 @@ children <- selection08RS |>
   reduce(left_join, by = "ParNo") |> 
   rowwise() |> 
   mutate(across(contains("HFMD"), ~ c(1:6, 0)[.x] + 1),                # recode grade
-         HFMD = max(across(c(HFMDToday, HFMDAdmitted, GradeHFMD)), na.rm = TRUE)) |>
+         HFMD = max2(across(c(HFMDToday, HFMDAdmitted, GradeHFMD)))) |>
   ungroup() |> 
   recoding1() |> 
   recoding2() |>
-  mutate(ID    = as.numeric(str_remove(ParNo, "^.*-")),
-         group = groups[ID]) |> 
+  mutate(ID = as.numeric(str_remove(ParNo, "^.*-"))) |> 
+  left_join(groups, "ID") |> 
   left_join(MRI, "ID") |> 
   left_join(PCR, "ID") |> 
   rename(PCR = `OUCRU RESULT`) |> 
-#  select(-HFMDToday, -HFMDAdmitted, -GradeHFMD, -ID) |> 
-  select(ParNo, Gender, DateBirth, DateIllness, DateAdmHosp,
-         DateAdmHTD, DateEnrol, DateDisc, everything()) |> 
+  select(-HFMDToday, -HFMDAdmitted, -GradeHFMD, -ID) |> 
+  select(ParNo, Gender, DateBirth, DateIllness, DateAdmHosp, DateAdmHTD, DateEnrol,
+         DateDisc, everything()) |> 
   arrange(ParNo)
 
-# undoing the change on the dictionary done at the top of the chunk
+# undoing the change on the dictionary done at the top of the chunk because of recoding
 CRF_dict <- CRF_dict0
 rm(CRF_dict0)
 ```
 
 
-### Patching 02EI CRF
+#### Patching 02EI CRF
 
 Conversion of IDs between 02EI and 08RS:
 
@@ -638,7 +703,8 @@ children <- selection02EI |>
   patch(children, "ParNo")
 ```
 
-### Stunt and waste
+
+#### Stunt and waste
 
 A function that computes stunt and waste variable from weight and height variables:
 
@@ -667,7 +733,7 @@ children <- stunt_waste(children, weigh, height)
 ```
 
 
-### Missing values
+#### Missing values
 
 A function that computes the numbers and percentages of missing values per variable:
 
@@ -685,9 +751,8 @@ number_of_NA <- function(x) {
 Let's look at the missing values among cases:
 
 ```{r}
-cases <- filter(children, group == "HFMD")
-
-cases |> 
+children |>
+  filter(group == "HFMD") |> 
   number_of_NA() |> 
   print(n = Inf)
 ```
@@ -695,13 +760,14 @@ cases |>
 And among controls:
 
 ```{r}
-controls <- filter(children, group == "control")
-
-controls |> 
+children |>
+  filter(, group == "control") |> 
   number_of_NA() |> 
   filter(percentage_of_NA < 100) |> 
   print(n = Inf)
 ```
+
+A function that displays the `NA` values:
 
 ```{r}
 show_NA <- function(x) {
@@ -826,66 +892,7 @@ show_NA(children)
 ```
 
 
-## M-ABC data
-
-```{r}
-ABC <- CRF08RS$ABC |> 
-  select(ParNo, DateTested, ends_with("ISS")) |> 
-  mutate(across(starts_with("Date"), as.Date)) |> 
-  arrange(ParNo, DateTested)
-```
-
-Of note, here
-
-* `MD` stands for manual dexterity,
-* `AC` stands for aiming and catching and
-* `BAL` stands for balance.
-
-```{r}
-ABC |> 
-  na.exclude()
-```
-
-
-## Bayley data
-
-Loading the data from CliRes:
-
-```{r}
-Bayley0 <- read_excel_file("12-9-2025-Bayley_v3_P1_Data.xlsx")
-```
-
-The tabs that we are interested in are the following:
-
-* **CS:** cognitive scale
-* **RC:** receptive communication (language scale)
-* **EC:** expressive communication (language scale)
-* **FM:** fine motor (motor scale)
-* **GM:** gross motor (motor scale)
-
-```{r}
-Bayley_tabs <- c("CS", "RC", "EC", "FM", "GM")
-```
-
-Let's generate the data frame from these tabs:
-
-```{r}
-common_variables1 <- c("PARNO", "DATETESTED")
-common_variables2 <- c(common_variables1, "SCALESCORE")
-
-Bayley<- Bayley_tabs |> 
-  map(~ c(common_variables2, .x)) |> 
-  setNames(Bayley_tabs) |> 
-  get_vars(Bayley0) |> 
-  map2(paste0("SCALESCORE_", Bayley_tabs), rename2, "SCALESCORE") |> 
-  reduce(left_join, by = c("PARNO", "DATETESTED")) |> 
-  mutate(across(starts_with("DATE"), as.Date)) |> 
-  rename(ParNo = PARNO) |> 
-  mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_")))
-```
-
-
-## Time points
+### Follow-up data
 
 A function that generates the time points:
 
@@ -934,7 +941,27 @@ show_duplicated_assessments <- function(x) {
 ```
 
 
-### M-ABC data
+#### M-ABC data
+
+```{r}
+ABC <- CRF08RS$ABC |> 
+  select(ParNo, DateTested, ends_with("ISS")) |> 
+  mutate(across(starts_with("Date"), as.Date)) |> 
+  arrange(ParNo, DateTested)
+```
+
+Of note, here
+
+* `MD` stands for manual dexterity,
+* `AC` stands for aiming and catching and
+* `BAL` stands for balance.
+
+```{r}
+ABC |> 
+  na.exclude()
+```
+
+Write duplicates to disk:
 
 ```{r}
 ABC |>
@@ -956,7 +983,7 @@ ABC2 <- ABC |>
 ```
 
 
-### Bayley data
+#### Bayley data
 
 ```{r}
 Bayley <- rename(Bayley, DateTested = DATETESTED)
@@ -984,7 +1011,7 @@ Bayley2 <- Bayley |>
 ```
 
 
-### Merging
+#### Merging
 
 Merging the M-ABC and Bayley data:
 
@@ -993,9 +1020,9 @@ followups <- full_join(ABC2, Bayley2, c("ParNo", "time_point"))
 ```
 
 
-### Visualization
+#### Visualization
 
-A function that prepend all the data frames of a list `x` of data frames with `n`
+A function that prepends all the data frames of a list `x` of data frames with `n`
 columns of the `v` values:
 
 ```{r}
