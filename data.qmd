@@ -60,7 +60,7 @@ knitr::opts_chunk$set(margin     = TRUE,
 
 ## Constants
 
-The path to the data folder on the local computer:
+The path to the data and cache folders on the local computer:
 
 ```{r}
 if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
@@ -69,6 +69,13 @@ if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
   cache_folder <- paste0(OneDrive, "GitHub/choisy/08RS/cache/")
 }
 if (! dir.exists(cache_folder)) dir.create(cache_folder)
+```
+
+```{r include = FALSE}
+make_path <- function(x) paste0(cache_folder, x)
+file_exists <- function(x) file.exists(make_path(x))
+readRDScache <- function(x) readRDS(make_path(x))
+saveRDScache <- function(object, file) saveRDS(object, make_path(file))
 ```
 
 Saras' CSV file:
@@ -105,13 +112,6 @@ Bayley's data file:
 
 ```{r}
 Bayley_file <- "12-9-2025-Bayley_v3_P1_Data.xlsx"
-```
-
-```{r include = FALSE}
-make_path <- function(x) paste0(cache_folder, x)
-file_exists <- function(x) file.exists(make_path(x))
-readRDScache <- function(x) readRDS(make_path(x))
-saveRDScache <- function(object, file) saveRDS(object, make_path(file))
 ```
 
 
@@ -155,6 +155,12 @@ A function that tunes a reading function:
 make_data_reader <- function(f) function(file, ...) f(paste0(data_folder, file), ...)
 ```
 
+A tuning of the `readxl::excel_sheets()` function:
+
+```{r}
+excel_sheets2 <- make_data_reader(readxl::excel_sheets)
+```
+
 A tuning of the `readxl::read_excel()` function:
 
 ```{r}
@@ -172,14 +178,14 @@ defined above:
 
 ```{r}
 read_excel_file <- function(file) {
-  sheets_names <- readxl::excel_sheets(paste0(data_folder, file))
+  sheets_names <- excel_sheets2(file)
   sheets_names |>
     map(~ read_excel2(file, .x)) |> 
     setNames(sheets_names)
 }
 ```
 
-A function that remove some slots of a list, by names:
+A function that removes some slots of a list, by names:
 
 ```{r}
 remove_slots <- function(lst, slt) {
