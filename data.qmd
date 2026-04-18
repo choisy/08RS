@@ -46,7 +46,7 @@ knitr::knit_hooks$set(
     if (before) par2(plt = c(.105, .97, .15, .95)) else NULL
   })
 
-figw <- 7  # default is 7
+figw <- 7  # default is 7 and maximum possible is 8.3
 figh <- 5  # default is 5
 eps <- .7
 
