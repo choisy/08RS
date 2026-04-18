@@ -63,15 +63,52 @@ knitr::opts_chunk$set(margin     = TRUE,
 The path to the data folder on the local computer:
 
 ```{r}
-root <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit"
-data_folder <- paste0(root, "/GitHub/choisy/08RS/")
-``` 
+if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
+  root <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
+  data_folder  <- paste0(root, "SharePoint/OUCRU Modelling/08RS/")
+  cache_folder <- paste0(root, "GitHub/choisy/08RS/cache/")
+}
+if (! dir.exists(cache_folder)) dir.create(cache_folder)
+```
+
+Saras' CSV file:
+
+```{r}
+saras_file <- "complete data including all withdrawals_updated26_3_21.csv"
+```
+
+08RS's CRF file:
+
+```{r}
+CRF08RS_file <- "6-11-2024-CTU08RS_Data.xlsx"
+```
+
+03EI's CRF file:
+
+```{r}
+CRF02EI_file <- "6-11-2024-CTU02EI_Data.xlsx"
+```
+
+PCR results data file:
+
+```{r}
+PCR_file <- "03EI-08RS PCR-Seq result.xlsx"
+```
+
+MRI data file:
+
+```{r}
+MRI_file <- "part_dataMRIentry_28AUG15_errorcor.csv"
+```
+
+Bayley's data file:
+
+```{r}
+Bayley_file <- "12-9-2025-Bayley_v3_P1_Data.xlsx"
+```
 
 ```{r include = FALSE}
-path2cache <- paste0(stringr::str_replace(getwd(), Sys.getenv("HOME"), root),
-                     "/cache/")
-if (! dir.exists(path2cache)) dir.create(path2cache)
-make_path <- function(x) paste0(path2cache, x)
+make_path <- function(x) paste0(cache_folder, x)
 file_exists <- function(x) file.exists(make_path(x))
 readRDScache <- function(x) readRDS(make_path(x))
 saveRDScache <- function(object, file) saveRDS(object, make_path(file))
@@ -112,10 +149,22 @@ library(randomForest)
 
 ## Functions
 
+A function that tunes a reading function:
+
+```{r}
+make_data_reader <- function(f) function(file, ...) f(paste0(data_folder, file), ...)
+```
+
 A tuning of the `readxl::read_excel()` function:
 
 ```{r}
-read_excel2 <- function(file, ...) readxl::read_excel(paste0(data_folder, file), ...)
+read_excel2 <- make_data_reader(readxl::read_excel)
+```
+
+A tuning of the `readr::read_csv()` function:
+
+```{r}
+read_csv2 <- make_data_reader(readr::read_csv)
 ```
 
 A function that reads all the tabs of an excel file in the data folder `data_folder`
@@ -329,8 +378,7 @@ hist2 <- function(x, ...) hist(x, function(x) min(x):max(x), ...)
 ## Saras' CSV file
 
 ```{r, message = FALSE}
-saras <- readr::read_csv(paste0(root, "/GitHub/choisy/08RS/complete data including ",
-                                "all withdrawals_updated26_3_21.csv"))
+saras <- read_csv2(saras_file)
 ```
 
 ```{r}
@@ -468,8 +516,8 @@ PCR <- "03EI-08RS PCR-Seq result.xlsx" |>
 ### MRI data
 
 ```{r, message = FALSE}
-MRI <- paste0(root, "/GitHub/choisy/08RS/part_dataMRIentry_28AUG15_errorcor.csv") |>
-  readr::read_csv() |> 
+MRI <- MRI_file |>
+  read_csv2() |> 
   rename(ID = code) |> 
   select(ID, Final, Acute) |> 
   mutate(across(c("Final", "Acute"), ~ .x == "Yes"))
