@@ -64,9 +64,9 @@ The path to the data folder on the local computer:
 
 ```{r}
 if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
-  root <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
-  data_folder  <- paste0(root, "SharePoint/OUCRU Modelling/08RS/")
-  cache_folder <- paste0(root, "GitHub/choisy/08RS/cache/")
+  OneDrive <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
+  data_folder  <- paste0(OneDrive, "SharePoint/OUCRU Modelling/08RS/")
+  cache_folder <- paste0(OneDrive, "GitHub/choisy/08RS/cache/")
 }
 if (! dir.exists(cache_folder)) dir.create(cache_folder)
 ```
