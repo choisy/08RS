@@ -186,7 +186,8 @@ A function that removes some slots of a list, by names:
 remove_slots <- function(lst, slt) lst[setdiff(names(lst), slt)]
 ```
 
-A function that extracts some variables of some slots of a list `x` of data frames:
+Below is a function that extracts some variables of some slots of a list `x` of data
+frames:
 
 ```{r}
 get_vars <- function(sel, x) {
@@ -199,22 +200,81 @@ get_vars <- function(sel, x) {
 The variables in questions are defined in the named list `sel` of character vectors.
 The names of this list should be among the names of `x` and the character vectors of
 each slots should be among the names of the columns of the data frames in the
-corresponding slots.
-
-A function that patches data values from the data frame `patch_df` into the data frame
-`df`, using the `key` variable as a common key between the two data frames:
+corresponding slots. Here is an example where all the data frames of the list happen to
+have the smes dimensions, but this does not have to be the case:
 
 ```{r}
-patch <- function(patch_df, df, key) {
-  ref <- df[, key]
-  sel <- df[[key]] %in% patch_df[[key]]
-  tmp <- df[sel, ]
-  tmp_names <- names(tmp)
-  tmp <- bind_cols(patch_df, tmp[, setdiff(tmp_names, names(patch_df))])[tmp_names]
-  df[! sel, ] |> 
+nb_cols <- 4
+nb_rows <- 3
+nb_df <- 4
+
+f_ <- function(x = 0) {
+  cols <- 1:nb_cols
+  cols |>
+    map(~ rnorm(nb_rows)) |> 
+    setNames(letters[cols + x]) |> 
+    as_tibble()  
+}
+
+(x_ <- seq(0, by = nb_cols, le = nb_df) |> 
+  map(f_) |> 
+  setNames(paste0("df", 1:nb_df)))
+
+
+(sel_ <- list(df1 = c("a", "c"), df3 = "j"))
+
+
+get_vars(sel_, x_)
+rm(nb_cols, nb_rows, nb_df, f_, x_, sel_)
+```
+
+Shortcut to `magrittr::extract(...)`:
+
+```{r}
+mextract  <- function(...) magrittr::extract(...)
+```
+
+Shortcut to `magrittr::extract2(...)`:
+
+```{r}
+mextract2 <- function(...) magrittr::extract2(...)
+```
+
+A function that patches data values from the data frame `patch_df` into the data frame
+`into_df`, using the `key` variable as a common key between the two data frames:
+
+```{r}
+patch <- function(patch_df, into_df, key) {
+  ref <- into_df[, key]
+  sel <- unlist(ref) %in% patch_df[[key]]
+  
+  tmp <- into_df[sel, ]
+  tmp <- tmp[, key] |>
+    left_join(patch_df) |> 
+    bind_cols(remove_slots(tmp, names(patch_df))) |> 
+    mextract(names(tmp))
+    
+  into_df[! sel, ] |> 
     bind_rows(tmp) |> 
     left_join(x = ref, y = _, by = key)
 }
+```
+
+An example:
+
+```{r}
+(into_df_ <- iris |>
+  head() |> 
+  as_tibble() |> 
+  mutate(key_ = row_number(), .before = everything()))
+
+(patch_df_ <- into_df_ |> 
+  slice_sample(n = 4) |> 
+  select(1, 3:4) |> 
+  mutate(across(-1, ~ rnorm(4))))
+
+patch(patch_df_, into_df_, "key_")
+rm(patch_df_, into_df_)
 ```
 
 A function that renames a column of a data frame:
@@ -314,18 +374,6 @@ svyglm2 <- function(formula, data, w) {
     svydesign(ids = ~1, weights = w, data = _) |> 
     svyglm(formula, design = _)
 }
-```
-
-Shortcut to `magrittr::extract(...)`:
-
-```{r}
-mextract  <- function(...) magrittr::extract(...)
-```
-
-Shortcut to `magrittr::extract2(...)`:
-
-```{r}
-mextract2 <- function(...) magrittr::extract2(...)
 ```
 
 A function that pads density coordinates with y zero value points:
