@@ -157,22 +157,15 @@ A function that tunes a reading function:
 make_data_reader <- function(f) function(file, ...) f(paste0(data_folder, file), ...)
 ```
 
-A tuning of the `readxl::excel_sheets()` function:
+Tunings of `readxl::excel_sheets()`, `readxl::read_excel()` and `readr::read_csv()`
+functions:
 
 ```{r}
-excel_sheets2 <- make_data_reader(readxl::excel_sheets)
-```
-
-A tuning of the `readxl::read_excel()` function:
-
-```{r}
-read_excel2 <- make_data_reader(readxl::read_excel)
-```
-
-A tuning of the `readr::read_csv()` function:
-
-```{r}
-read_csv2 <- make_data_reader(readr::read_csv)
+list(excel_sheets2 = readxl::excel_sheets,
+     read_excel2   = readxl::read_excel,
+     read_csv2     = readr::read_csv) |> 
+  map(make_data_reader) |> 
+  list2env(envir = .GlobalEnv)
 ```
 
 A function that reads all the tabs of an excel file in the data folder `data_folder`
