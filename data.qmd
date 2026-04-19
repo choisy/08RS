@@ -1131,838 +1131,10 @@ available, purple is where both data are available and white is where none of th
 are available.
 
 
-## Analysis
+## Explorations
 
-### HFMD vs controls
 
-From here we work with 2 data frames: `children` that contains the children
-information, and `followups` that contains the follow-up data. Number of missing data
-points:
-
-```{r}
-children |> 
-  select(group, age, MomEdu, Gender, stunting) |> 
-  map_int(~ sum(is.na(.x)))
-```
-
-Some common code:
-
-```{r}
-cols <- c(2, 4)
-adjcol <- function(...) adjustcolor(..., alpha = .3)
-
-barplot2 <- function(height, x) {
-  barplot(height, names.arg = x, beside = TRUE, ylab = "proportion",
-          col = adjcol(rev(cols)))
-}
-
-add_legend1 <- function(where = "topright") {
-  legend(where, legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
-}
-```
-
-Let's look at the age distribution of the controls and HFMD cases:
-
-```{r fig_age_distribution, fig.width = eps * figw, fig.height = eps * figh}
-tmp <- children |>
-  mutate(across(age, ~ as.numeric(.x) / 30)) |> 
-  group_by(group) |> 
-  group_map(~ .x |> pull(age) |> density(from = 0))
-
-tmp |> 
-  map(~ .x |> unclass() |> magrittr::extract(c("x", "y")) |> as_tibble()) |> 
-  bind_rows() |> 
-  map(range) |> 
-  with(plot(NA, xlim = x, ylim = y, xlab = "age (months)", ylab = "density"))
-
-tmp |> 
-  walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
-
-add_legend1()
-```
-
-Let's now look at the level of the mother's education:
-
-```{r fig_mom_edu, fig.width = eps * figw, fig.height = eps * figh}
-edu_order <- c("Never been to school", "Attended some primary school",
-               "Completed primary school (5th gr)",
-               "Completed lower secondary school (9th gr)",
-               "Completed higher secondary school (12th gr)",
-               "Completed university/college degree", "Completed postgraduate degree")
-
-children |> 
-  with(table(MomEdu, group)) |>
-  prop.table(2) %>%
-  `[`(edu_order, ) |> 
-  t() |> 
-  barplot2(c("none", "some", "5th g", "9th g", "12th g", "collg", "postg"))
-
-add_legend1()
-```
-
-Stunt and gender:
-
-```{r fig_sex_stunt, fig.width = eps * figw, fig.height = eps * figh}
-children |> 
-  select(group, Gender, stunting) |> 
-  na.exclude() |> 
-  group_by(group) |> 
-  group_split() |> 
-  map(~ .x |> group_by(Gender, stunting) |> tally() |> ungroup()) |> 
-  reduce(left_join, c("Gender", "stunting")) |> 
-  select(starts_with("n")) |> 
-  as.matrix() |> 
-  prop.table(2) |> 
-  t() %>%
-  `[`(2:1, ) |> 
-  barplot2(rep(c("female", "male"), each = 2))
-
-mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = seq(2, 11, 3))
-add_legend1()
-```
-
-### Propensity scores
-
-All the covariates when considering the controls as the controls:
-
-```{r}
-covariables_all <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-The covariates for the HFMD cases only and when considering the grades 2a as the
-controls:
-
-```{r}
-covariables_sev <- children |>
-  filter(group == "HFMD") |> 
-  mutate(group = ifelse(HFMD == "grade 2a", "control", "HFMD")) |> 
-  select(ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-The covariates for the HFMD cases only and when considering the non EV-A71 as the
-controls:
-
-```{r}
-covariables_EV71 <- children |>
-  filter(group == "HFMD") |> 
-  mutate(group = ifelse(str_detect(PCR, "EV-A71"), "HFMD", "control")) |> 
-  select(ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-The covariates for the HFMD cases with an MRI only and when considering those without
-any lesions as the controls:
-
-```{r}
-covariables_MRI <- children |>
-#  filter(group == "HFMD") |> 
-  filter_out(is.na(Final)) |> 
-  mutate(group = ifelse(Final, "HFMD", "control")) |> 
-  select(ParNo, Gender, age, MomEdu, stunting, group)
-```
-
-The formula:
-
-```{r}
-ps_formula <- group ~ Gender + age + MomEdu + stunting
-```
-
-A function that generates a data set for a given response variable at a given time
-point:
-
-```{r}
-make_data <- function(data, response, timepoint, covariab = covariables) {
-  data |> 
-    filter(time_point == timepoint) |> 
-    select(ParNo, all_of(response)) |> 
-    na.exclude() |> 
-    left_join(covariab, "ParNo") |> # here we can specify the covariables we want
-    select(-ParNo) |> 
-    select(all_of(response), group, everything()) |> 
-    na.exclude()
-}
-```
-
-The scores:
-
-```{r}
-scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
-            "BAL3ISS", "CS", "RC", "EC", "FM", "GM")
-```
-
-A function that prepares the follow-up data:
-
-```{r}
-prepare_fu_data <- function(data = followups, min_nb = 4, covariab = covariables) {
-  expand_grid(response  = scores,
-              timepoint = c("enrollment", "6 months", "18 months")) |> 
-    mutate(dataset = map2(response, timepoint, ~ make_data2(data, .x, .y, covariab)),
-           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
-    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
-    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
-    unnest_wider(ctable) |> 
-    filter(HFMD > min_nb)
-}
-```
-
-A function that generates ATT (Average Treatment effect on Treated) weights from a
-logistic regression:
-
-```{r}
-logistic_ps <- function(data) {
-  data |>
-    mutate(across(group, ~ .x == "HFMD"),
-           weights = ps_formula |>
-             glm(binomial, data = pick(everything())) |> 
-             predict(type = "response") %>%
-             { ifelse(group, 1, . / (1 - .)) }) |>  # ATT 
-    pull(weights)
-}
-```
-
-A function that generates weights from the `twang` package:
-
-```{r}
-twang_ps <- function(data, ...) {
-  data |> 
-    mutate(across(group, ~ as.integer(group == "HFMD")),
-           across(where(~ is.character(.x) | is.logical(.x)), as.factor),
-           across(age, as.numeric)) |> 
-    as.data.frame() |> 
-    ps(ps_formula, data = _, estimand = "ATT", stop.method = "es.mean",
-       verbose = FALSE, ...) |> 
-    get.weights("es.mean")  
-}
-```
-
-A function that computes the TMLE:
-
-```{r}
-default_libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam")
-
-tmle2 <- function(data, response, family = "gaussian",
-                  Qlib = default_libs, glib = default_libs, ...) {
-  data |> 
-    select(Gender, age, MomEdu, stunting) |> 
-    mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
-           across(age, as.numeric)) |>
-    tmle(data[[response]], as.integer(data$group == "HFMD"), W = _, family = family,
-         Q.SL.library = Qlib, g.SL.library = glib) |> 
-    mextract2(c("estimates", "ATT")) |> 
-    mextract(c("psi", "CI", "pvalue")) |> 
-    unlist() |> 
-    setNames(c("cf_tm", "2.5 %tm", "97.5 %tm", "p_tm"))
-}
-```
-
-A function that computes balance statistics for diagnostic of the propensity scores:
-
-```{r}
-bal_tab <- function(data, w) {
-  data |> 
-    mutate(across(group, ~ .x == "HFMD")) |> 
-    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated")
-}
-```
-
-A function that computes balance statistics for diagnostic of the propensity scores:
-
-```{r}
-bal_tab <- function(data, w) {
-  data |> 
-    mutate(across(group, ~ .x == "HFMD")) |> 
-    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated")
-}
-```
-
-A function that retrieves the balance adjustments for diagnostic of the propensity
-scores:
-
-```{r}
-get_diff <- function(x) x$Balance$Diff.Adj
-```
-
-A function that produces the maximum values of the balance adjustments for diagnostic
-of the propensity scores:
-
-```{r}
-get_max_diff <- function(data, w) {
-  data |> 
-    bal_tab(w) |> 
-    get_diff() |> 
-    max()
-}
-```
-
-A function that generates the formula of the model with the response `y`:
-
-```{r}
-reformulate2 <- function(y) {
-  reformulate(c("Gender", "age", "MomEdu", "stunting", "group"), y)
-}
-```
-
-A function that processes the output of a model in the `pipeline()` function that
-follows:
-
-```{r}
-process_model <- function(x, model, nm) {
-  x |> 
-    mutate(!!paste0("cf_", nm) := map_dbl({{ model }}, coef2),
-           ci                   = map({{ model }}, confint2)) |>   
-    unnest_wider(ci) |> 
-    rename_with(~ paste0(.x, nm), ends_with("%")) |> 
-    mutate(!!paste0("p_", nm) := map_dbl({{ model}}, get_p))
-}
-```
-
-The pipeline:
-
-```{r}
-pipeline <- function(data = followups, min_nb = 4, covariab = covariables) {
-  data |> 
-    prepare_fu_data2(min_nb, covariab) |> 
-    mutate(dataset = map(dataset,
-                         ~ mutate(.x, ow = logistic_ps(pick(everything())),
-                                      tw = twang_ps(pick(everything())),
-                                      t2 = twang_ps(pick(everything()),
-                                                    n.trees = 5000,
-                                                    interaction.depth = 2))),
-           formula = map(response, ~ reformulate("group", .x)),
-           glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
-           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
-           m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
-           m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
-           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2))) |> 
-    process_model(glm0, "l0") |> 
-    process_model(glm1, "l1") |> 
-    process_model(m_ow, "ow") |> 
-    process_model(m_tw, "tw") |> 
-    process_model(m_t2, "t2") #|> 
-# 6 - TMLE:           
-#    mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
-#    unnest_wider(tmle)
-}
-```
-
-A function that computes the diagnostic metrics for a dataset `x` and for the
-propensity score weight `psw`:
-
-```{r}
-diagnostic_metrics <- function(x, psw) {
-  y <- x[[psw]]
-  y <- c(max = max,
-         mea = mean,
-         med = median,
-         ess = function(x) sum(x)^2 / sum(x^2)) |>
-    map_dfc(~ .x(y)) |> 
-    mutate(dif = abs(mea - med),
-           bal = get_max_diff(x, psw))
-  names(y) <- paste0(psw, "_", names(y))
-  y
-}
-```
-
-A function that runs `diagnostic_metrics()` on all the datasets of an output `x` of the
-`pipeline()` function, and for the propensity score weight `psw`:
-
-```{r}
-diagnostic_ps <- function(x, psw) {
-  x |> 
-    select(response, timepoint, control, HFMD, dataset) |> 
-    mutate(diag = map(dataset, diagnostic_metrics, psw)) |> 
-    unnest_wider(diag) |> 
-    mutate(n = control + HFMD) |> 
-    select(-c(dataset, control, HFMD))
-}
-```
-
-Running the pipeline (takes 2'):
-
-```{r eval = FALSE}
-output <- pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output.rds")) {
-  output <- readRDScache("output.rds")
-} else {
-  output <- pipeline()
-  saveRDScache(output, "output.rds")
-}
-```
-
-Let's compare the p values:
-
-```{r}
-output |> 
-  select(response, timepoint, control, HFMD, starts_with("p_")) |> 
-  mutate(across(starts_with("p"), ~ round(.x, 3))) |> 
-  print(n = Inf) 
-```
-
-Let's look at the estimates:
-
-```{r}
-output |> 
-  select(response, timepoint, control, HFMD, starts_with("cf")) |> 
-  mutate(across(starts_with("cf"), ~ round(.x, 2))) |> 
-  print(n = Inf) 
-```
-
-Computing the diagnostic metrics for all the propensity score weights:
-
-```{r}
-c("ow", "tw", "t2") |>
-  map(diagnostic_ps, x = output) |> 
-  walk(print, n = Inf)
-```
-
-**Interpretations:**
-
-* covariates balance < 0.1 is good. Values between 0.1 and 0.2 are indicative of
-moderate imbalance. Values above 0.2 are a problem.
-* weights should not be too high.
-* weights distribution should not be too heavy right tail.
-* mean an median of weights should not be too different.
-* effective sample size should not be too different from real sample size (not less
-than 50% of original sample size).
-* effective sample size should not be lower than the number treated.
-* max weight should not be much higher than 10 to 20 times the median weight.
-
-
-### Responses
-
-A function that plots the density of the response for a given data set (where the
-response is the first variable of input `x` data frame):
-
-```{r}
-plot_density1 <- function(dataset, response, timepoint) {
-  dataset |> 
-    pull(1) |> 
-    density2() |> 
-    (\(x) {
-      plot(x, type = "n", xlab = paste(response, "score"), ylab = "density")
-      polygon2(x, col = 4)
-    })()
-  mtext(timepoint, cex = 2 / 3)
-}
-```
-
-The same function as above but with a histogram:
-
-```{r}
-plot_histogram1 <- function(dataset, response, timepoint) {
-  dataset |> 
-    pull(1) |> 
-    hist2(col = 4, border = NA, main = NA,
-          xlab = paste(response, "score"), ylab = "probability")
-  mtext(timepoint, cex = 2 / 3)
-}
-```
-
-This function splits the response (i.e. first variable) of the `x` data frame into
-control and disease:
-
-```{r}
-split2control_disease <- function(x) {
-  c("control", "HFMD") |> 
-    set_names() |> 
-    map(~ x |> filter(group == .x) |> pull(1))
-}
-```
-
-This function does the same as `plot_density1()` but for the control and infected
-separately:
-
-```{r}
-plot_density2 <- function(dataset, response, timepoint) {
-  dataset |> 
-    split2control_disease() |> 
-    map(density2) |> 
-    (\(x) {
-      plot(NA, xlim = range2(x, "x"), ylim = range2(x, "y"),
-           xlab = paste(response, "score"), ylab = "density")
-      walk2(x, adjustcolor(c(4, 2), .2), ~ polygon2(.x, col = .y))
-    })()
-  mtext(timepoint, cex = 2 / 3)
-}
-```
-
-The histogram version:
-
-```{r}
-plot_histogram2 <- function(dataset, response, timepoint) {
-  dataset |> 
-    split2control_disease() |> 
-    map(hist2, plot = FALSE) |> 
-    (\(x) {
-      plot(NA, xlim = range2(x, "breaks"), ylim = range2(x, "density"),
-           xlab = paste(response, "score"), ylab = "probability")
-      walk2(x, adjustcolor(c(4, 2), .2),
-            ~ plot(.x, col = .y, freq = FALSE, border = NA, add = TRUE))
-    })()
-  mtext(timepoint, cex = 2 / 3)
-}
-```
-
-Let's look at the distribution of the responses:
-
-```{r fig_responses_distribution1, fig.width = 7, fig.height = 10}
-opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
-output |>
-  select(dataset, response, timepoint) |> 
-  pwalk(plot_density1)
-par(opar)
-```
-
-The histogram version:
-
-```{r fig_responses_distribution1h, fig.width = 7, fig.height = 10}
-opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
-output |>
-  select(dataset, response, timepoint) |> 
-  pwalk(plot_histogram1)
-par(opar)
-```
-
-Let's look at the distribution of the responses, distinguishing control (in blue) and
-infected patients (red):
-
-```{r fig_responses_distribution2, fig.width = 7, fig.height = 10}
-opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
-
-output |>
-  select(dataset, response, timepoint) |> 
-  pwalk(plot_density2)
-
-plot(1, type = "n", ann = FALSE, axes = FALSE)
-add_legend1("center")
-
-par(opar)
-```
-
-The histogram version:
-
-```{r fig_responses_distribution2h, fig.width = 7, fig.height = 10}
-opar <- par(mfrow = c(8, 4), plt = c(.2, .97, .27, .87))
-
-output |>
-  select(dataset, response, timepoint) |> 
-  pwalk(plot_histogram2)
-
-plot(1, type = "n", ann = FALSE, axes = FALSE)
-add_legend1("center")
-
-par(opar)
-```
-
-
-### Plotting effects
-
-The methods and their color code:
-
-```{r}
-methods <- c("l0", "l1", "ow", "tw", "t2")
-cols <- RColorBrewer::brewer.pal(length(methods), "Set1")
-```
-
-The time points:
-
-```{r}
-timepoints <- c("enrollment", "6 months", "18 months")
-template <- tibble(timepoint = timepoints)
-```
-
-A function that prepares the data:
-
-```{r}
-prepare_data <- function(method, data) {
-  data |> 
-    select(timepoint, ends_with(method), -starts_with(c("p", "m"))) |> 
-    left_join(template, y = _, "timepoint") |> 
-    mutate(x = 1:n()) |> 
-    setNames(c("timepoint", "y", "l", "u", "x"))
-}
-```
-
-A function that plots the effect for 1 score, for the 3 time points and the 5 methods:
-
-```{r}
-plot_effects <- function(x) {
-  x |>
-    map2(seq(-.2, .2, .1), ~ mutate(.x, x = x + .y)) |> 
-    map2(cols, ~ mutate(.x, col = .y)) |> 
-    bind_rows() |> 
-    with({
-      plot(x, y, ylim = c(min(l, na.rm = TRUE), max(u, na.rm = TRUE)), col = col,
-           axes = FALSE, xlab = NA, pch = 19, ylab = "effect of disease on score")
-      abline(h = 0)
-      arrows(x, l, x, u, .03, 90, 3, col)
-      })
-  axis(2)
-}
-```
-
-A function that combines `prepare_data()` and `plot_effects()`:
-
-```{r}
-plot_1_variable <- function(var, data) {
-  methods |> 
-    map(prepare_data, filter(data, response == var)) |> 
-    plot_effects()
-
-  mtext2(paste(var, "score"))
-  mtext2(timepoints, 1, at = seq_along(timepoints))
-}
-```
-
-The function that plots the effects for all the scores, for all time points and
-methods:
-
-```{r}
-plot_effects_all <- function(x) {
-  plot(1, type = "n", ann = FALSE, axes = FALSE)
-  legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
-         legend = c("no correction", "multivariate model", "PS by logistic regression",
-                    "PS by gradient boosting, default",
-                    "PS by gradient boosting, Saras'"))
-  x |> 
-    pull(response) |> 
-    unique() |> 
-    walk(plot_1_variable, x)
-}
-```
-
-The number of data points:
-
-```{r}
-output |> 
-  select(response, timepoint, control, HFMD) |> 
-  print(n = Inf)
-```
-
-Let's plot the effect for all the score, time points and methods:
-
-```{r fig_Bayley, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output)
-par(opar)
-```
-
-## Running the pipeline
-
-All cases vs controls:
-
-```{r}
-#output <- pipeline()
-#output_all_cont <- pipeline()
-```
-
-Severe cases vs controls:
-
-```{r eval = FALSE}
-output_sev_cont <- filter_patients(group == "control" |
-                                     !(is.na(HFMD) | HFMD == "grade 2a")) |> 
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_sev_cont.rds")) {
-  output_sev_cont <- readRDScache("output_sev_cont.rds")
-} else {
-  output_sev_cont <- filter_patients(group == "control" |
-                                       !(is.na(HFMD) | HFMD == "grade 2a")) |> 
-  pipeline()
-  saveRDScache(output_sev_cont, "output_sev_cont.rds")
-}
-```
-
-```{r fig_sev_cont, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_sev_cont)
-par(opar)
-```
-
-Non severe cases vs controls:
-
-```{r eval = FALSE}
-output_nonsev_cont <- filter_patients(group == "control" |
-                                        !(is.na(HFMD) | HFMD != "grade 2a")) |> 
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_nonsev_cont.rds")) {
-  output_nonsev_cont <- readRDScache("output_nonsev_cont.rds")
-} else {
-  output_nonsev_cont <- filter_patients(group == "control" |
-                                          !(is.na(HFMD) | HFMD != "grade 2a")) |> 
-    pipeline()
-  saveRDScache(output_nonsev_cont, "output_nonsev_cont.rds")
-}
-```
-
-```{r fig_nonsev_cont, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_nonsev_cont)
-par(opar)
-```
-
-Severe vs non-severe (considered as controls):
-
-```{r eval = FALSE}
-output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
-  pipeline2(covariab = covariables_sev)
-```
-
-```{r include = FALSE}
-if (file_exists("output_sev_nonsev.rds")) {
-  output_sev_nonsev <- readRDScache("output_sev_nonsev.rds")
-} else {
-  output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
-    pipeline2(covariab = covariables_sev)
-  saveRDScache(output_sev_nonsev, "output_sev_nonsev.rds")
-}
-```
-
-```{r fig_sev_nonsev, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_sev_nonsev)
-par(opar)
-```
-
-EV-A71 vs controls:
-
-```{r eval = FALSE}
-output_EV71_cont <- filter_patients(group == "control" |
-                                      !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_EV71_cont.rds")) {
-  output_EV71_cont <- readRDScache("output_EV71_cont.rds")
-} else {
-  output_EV71_cont <- filter_patients(group == "control" |
-                                        !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
-    pipeline()
-  saveRDScache(output_EV71_cont, "output_EV71_cont.rds")
-}
-```
-
-```{r fig_EV71_cont, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_EV71_cont)
-par(opar)
-```
-
-Non EV-A71 vs controls:
-
-```{r eval = FALSE}
-output_nonEV71_cont <- filter_patients(group == "control" |
-                                         !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_nonEV71_cont.rds")) {
-  output_nonEV71_cont <- readRDScache("output_nonEV71_cont.rds")
-} else {
-  output_nonEV71_cont <- filter_patients(group == "control" |
-                                           !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
-    pipeline()
-  saveRDScache(output_nonEV71_cont, "output_nonEV71_cont.rds")
-}
-```
-
-```{r fig_nonEV71_cont, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_nonEV71_cont)
-par(opar)
-```
-
-EV-A71 vs non-EV-A71 (considered as controls):
-
-```{r eval = FALSE}
-output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
-  pipeline2(covariab = covariables_EV71)
-```
-
-```{r include = FALSE}
-if (file_exists("output_EV71_nonEV71.rds")) {
-  output_EV71_nonEV71 <- readRDScache("output_EV71_nonEV71.rds")
-} else {
-  output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
-    pipeline2(covariab = covariables_EV71)
-  saveRDScache(output_EV71_nonEV71, "output_EV71_nonEV71.rds")
-}
-```
-
-```{r fig_EV71_nonEV71, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_EV71_nonEV71)
-par(opar)
-```
-
-Lesions on MRI vs controls:
-
-```{r eval = FALSE}
-output_lesions_cont <- filter_patients(group == "control" |
-                                         ! (is.na(Final) | ! Final)) |>
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_lesions_cont.rds")) {
-  output_lesions_cont <- readRDScache("output_lesions_cont.rds")
-} else {
-  output_lesions_cont <- filter_patients(group == "control" |
-                                           ! (is.na(Final) | ! Final)) |>
-    pipeline()
-  saveRDScache(output_lesions_cont, "output_lesions_cont.rds")
-}
-```
-
-```{r fig_lesions_cont, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_lesions_cont)
-par(opar)
-```
-
-No lesions on MRI vs controls:
-
-```{r eval = FALSE}
-output_nolesions_cont <- filter_patients(group == "control" |
-                                         ! (is.na(Final) | Final)) |>
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_nolesions_cont.rds")) {
-  output_nolesions_cont <- readRDScache("output_nolesions_cont.rds")
-} else {
-  output_nolesions_cont <- filter_patients(group == "control" |
-                                             ! (is.na(Final) | Final)) |>
-    pipeline()
-  saveRDScache(output_nolesions_cont, "output_nolesions_cont.rds")
-}
-```
-
-```{r fig_nolesions_cont, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_nolesions_cont)
-par(opar)
-```
-
-MRI lesions vs no MRI lesions (considered as controls):
-
-```{r}
-#output_lesions_nolesions <- filter_patients(group == "HFMD", !is.na(Final)) |> 
-#  pipeline2(covariab = covariables_MRI)
-```
-
-
-## EV-A71 and severe cases
+### EV-A71 and severity
 
 A function that computes a summary table of HFMD cases according to the variable `var`:
 
@@ -2178,219 +1350,7 @@ children |>
 ```
 
 
-### Severe cases
-
-Running the pipeline on the severe cases only:
-
-```{r eval = FALSE}
-output_sev <- filter_patients(group == "control" |
-                                !(HFMD %in% c("grade 2a", "Not Applicable"))) |> 
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_sev.rds")) {
-  output_sev <- readRDScache("output_sev.rds")
-} else {
-  output_sev <- filter_patients(group == "control" |
-                                  !(HFMD %in% c("grade 2a", "Not Applicable"))) |> 
-    pipeline()
-  saveRDScache(output_sev, "output_sev.rds")
-}
-```
-
-The number of data points:
-
-```{r}
-output_sev |> 
-  select(response, timepoint, control, HFMD) |> 
-  print(n = Inf)
-```
-
-Looking at the HFMD effects:
-
-```{r fig_Bayley_sev, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_sev)
-par(opar)
-```
-
-### EV71 cases
-
-Running the pipeline on the EV71 cases only:
-
-```{r eval = FALSE}
-output_ev71 <- filter_patients(group == "control" | str_detect(PCR, "EV-A71")) |> 
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_ev71.rds")) {
-  output_ev71 <- readRDScache("output_ev71.rds")
-} else {
-  output_ev71 <- filter_patients(group == "control" | str_detect(PCR, "EV-A71")) |> 
-    pipeline()
-  saveRDScache(output_ev71, "output_ev71.rds")
-}
-```
-
-The number of data points:
-
-```{r}
-output_ev71 |> 
-  select(response, timepoint, control, HFMD) |> 
-  print(n = Inf)
-```
-
-Looking at the HFMD effects:
-
-```{r fig_Bayley_ev71, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_ev71)
-par(opar)
-```
-
-### Severe EV71 cases
-
-Running the pipeline on the EV71 cases only:
-
-```{r eval = FALSE}
-output_sev71 <- filter_patients(group == "control" |
-                                  (str_detect(PCR, "EV-A71") &
-                                     !(HFMD %in% c("grade 2a", "Not Applicable")))) |> 
-  pipeline()
-```
-
-```{r include = FALSE}
-if (file_exists("output_sev71.rds")) {
-  output_sev71 <- readRDScache("output_sev71.rds")
-} else {
-  output_sev71 <- filter_patients(group == "control" |
-                                    (str_detect(PCR, "EV-A71") &
-                                       !(HFMD %in% c("grade 2a", "Not Applicable")))) |> 
-    pipeline()
-  saveRDScache(output_sev71, "output_sev71.rds")
-}
-```
-
-The number of data points:
-
-```{r}
-output_sev71 |> 
-  select(response, timepoint, control, HFMD) |> 
-  print(n = Inf)
-```
-
-Looking at the HFMD effects:
-
-```{r fig_Bayley_sev71, fig.width = 7, fig.height = 25 / 3}
-opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
-plot_effects_all(output_sev71)
-par(opar)
-```
-
-
-## Individual longitudinal
-
-A function that summarizes the number of patients available for various longitudinal
-schemes:
-
-```{r}
-longitudinal_summary <- function(x) {
-  x <- x |>
-    group_by(ParNo, time_point) |> 
-    tally() |> 
-    na.exclude() |> 
-    pivot_wider(names_from = time_point, values_from = n)
-  out <- c("3 time points" = nrow(na.exclude(x)),
-           "at least first 2 time points" = nrow(na.exclude(select(x, -`18 months`))),
-           "at least last 2 time points" = nrow(na.exclude(select(x, -enrollment))),
-           "at least the first and last time points" =
-             nrow(na.exclude(select(x, - `6 months`))))
-  tibble(condition            = names(out), 
-         "number of patients" = out)
-}
-```
-
-A function that runs `longitudinal_summary()` on all the scores of a follow-up data
-frame `df`:
-
-```{r}
-lsummary <- function(df) {
-  scores |> 
-    set_names() |>
-    map(~ longitudinal_summary(df[! is.na(df[[.x]]), ])) |> 
-    bind_rows(.id = "score")
-}
-```
-
-The patients ID of the HFMD cases:
-
-```{r}
-HFMDcases <- children |> 
-  filter(group == "HFMD") |> 
-  pull(ParNo)
-```
-
-Looking that the number of case and control patients for which we have longitudinal
-data:
-
-```{r}
-left_join(rename(lsummary(filter(followups, ParNo %in% HFMDcases)),
-                 HFMD = `number of patients`),
-          rename(lsummary(filter_out(followups, ParNo %in% HFMDcases)),
-                 control = `number of patients`), c("score", "condition")) |> 
-  filter(HFMD > 5) |> 
-  print(n = Inf)
-```
-
-```{r}
-hash <- c(enrollment = 1, `6 months` = 2, `18 months` = 3)
-
-followups2 <- followups |> 
-  mutate(x = hash[time_point]) |> 
-  left_join(select(children, ParNo, group), "ParNo")
-
-ids <- followups2 |> 
-  filter_out(is.na(CS)) |> 
-  group_by(ParNo) |> 
-  tally() |> 
-  filter(n > 2) |> 
-  pull(ParNo)
-
-followups3 <- followups2 |> 
-  filter_out(is.na(CS)) |> 
-  select(ParNo, time_point, x, CS, group) |> 
-  filter(ParNo %in% ids) |> 
-  arrange(ParNo, time_point)
-
-with(followups3, plot(x, CS))
-
-followups3 |> 
-  mutate(col = c(HFMD = "red", control = "blue")[group]) |> 
-  group_by(ParNo) |> 
-  group_split() |> 
-  sample() |> 
-  walk(~ with(.x, lines(x, CS, col = col)))
-
-fu4 <- followups3 |>
-  pivot_wider(id_cols = -x, names_from = time_point, values_from = CS) |> 
-  mutate(col = c(HFMD = "red", control = "blue")[group]) |> 
-  select(-c(ParNo, group))
-
-fu4 |> 
-  select(-`18 months`) |> 
-  group_by(across(everything())) |> 
-  summarise(n = sqrt(n())) |> 
-  with(plot(enrollment, `6 months`, cex = n, col = col))
-  
-
-fu4 |> 
-with(plot(jitter(enrollment), jitter(`6 months`)))
-```
-
-
-## Ranges of scores
+### Scores
 
 ```{r}
 hist3 <- function(x, ...) {
@@ -2476,7 +1436,7 @@ followups |>
 ```
 
 
-### RC
+#### RC
 
 ```{r}
 fu2 <- followups |> 
@@ -2598,7 +1558,97 @@ a |>
 
 
 
-## Age distributions
+
+### HFMD vs controls
+
+From here we work with 2 data frames: `children` that contains the children
+information, and `followups` that contains the follow-up data. Number of missing data
+points:
+
+```{r}
+children |> 
+  select(group, age, MomEdu, Gender, stunting) |> 
+  map_int(~ sum(is.na(.x)))
+```
+
+Some common code:
+
+```{r}
+cols <- c(2, 4)
+adjcol <- function(...) adjustcolor(..., alpha = .3)
+
+barplot2 <- function(height, x) {
+  barplot(height, names.arg = x, beside = TRUE, ylab = "proportion",
+          col = adjcol(rev(cols)))
+}
+
+add_legend1 <- function(where = "topright") {
+  legend(where, legend = c("control", "HFMD"), fill = adjcol(rev(cols)), bty = "n")
+}
+```
+
+Let's look at the age distribution of the controls and HFMD cases:
+
+```{r fig_age_distribution, fig.width = eps * figw, fig.height = eps * figh}
+tmp <- children |>
+  mutate(across(age, ~ as.numeric(.x) / 30)) |> 
+  group_by(group) |> 
+  group_map(~ .x |> pull(age) |> density(from = 0))
+
+tmp |> 
+  map(~ .x |> unclass() |> magrittr::extract(c("x", "y")) |> as_tibble()) |> 
+  bind_rows() |> 
+  map(range) |> 
+  with(plot(NA, xlim = x, ylim = y, xlab = "age (months)", ylab = "density"))
+
+tmp |> 
+  walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
+
+add_legend1()
+```
+
+Let's now look at the level of the mother's education:
+
+```{r fig_mom_edu, fig.width = eps * figw, fig.height = eps * figh}
+edu_order <- c("Never been to school", "Attended some primary school",
+               "Completed primary school (5th gr)",
+               "Completed lower secondary school (9th gr)",
+               "Completed higher secondary school (12th gr)",
+               "Completed university/college degree", "Completed postgraduate degree")
+
+children |> 
+  with(table(MomEdu, group)) |>
+  prop.table(2) %>%
+  `[`(edu_order, ) |> 
+  t() |> 
+  barplot2(c("none", "some", "5th g", "9th g", "12th g", "collg", "postg"))
+
+add_legend1()
+```
+
+Stunt and gender:
+
+```{r fig_sex_stunt, fig.width = eps * figw, fig.height = eps * figh}
+children |> 
+  select(group, Gender, stunting) |> 
+  na.exclude() |> 
+  group_by(group) |> 
+  group_split() |> 
+  map(~ .x |> group_by(Gender, stunting) |> tally() |> ungroup()) |> 
+  reduce(left_join, c("Gender", "stunting")) |> 
+  select(starts_with("n")) |> 
+  as.matrix() |> 
+  prop.table(2) |> 
+  t() %>%
+  `[`(2:1, ) |> 
+  barplot2(rep(c("female", "male"), each = 2))
+
+mtext(rep(c("non-stunt", "stunt"), 2), 1, 1.5, at = seq(2, 11, 3))
+add_legend1()
+```
+
+
+### Age distributions
 
 ```{r}
 ages <- followups |> 
@@ -2623,7 +1673,7 @@ par(opar)
 ```
 
 
-## Timings of followups
+### Timings of followups
 
 ```{r}
 btw_fup <- ages |> 
@@ -2647,5 +1697,713 @@ abline(v = c(6, 18), col = 2, lwd = 3)
 plot(fuh[[3]], add = TRUE)
 abline(v = 12, lwd = 3)
 ```
+
+
+
+
+## Analysis per time point
+
+### Propensity scores
+
+All the covariates when considering the controls as the controls:
+
+```{r}
+covariables_all <- select(children, ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The covariates for the HFMD cases only and when considering the grades 2a as the
+controls:
+
+```{r}
+covariables_sev <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(HFMD == "grade 2a", "control", "HFMD")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The covariates for the HFMD cases only and when considering the non EV-A71 as the
+controls:
+
+```{r}
+covariables_EV71 <- children |>
+  filter(group == "HFMD") |> 
+  mutate(group = ifelse(str_detect(PCR, "EV-A71"), "HFMD", "control")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The covariates for the HFMD cases with an MRI only and when considering those without
+any lesions as the controls:
+
+```{r}
+covariables_MRI <- children |>
+#  filter(group == "HFMD") |> 
+  filter_out(is.na(Final)) |> 
+  mutate(group = ifelse(Final, "HFMD", "control")) |> 
+  select(ParNo, Gender, age, MomEdu, stunting, group)
+```
+
+The formula:
+
+```{r}
+ps_formula <- group ~ Gender + age + MomEdu + stunting
+```
+
+A function that generates a data set for a given response variable at a given time
+point:
+
+```{r}
+make_data <- function(data, response, timepoint, covariab = covariables) {
+  data |> 
+    filter(time_point == timepoint) |> 
+    select(ParNo, all_of(response)) |> 
+    na.exclude() |> 
+    left_join(covariab, "ParNo") |> # here we can specify the covariables we want
+    select(-ParNo) |> 
+    select(all_of(response), group, everything()) |> 
+    na.exclude()
+}
+```
+
+The scores:
+
+```{r}
+scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
+            "BAL3ISS", "CS", "RC", "EC", "FM", "GM")
+```
+
+A function that prepares the follow-up data:
+
+```{r}
+prepare_fu_data <- function(data = followups, min_nb = 4, covariab = covariables) {
+  expand_grid(response  = scores,
+              timepoint = c("enrollment", "6 months", "18 months")) |> 
+    mutate(dataset = map2(response, timepoint, ~ make_data2(data, .x, .y, covariab)),
+           ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
+    filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
+    mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
+    unnest_wider(ctable) |> 
+    filter(HFMD > min_nb)
+}
+```
+
+A function that generates ATT (Average Treatment effect on Treated) weights from a
+logistic regression:
+
+```{r}
+logistic_ps <- function(data) {
+  data |>
+    mutate(across(group, ~ .x == "HFMD"),
+           weights = ps_formula |>
+             glm(binomial, data = pick(everything())) |> 
+             predict(type = "response") %>%
+             { ifelse(group, 1, . / (1 - .)) }) |>  # ATT 
+    pull(weights)
+}
+```
+
+A function that generates weights from the `twang` package:
+
+```{r}
+twang_ps <- function(data, ...) {
+  data |> 
+    mutate(across(group, ~ as.integer(group == "HFMD")),
+           across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+           across(age, as.numeric)) |> 
+    as.data.frame() |> 
+    ps(ps_formula, data = _, estimand = "ATT", stop.method = "es.mean",
+       verbose = FALSE, ...) |> 
+    get.weights("es.mean")  
+}
+```
+
+A function that computes the TMLE:
+
+```{r}
+default_libs <- c("SL.glm", "SL.glmnet", "SL.mean", "SL.gam")
+
+tmle2 <- function(data, response, family = "gaussian",
+                  Qlib = default_libs, glib = default_libs, ...) {
+  data |> 
+    select(Gender, age, MomEdu, stunting) |> 
+    mutate(across(where(~ is.character(.x) | is.logical(.x)), as.factor),
+           across(age, as.numeric)) |>
+    tmle(data[[response]], as.integer(data$group == "HFMD"), W = _, family = family,
+         Q.SL.library = Qlib, g.SL.library = glib) |> 
+    mextract2(c("estimates", "ATT")) |> 
+    mextract(c("psi", "CI", "pvalue")) |> 
+    unlist() |> 
+    setNames(c("cf_tm", "2.5 %tm", "97.5 %tm", "p_tm"))
+}
+```
+
+A function that generates the formula of the model with the response `y`:
+
+```{r}
+reformulate2 <- function(y) {
+  reformulate(c("Gender", "age", "MomEdu", "stunting", "group"), y)
+}
+```
+
+A function that processes the output of a model in the `pipeline()` function that
+follows:
+
+```{r}
+process_model <- function(x, model, nm) {
+  x |> 
+    mutate(!!paste0("cf_", nm) := map_dbl({{ model }}, coef2),
+           ci                   = map({{ model }}, confint2)) |>   
+    unnest_wider(ci) |> 
+    rename_with(~ paste0(.x, nm), ends_with("%")) |> 
+    mutate(!!paste0("p_", nm) := map_dbl({{ model}}, get_p))
+}
+```
+
+The pipeline:
+
+```{r}
+pipeline <- function(data = followups, min_nb = 4, covariab = covariables) {
+  data |> 
+    prepare_fu_data2(min_nb, covariab) |> 
+    mutate(dataset = map(dataset,
+                         ~ mutate(.x, ow = logistic_ps(pick(everything())),
+                                      tw = twang_ps(pick(everything())),
+                                      t2 = twang_ps(pick(everything()),
+                                                    n.trees = 5000,
+                                                    interaction.depth = 2))),
+           formula = map(response, ~ reformulate("group", .x)),
+           glm0 = map2(formula,  dataset, ~ glm(.x, data = .y)),
+           glm1 = map2(response, dataset, ~ glm(reformulate2(.x), data = .y)),
+           m_ow = map2(formula,  dataset, ~ svyglm2(.x, .y, ~ow)),
+           m_tw = map2(formula,  dataset, ~ svyglm2(.x, .y, ~tw)),
+           m_t2 = map2(formula,  dataset, ~ svyglm2(.x, .y, ~t2))) |> 
+    process_model(glm0, "l0") |> 
+    process_model(glm1, "l1") |> 
+    process_model(m_ow, "ow") |> 
+    process_model(m_tw, "tw") |> 
+    process_model(m_t2, "t2") #|> 
+# 6 - TMLE:           
+#    mutate(tmle = map2_dfr(dataset, response, tmle2)) |> 
+#    unnest_wider(tmle)
+}
+```
+
+### Diagnostics
+
+A function that computes balance statistics for diagnostic of the propensity scores:
+
+```{r}
+bal_tab <- function(data, w) {
+  data |> 
+    mutate(across(group, ~ .x == "HFMD")) |> 
+    bal.tab(ps_formula, data = _, weights = w, s.d.denom = "treated")
+}
+```
+
+A function that retrieves the balance adjustments for diagnostic of the propensity
+scores:
+
+```{r}
+get_diff <- function(x) x$Balance$Diff.Adj
+```
+
+A function that produces the maximum values of the balance adjustments for diagnostic
+of the propensity scores:
+
+```{r}
+get_max_diff <- function(data, w) {
+  data |> 
+    bal_tab(w) |> 
+    get_diff() |> 
+    max()
+}
+```
+
+A function that computes the diagnostic metrics for a dataset `x` and for the
+propensity score weight `psw`:
+
+```{r}
+diagnostic_metrics <- function(x, psw) {
+  y <- x[[psw]]
+  y <- c(max = max,
+         mea = mean,
+         med = median,
+         ess = function(x) sum(x)^2 / sum(x^2)) |>
+    map_dfc(~ .x(y)) |> 
+    mutate(dif = abs(mea - med),
+           bal = get_max_diff(x, psw))
+  names(y) <- paste0(psw, "_", names(y))
+  y
+}
+```
+
+A function that runs `diagnostic_metrics()` on all the datasets of an output `x` of the
+`pipeline()` function, and for the propensity score weight `psw`:
+
+```{r}
+diagnostic_ps <- function(x, psw) {
+  x |> 
+    select(response, timepoint, control, HFMD, dataset) |> 
+    mutate(diag = map(dataset, diagnostic_metrics, psw)) |> 
+    unnest_wider(diag) |> 
+    mutate(n = control + HFMD) |> 
+    select(-c(dataset, control, HFMD))
+}
+```
+
+
+### Plotting effects
+
+The methods and their color code:
+
+```{r}
+methods <- c("l0", "l1", "ow", "tw", "t2")
+cols <- RColorBrewer::brewer.pal(length(methods), "Set1")
+```
+
+The time points:
+
+```{r}
+timepoints <- c("enrollment", "6 months", "18 months")
+template <- tibble(timepoint = timepoints)
+```
+
+A function that prepares the data:
+
+```{r}
+prepare_data <- function(method, data) {
+  data |> 
+    select(timepoint, ends_with(method), -starts_with(c("p", "m"))) |> 
+    left_join(template, y = _, "timepoint") |> 
+    mutate(x = 1:n()) |> 
+    setNames(c("timepoint", "y", "l", "u", "x"))
+}
+```
+
+A function that plots the effect for 1 score, for the 3 time points and the 5 methods:
+
+```{r}
+plot_effects <- function(x) {
+  x |>
+    map2(seq(-.2, .2, .1), ~ mutate(.x, x = x + .y)) |> 
+    map2(cols, ~ mutate(.x, col = .y)) |> 
+    bind_rows() |> 
+    with({
+      plot(x, y, ylim = c(min(l, na.rm = TRUE), max(u, na.rm = TRUE)), col = col,
+           axes = FALSE, xlab = NA, pch = 19, ylab = "effect of disease on score")
+      abline(h = 0)
+      arrows(x, l, x, u, .03, 90, 3, col)
+      })
+  axis(2)
+}
+```
+
+A function that combines `prepare_data()` and `plot_effects()`:
+
+```{r}
+plot_1_variable <- function(var, data) {
+  methods |> 
+    map(prepare_data, filter(data, response == var)) |> 
+    plot_effects()
+
+  mtext2(paste(var, "score"))
+  mtext2(timepoints, 1, at = seq_along(timepoints))
+}
+```
+
+The function that plots the effects for all the scores, for all time points and
+methods:
+
+```{r}
+plot_effects_all <- function(x) {
+  plot(1, type = "n", ann = FALSE, axes = FALSE)
+  legend("topleft", col = cols, lwd = 1, pch = 19, bty = "n",
+         legend = c("no correction", "multivariate model", "PS by logistic regression",
+                    "PS by gradient boosting, default",
+                    "PS by gradient boosting, Saras'"))
+  x |> 
+    pull(response) |> 
+    unique() |> 
+    walk(plot_1_variable, x)
+}
+```
+
+
+### Running the pipeline
+
+#### All cases
+
+Running the pipeline for all cases vs controls (takes 2'):
+
+```{r eval = FALSE}
+output_all_cont <- pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_all_cont.rds")) {
+  output_all_cont <- readRDScache("output_all_cont.rds")
+} else {
+  output_all_cont <- pipeline()
+  saveRDScache(output_all_cont, "output_all_cont.rds")
+}
+```
+
+Let's compare the p values:
+
+```{r}
+output_all_cont |> 
+  select(response, timepoint, control, HFMD, starts_with("p_")) |> 
+  mutate(across(starts_with("p"), ~ round(.x, 3))) |> 
+  print(n = Inf) 
+```
+
+Let's look at the estimates:
+
+```{r}
+output_all_cont |> 
+  select(response, timepoint, control, HFMD, starts_with("cf")) |> 
+  mutate(across(starts_with("cf"), ~ round(.x, 2))) |> 
+  print(n = Inf) 
+```
+
+Computing the diagnostic metrics for all the propensity score weights:
+
+```{r}
+c("ow", "tw", "t2") |>
+  map(diagnostic_ps, x = output_all_cont) |> 
+  walk(print, n = Inf)
+```
+
+**Interpretations:**
+
+* covariates balance < 0.1 is good. Values between 0.1 and 0.2 are indicative of
+moderate imbalance. Values above 0.2 are a problem.
+* weights should not be too high.
+* weights distribution should not be too heavy right tail.
+* mean an median of weights should not be too different.
+* effective sample size should not be too different from real sample size (not less
+than 50% of original sample size).
+* effective sample size should not be lower than the number treated.
+* max weight should not be much higher than 10 to 20 times the median weight.
+
+The number of data points:
+
+```{r}
+output_all_cont |> 
+  select(response, timepoint, control, HFMD) |> 
+  print(n = Inf)
+```
+
+Let's plot the effect for all the score, time points and methods:
+
+```{r fig_Bayley, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_all_cont)
+par(opar)
+```
+
+
+#### Other controls
+
+Severe cases vs controls:
+
+```{r eval = FALSE}
+output_sev_cont <- filter_patients(group == "control" |
+                                     !(is.na(HFMD) | HFMD == "grade 2a")) |> 
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_sev_cont.rds")) {
+  output_sev_cont <- readRDScache("output_sev_cont.rds")
+} else {
+  output_sev_cont <- filter_patients(group == "control" |
+                                       !(is.na(HFMD) | HFMD == "grade 2a")) |> 
+  pipeline()
+  saveRDScache(output_sev_cont, "output_sev_cont.rds")
+}
+```
+
+```{r fig_sev_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_sev_cont)
+par(opar)
+```
+
+Non severe cases vs controls:
+
+```{r eval = FALSE}
+output_nonsev_cont <- filter_patients(group == "control" |
+                                        !(is.na(HFMD) | HFMD != "grade 2a")) |> 
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_nonsev_cont.rds")) {
+  output_nonsev_cont <- readRDScache("output_nonsev_cont.rds")
+} else {
+  output_nonsev_cont <- filter_patients(group == "control" |
+                                          !(is.na(HFMD) | HFMD != "grade 2a")) |> 
+    pipeline()
+  saveRDScache(output_nonsev_cont, "output_nonsev_cont.rds")
+}
+```
+
+```{r fig_nonsev_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_nonsev_cont)
+par(opar)
+```
+
+Severe vs non-severe (considered as controls):
+
+```{r eval = FALSE}
+output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
+  pipeline2(covariab = covariables_sev)
+```
+
+```{r include = FALSE}
+if (file_exists("output_sev_nonsev.rds")) {
+  output_sev_nonsev <- readRDScache("output_sev_nonsev.rds")
+} else {
+  output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
+    pipeline2(covariab = covariables_sev)
+  saveRDScache(output_sev_nonsev, "output_sev_nonsev.rds")
+}
+```
+
+```{r fig_sev_nonsev, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_sev_nonsev)
+par(opar)
+```
+
+EV-A71 vs controls:
+
+```{r eval = FALSE}
+output_EV71_cont <- filter_patients(group == "control" |
+                                      !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_EV71_cont.rds")) {
+  output_EV71_cont <- readRDScache("output_EV71_cont.rds")
+} else {
+  output_EV71_cont <- filter_patients(group == "control" |
+                                        !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
+    pipeline()
+  saveRDScache(output_EV71_cont, "output_EV71_cont.rds")
+}
+```
+
+```{r fig_EV71_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_EV71_cont)
+par(opar)
+```
+
+Non EV-A71 vs controls:
+
+```{r eval = FALSE}
+output_nonEV71_cont <- filter_patients(group == "control" |
+                                         !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_nonEV71_cont.rds")) {
+  output_nonEV71_cont <- readRDScache("output_nonEV71_cont.rds")
+} else {
+  output_nonEV71_cont <- filter_patients(group == "control" |
+                                           !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
+    pipeline()
+  saveRDScache(output_nonEV71_cont, "output_nonEV71_cont.rds")
+}
+```
+
+```{r fig_nonEV71_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_nonEV71_cont)
+par(opar)
+```
+
+EV-A71 vs non-EV-A71 (considered as controls):
+
+```{r eval = FALSE}
+output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
+  pipeline2(covariab = covariables_EV71)
+```
+
+```{r include = FALSE}
+if (file_exists("output_EV71_nonEV71.rds")) {
+  output_EV71_nonEV71 <- readRDScache("output_EV71_nonEV71.rds")
+} else {
+  output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
+    pipeline2(covariab = covariables_EV71)
+  saveRDScache(output_EV71_nonEV71, "output_EV71_nonEV71.rds")
+}
+```
+
+```{r fig_EV71_nonEV71, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_EV71_nonEV71)
+par(opar)
+```
+
+Lesions on MRI vs controls:
+
+```{r eval = FALSE}
+output_lesions_cont <- filter_patients(group == "control" |
+                                         ! (is.na(Final) | ! Final)) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_lesions_cont.rds")) {
+  output_lesions_cont <- readRDScache("output_lesions_cont.rds")
+} else {
+  output_lesions_cont <- filter_patients(group == "control" |
+                                           ! (is.na(Final) | ! Final)) |>
+    pipeline()
+  saveRDScache(output_lesions_cont, "output_lesions_cont.rds")
+}
+```
+
+```{r fig_lesions_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_lesions_cont)
+par(opar)
+```
+
+No lesions on MRI vs controls:
+
+```{r eval = FALSE}
+output_nolesions_cont <- filter_patients(group == "control" |
+                                         ! (is.na(Final) | Final)) |>
+  pipeline()
+```
+
+```{r include = FALSE}
+if (file_exists("output_nolesions_cont.rds")) {
+  output_nolesions_cont <- readRDScache("output_nolesions_cont.rds")
+} else {
+  output_nolesions_cont <- filter_patients(group == "control" |
+                                             ! (is.na(Final) | Final)) |>
+    pipeline()
+  saveRDScache(output_nolesions_cont, "output_nolesions_cont.rds")
+}
+```
+
+```{r fig_nolesions_cont, fig.width = 7, fig.height = 25 / 3}
+opar <- par(mfrow = c(5, 3), plt = c(.15, .97, .15, .9))
+plot_effects_all(output_nolesions_cont)
+par(opar)
+```
+
+MRI lesions vs no MRI lesions (considered as controls):
+
+```{r}
+#output_lesions_nolesions <- filter_patients(group == "HFMD", !is.na(Final)) |> 
+#  pipeline2(covariab = covariables_MRI)
+```
+
+
+
+## Longitudinal analysis
+
+A function that summarizes the number of patients available for various longitudinal
+schemes:
+
+```{r}
+longitudinal_summary <- function(x) {
+  x <- x |>
+    group_by(ParNo, time_point) |> 
+    tally() |> 
+    na.exclude() |> 
+    pivot_wider(names_from = time_point, values_from = n)
+  out <- c("3 time points" = nrow(na.exclude(x)),
+           "at least first 2 time points" = nrow(na.exclude(select(x, -`18 months`))),
+           "at least last 2 time points" = nrow(na.exclude(select(x, -enrollment))),
+           "at least the first and last time points" =
+             nrow(na.exclude(select(x, - `6 months`))))
+  tibble(condition            = names(out), 
+         "number of patients" = out)
+}
+```
+
+A function that runs `longitudinal_summary()` on all the scores of a follow-up data
+frame `df`:
+
+```{r}
+lsummary <- function(df) {
+  scores |> 
+    set_names() |>
+    map(~ longitudinal_summary(df[! is.na(df[[.x]]), ])) |> 
+    bind_rows(.id = "score")
+}
+```
+
+The patients ID of the HFMD cases:
+
+```{r}
+HFMDcases <- children |> 
+  filter(group == "HFMD") |> 
+  pull(ParNo)
+```
+
+Looking that the number of case and control patients for which we have longitudinal
+data:
+
+```{r}
+left_join(rename(lsummary(filter(followups, ParNo %in% HFMDcases)),
+                 HFMD = `number of patients`),
+          rename(lsummary(filter_out(followups, ParNo %in% HFMDcases)),
+                 control = `number of patients`), c("score", "condition")) |> 
+  filter(HFMD > 5) |> 
+  print(n = Inf)
+```
+
+```{r}
+hash <- c(enrollment = 1, `6 months` = 2, `18 months` = 3)
+
+followups2 <- followups |> 
+  mutate(x = hash[time_point]) |> 
+  left_join(select(children, ParNo, group), "ParNo")
+
+ids <- followups2 |> 
+  filter_out(is.na(CS)) |> 
+  group_by(ParNo) |> 
+  tally() |> 
+  filter(n > 2) |> 
+  pull(ParNo)
+
+followups3 <- followups2 |> 
+  filter_out(is.na(CS)) |> 
+  select(ParNo, time_point, x, CS, group) |> 
+  filter(ParNo %in% ids) |> 
+  arrange(ParNo, time_point)
+
+with(followups3, plot(x, CS))
+
+followups3 |> 
+  mutate(col = c(HFMD = "red", control = "blue")[group]) |> 
+  group_by(ParNo) |> 
+  group_split() |> 
+  sample() |> 
+  walk(~ with(.x, lines(x, CS, col = col)))
+
+fu4 <- followups3 |>
+  pivot_wider(id_cols = -x, names_from = time_point, values_from = CS) |> 
+  mutate(col = c(HFMD = "red", control = "blue")[group]) |> 
+  select(-c(ParNo, group))
+
+fu4 |> 
+  select(-`18 months`) |> 
+  group_by(across(everything())) |> 
+  summarise(n = sqrt(n())) |> 
+  with(plot(enrollment, `6 months`, cex = n, col = col))
+```
+
+
 
 
