@@ -228,13 +228,13 @@ get_vars(sel_, x_)
 rm(nb_cols, nb_rows, nb_df, f_, x_, sel_)
 ```
 
-Shortcut to `magrittr::extract(...)`:
+Shortcut to `magrittr::extract()`:
 
 ```{r}
 mextract  <- function(...) magrittr::extract(...)
 ```
 
-Shortcut to `magrittr::extract2(...)`:
+Shortcut to `magrittr::extract2()`:
 
 ```{r}
 mextract2 <- function(...) magrittr::extract2(...)
@@ -275,16 +275,6 @@ An example:
 
 patch(patch_df_, into_df_, "key_")
 rm(patch_df_, into_df_)
-```
-
-A function that renames a column of a data frame:
-
-```{r}
-rename2 <- function(df, newname, oldname) {
-  df_names <- names(df)
-  df_names[which(df_names == oldname)] <- newname
-  setNames(df, df_names)
-}
 ```
 
 A function that splits a data frame into a list of data frames:
@@ -629,7 +619,7 @@ Bayley <- Bayley_tabs |>
   map(~ c(common_variables, "SCALESCORE", .x)) |> 
   setNames(Bayley_tabs) |> 
   get_vars(Bayley0) |> 
-  map2(paste0("SCALESCORE_", Bayley_tabs), rename2, "SCALESCORE") |> 
+  imap(~ rename(.x, !! paste0("SCALESCORE_", .y) := SCALESCORE)) |> 
   reduce(left_join, common_variables) |> 
   mutate(across(starts_with("DATE"), as.Date)) |> 
   rename(ParNo = PARNO) |> 
