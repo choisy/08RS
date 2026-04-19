@@ -121,7 +121,8 @@ Required packages:
 
 ```{r}
 required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
-              "cobalt", "survey", "tmle", "RColorBrewer", "lubridate", "randomForest")
+              "cobalt", "survey", "tmle", "RColorBrewer", "lubridate", "randomForest",
+              "tibble")
 ```
 
 Installing those that are not installed yet:
@@ -144,6 +145,7 @@ library(survey)
 library(tmle)
 library(lubridate)
 library(randomForest)
+library(tibble)
 ```
 
 
@@ -1457,11 +1459,6 @@ fu2 |>
   mutate(across(time_point, ~ setNames(1:3, tps)[time_point])) |> 
   group_by(time_point) |> 
   group_walk(~ hist3(.x$value, xlim = c(2, 45)))
-```
-
-```{r}
-library(randomForest)
-library(tibble)
 ```
 
 ```{r}
