@@ -180,10 +180,10 @@ defined above:
 
 ```{r}
 read_excel_file <- function(file) {
-  sheets_names <- excel_sheets2(file)
-  sheets_names |>
-    map(~ read_excel2(file, .x)) |> 
-    setNames(sheets_names)
+  file |> 
+    excel_sheets2() |> 
+    set_names() |> 
+    map(~ read_excel2(file, .x))
 }
 ```
 
