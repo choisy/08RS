@@ -322,15 +322,14 @@ A tuning of the `image()` function:
 image2 <- function(x, y, z, ...) image(x, y, t(z[nrow(z):1, ]), ...)
 ```
 
-A function that adds an y zero value to both ends of a data frame with two columns `x`
-and `y`:
+A function that adds an `y` zero value to both ends of a data frame with two columns
+`x` and `y` (that correspond to coordinates):
 
 ```{r}
-adding_zero_ys <- function(x) {
-  x <- as_tibble(x[c("x", "y")])
-  x <- bind_rows(head(x, 1), x, tail(x, 1))
-  x$y[c(1, nrow(x))] <- 0
-  x
+adding_zero_ys <- function(df) {
+  df <- bind_rows(head(df, 1), df, tail(df, 1))
+  df$y[c(1, nrow(df))] <- 0
+  df
 }
 ```
 
@@ -379,7 +378,7 @@ pad_density <- function(x) {
 }
 ```
 
-A tuning of the `density()` function:
+where `x` is a density object. A tuning of the `density()` function:
 
 ```{r}
 density2 <- function(...) pad_density(density(...))
