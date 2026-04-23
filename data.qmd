@@ -36,6 +36,20 @@ rerun_all <- function() {
 }
 ```
 
+
+## Constants
+
+The path to the data and cache folders on the local computer:
+
+```{r}
+if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
+  OneDrive <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
+  data_folder  <- paste0(OneDrive, "SharePoint/OUCRU Modelling/08RS/data/")
+  cache_folder <- paste0(OneDrive, "GitHub/choisy/08RS/cache/")
+}
+if (! dir.exists(cache_folder)) dir.create(cache_folder)
+```
+
 ```{r include = FALSE}
 setHook("plot.new", NULL, action = "replace")
 
@@ -50,25 +64,12 @@ figw <- 7  # default is 7 and maximum possible is 8.3
 figh <- 5  # default is 5
 eps <- .7
 
-knitr::opts_chunk$set(margin     = TRUE,
+knitr::opts_chunk$set(cache.path = cache_folder,
+                      margin     = TRUE,
                       fig.retina = 2,
                       fig.align  = "center",
                       fig.width  = eps * figw,
                       fig.height = eps * figh) 
-```
-
-
-## Constants
-
-The path to the data and cache folders on the local computer:
-
-```{r}
-if (Sys.getenv("USER") == "MarcChoisy" | Sys.getenv("USER") == "marc") {
-  OneDrive <- "~/Library/CloudStorage/OneDrive-OxfordUniversityClinicalResearchUnit/"
-  data_folder  <- paste0(OneDrive, "SharePoint/OUCRU Modelling/08RS/data/")
-  cache_folder <- paste0(OneDrive, "GitHub/choisy/08RS/cache/")
-}
-if (! dir.exists(cache_folder)) dir.create(cache_folder)
 ```
 
 ```{r include = FALSE}
@@ -1782,7 +1783,7 @@ A function that generates a data set for a given response variable at a given ti
 point:
 
 ```{r}
-make_data <- function(data, response, timepoint, covariab = covariables) {
+make_data <- function(data, response, timepoint, covariab = covariables_all) {
   data |> 
     filter(time_point == timepoint) |> 
     select(ParNo, all_of(response)) |> 
@@ -1804,10 +1805,10 @@ scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2IS
 A function that prepares the follow-up data:
 
 ```{r}
-prepare_fu_data <- function(data = followups, min_nb = 4, covariab = covariables) {
+prepare_fu_data <- function(data = followups, min_nb = 4, covariab = covariables_all) {
   expand_grid(response  = scores,
               timepoint = c("enrollment", "6 months", "18 months")) |> 
-    mutate(dataset = map2(response, timepoint, ~ make_data2(data, .x, .y, covariab)),
+    mutate(dataset = map2(response, timepoint, ~ make_data(data, .x, .y, covariab)),
            ctable  = map(dataset, ~ as.vector(table(.x$group)))) |> 
     filter(map_lgl(ctable, ~ length(.x) > 1)) |> 
     mutate(ctable = map(ctable, ~ setNames(.x, c("control", "HFMD")))) |> 
@@ -1891,9 +1892,9 @@ process_model <- function(x, model, nm) {
 The pipeline:
 
 ```{r}
-pipeline <- function(data = followups, min_nb = 4, covariab = covariables) {
+pipeline <- function(data = followups, min_nb = 4, covariab = covariables_all) {
   data |> 
-    prepare_fu_data2(min_nb, covariab) |> 
+    prepare_fu_data(min_nb, covariab) |> 
     mutate(dataset = map(dataset,
                          ~ mutate(.x, ow = logistic_ps(pick(everything())),
                                       tw = twang_ps(pick(everything())),
@@ -2064,11 +2065,11 @@ plot_effects_all <- function(x) {
 
 Running the pipeline for all cases vs controls (takes 2'):
 
-```{r eval = FALSE}
+```{r cache_output_all_cont, eval = T, cache = TRUE}
 output_all_cont <- pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = F}
 if (file_exists("output_all_cont.rds")) {
   output_all_cont <- readRDScache("output_all_cont.rds")
 } else {
@@ -2136,13 +2137,13 @@ par(opar)
 
 Severe cases vs controls:
 
-```{r eval = FALSE}
+```{r cache_output_sev_cont, eval = T, cache = TRUE}
 output_sev_cont <- filter_patients(group == "control" |
                                      !(is.na(HFMD) | HFMD == "grade 2a")) |> 
   pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = F}
 if (file_exists("output_sev_cont.rds")) {
   output_sev_cont <- readRDScache("output_sev_cont.rds")
 } else {
@@ -2161,13 +2162,13 @@ par(opar)
 
 Non severe cases vs controls:
 
-```{r eval = FALSE}
+```{r cache_output_nonsev_cont, eval = T, cache = TRUE}
 output_nonsev_cont <- filter_patients(group == "control" |
                                         !(is.na(HFMD) | HFMD != "grade 2a")) |> 
   pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = FALSE}
 if (file_exists("output_nonsev_cont.rds")) {
   output_nonsev_cont <- readRDScache("output_nonsev_cont.rds")
 } else {
@@ -2186,17 +2187,17 @@ par(opar)
 
 Severe vs non-severe (considered as controls):
 
-```{r eval = FALSE}
+```{r cache_output_sev_nonsev, eval = T, cache = TRUE}
 output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
-  pipeline2(covariab = covariables_sev)
+  pipeline(covariab = covariables_sev)
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = F}
 if (file_exists("output_sev_nonsev.rds")) {
   output_sev_nonsev <- readRDScache("output_sev_nonsev.rds")
 } else {
   output_sev_nonsev <- filter_patients(group == "HFMD", !is.na(HFMD)) |> 
-    pipeline2(covariab = covariables_sev)
+    pipeline(covariab = covariables_sev)
   saveRDScache(output_sev_nonsev, "output_sev_nonsev.rds")
 }
 ```
@@ -2209,13 +2210,13 @@ par(opar)
 
 EV-A71 vs controls:
 
-```{r eval = FALSE}
+```{r cache_output_EV71_cont, eval = T, cache = TRUE}
 output_EV71_cont <- filter_patients(group == "control" |
                                       !(is.na(PCR) | ! str_detect(PCR, "EV-A71"))) |>
   pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = FALSE}
 if (file_exists("output_EV71_cont.rds")) {
   output_EV71_cont <- readRDScache("output_EV71_cont.rds")
 } else {
@@ -2234,13 +2235,13 @@ par(opar)
 
 Non EV-A71 vs controls:
 
-```{r eval = FALSE}
+```{r cache_output_nonEV71_cont, eval = T, cache = TRUE}
 output_nonEV71_cont <- filter_patients(group == "control" |
                                          !(is.na(PCR) | str_detect(PCR, "EV-A71"))) |>
   pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = FALSE}
 if (file_exists("output_nonEV71_cont.rds")) {
   output_nonEV71_cont <- readRDScache("output_nonEV71_cont.rds")
 } else {
@@ -2259,17 +2260,17 @@ par(opar)
 
 EV-A71 vs non-EV-A71 (considered as controls):
 
-```{r eval = FALSE}
+```{r cache_output_EV71_nonEV71, eval = T, cache = TRUE}
 output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
-  pipeline2(covariab = covariables_EV71)
+  pipeline(covariab = covariables_EV71)
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = F}
 if (file_exists("output_EV71_nonEV71.rds")) {
   output_EV71_nonEV71 <- readRDScache("output_EV71_nonEV71.rds")
 } else {
   output_EV71_nonEV71 <- filter_patients(group == "HFMD", !is.na(PCR)) |> 
-    pipeline2(covariab = covariables_EV71)
+    pipeline(covariab = covariables_EV71)
   saveRDScache(output_EV71_nonEV71, "output_EV71_nonEV71.rds")
 }
 ```
@@ -2282,13 +2283,13 @@ par(opar)
 
 Lesions on MRI vs controls:
 
-```{r eval = FALSE}
+```{r cache_output_lesions_cont, eval = T, cache = TRUE}
 output_lesions_cont <- filter_patients(group == "control" |
                                          ! (is.na(Final) | ! Final)) |>
   pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = F}
 if (file_exists("output_lesions_cont.rds")) {
   output_lesions_cont <- readRDScache("output_lesions_cont.rds")
 } else {
@@ -2307,13 +2308,13 @@ par(opar)
 
 No lesions on MRI vs controls:
 
-```{r eval = FALSE}
+```{r cache_output_nolesions_cont, eval = T, cache = TRUE}
 output_nolesions_cont <- filter_patients(group == "control" |
                                          ! (is.na(Final) | Final)) |>
   pipeline()
 ```
 
-```{r include = FALSE}
+```{r include = FALSE, eval = F}
 if (file_exists("output_nolesions_cont.rds")) {
   output_nolesions_cont <- readRDScache("output_nolesions_cont.rds")
 } else {
