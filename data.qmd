@@ -1631,6 +1631,7 @@ tmp |>
   with(plot(NA, xlim = x, ylim = y, xlab = "age (months)", ylab = "density"))
 
 tmp |> 
+  map(~ with(.x, tibble(x = x, y = y))) |> 
   walk2(cols, ~ polygon(adding_zero_ys(.x), col = adjcol(.y), border = NA))
 
 add_legend1()
