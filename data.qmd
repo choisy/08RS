@@ -585,13 +585,8 @@ the analysis:
 filter(MRI, Final != Acute)
 ```
 
+
 #### Bayley data
-
-Loading the data from CliRes:
-
-```{r}
-Bayley0 <- read_excel_file(Bayley_file)
-```
 
 The tabs that we are interested in are the following:
 
@@ -601,20 +596,15 @@ The tabs that we are interested in are the following:
 * **FM:** fine motor (motor scale)
 * **GM:** gross motor (motor scale)
 
-```{r}
-Bayley_tabs <- c("CS", "RC", "EC", "FM", "GM")
-```
-
 Let's generate the data frame from these tabs:
 
 ```{r}
 common_variables <- c("PARNO", "DATETESTED")
 
-Bayley <- Bayley_tabs |> 
-  map(~ c(common_variables, "SCALESCORE", .x)) |> 
-  setNames(Bayley_tabs) |> 
-  get_vars(Bayley0) |> 
-  imap(~ rename(.x, !! paste0("SCALESCORE_", .y) := SCALESCORE)) |> 
+Bayley <- c("CS", "RC", "EC", "FM", "GM") |> 
+  set_names() |> 
+  map(~ c(common_variables, .x)) |> 
+  get_vars(read_excel_file(Bayley_file)) |> 
   reduce(left_join, common_variables) |> 
   mutate(across(starts_with("DATE"), as.Date)) |> 
   rename(ParNo = PARNO) |> 
