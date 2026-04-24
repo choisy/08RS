@@ -608,7 +608,8 @@ Bayley <- c("CS", "RC", "EC", "FM", "GM") |>
   reduce(left_join, common_variables) |> 
   mutate(across(starts_with("DATE"), as.Date)) |> 
   rename(ParNo = PARNO) |> 
-  mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_")))
+  mutate(across(ParNo, ~ stringr::str_remove(.x, "08RS_"))) |> 
+  rename(DateTested = DATETESTED)
 ```
 
 
@@ -1024,8 +1025,6 @@ Of note, here
 #### Bayley data
 
 ```{r}
-Bayley <- rename(Bayley, DateTested = DATETESTED)
-
 Bayley |>
   show_duplicated_assessments() |> 
   writexl::write_xlsx("Bayley2.xlsx")
@@ -1039,12 +1038,12 @@ This shows that
 In consequence, we decide to simply filter out all the incomplete duplicates:
 
 ```{r}
-Bayley2 <- Bayley |> 
+Bayley <- Bayley |> 
   make_time_points() |>
   group_by(ParNo, time_point) |> 
   group_modify(~ {if (nrow(.x) > 1) return(na.exclude(.x)); .x }) |> 
   ungroup() |> 
-  select(-DateEnrol, -DateDisc, -min_delay, - time_diff, -time1, -time2, -time3) |> 
+  select(-c(DateEnrol, DateDisc, min_delay, time_diff, time1, time2, time3)) |> 
   rename(Date_Bayley = DateTested)
 ```
 
@@ -1054,7 +1053,7 @@ Bayley2 <- Bayley |>
 Merging the M-ABC and Bayley data:
 
 ```{r}
-followups <- full_join(ABC2, Bayley2, c("ParNo", "time_point"))
+followups <- full_join(ABC, Bayley, c("ParNo", "time_point"))
 ```
 
 
