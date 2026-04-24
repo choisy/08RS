@@ -1053,7 +1053,9 @@ Bayley <- Bayley |>
 Merging the M-ABC and Bayley data:
 
 ```{r}
-followups <- full_join(ABC, Bayley, c("ParNo", "time_point"))
+followups <- ABC |>
+  full_join(Bayley, c("ParNo", "time_point")) |> 
+  filter_out(is.na(time_point))
 ```
 
 
@@ -1402,7 +1404,7 @@ hist3 <- function(x, ...) {
 plot_score_distr <- function(df) {
   opar <- par(mfrow = c(5, 3), cex = 1, plt = c(.2, .95, .3, .94))
   df |>
-    select(ends_with("ISS"), starts_with("SCALE")) |> 
+    select(-c(ParNo, time_point, starts_with("Date"))) |> 
     iwalk(~ {
       hdata <- hist3(.x, plot = FALSE)
       ddata <- density(na.exclude(.x))
@@ -1483,7 +1485,8 @@ variable_importance <- function(var) {
 
 ```{r}
 followups |>
-  select(ends_with("ISS"), starts_with("SCALE")) |> 
+#  select(ends_with("ISS"), starts_with("SCALE")) |> 
+  select(-c(ParNo, time_point, starts_with("Date"))) |> 
   names() |> 
   set_names() |> 
   map(variable_importance)
@@ -1500,7 +1503,7 @@ fu2 |>
 
 ```{r}
 fu2 |> 
-  filter(name == "BAL3ISS") |> 
+  filter(name == "BAL3") |> 
   with(plot(age, value))
 ```
 
@@ -1737,9 +1740,12 @@ The scores:
 #scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
 #            "BAL3ISS", "CS", "RC", "EC", "FM", "GM")
 
-scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
-            "BAL3ISS", "SCALESCORE_CS", "SCALESCORE_RC", "SCALESCORE_EC",
-            "SCALESCORE_FM", "SCALESCORE_GM")
+#scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
+#            "BAL3ISS", "SCALESCORE_CS", "SCALESCORE_RC", "SCALESCORE_EC",
+#            "SCALESCORE_FM", "SCALESCORE_GM")
+
+scores <- c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3",
+            "CS", "RC", "EC", "FM", "GM")
 ```
 
 A function that prepares the follow-up data:
@@ -2230,7 +2236,7 @@ HFMDcases <- children |>
 Looking that the number of case and control patients for which we have longitudinal
 data:
 
-```{r}
+```{r eval = FALSE}
 left_join(rename(lsummary(filter(followups, ParNo %in% HFMDcases)),
                  HFMD = `number of patients`),
           rename(lsummary(filter_out(followups, ParNo %in% HFMDcases)),
@@ -2239,7 +2245,7 @@ left_join(rename(lsummary(filter(followups, ParNo %in% HFMDcases)),
   print(n = Inf)
 ```
 
-```{r}
+```{r eval = FALSE}
 hash <- c(enrollment = 1, `6 months` = 2, `18 months` = 3)
 
 followups2 <- followups |> 
