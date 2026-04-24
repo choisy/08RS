@@ -1612,6 +1612,24 @@ walk(c("enrollment", "6 months", "18 months"), ~ {
 par(opar)
 ```
 
+Note that the M-ABC tests are done on children aged at least 3 year-old only:
+
+```{r}
+tmp <- followups |> 
+  filter_out(is.na(Date_ABC)) |> 
+  select(ParNo, Date_ABC) |> 
+  left_join(select(children, ParNo, DateBirth), "ParNo") |> 
+  mutate(age = interval(DateBirth, Date_ABC) |> time_length("years"))
+```
+
+```{r}
+with(tmp, hist(age, xlab = "age (years)", ylab = "counts", main = NA))
+```
+
+```{r}
+filter(tmp, age < 3)
+```
+
 
 ### Timings of followups
 
