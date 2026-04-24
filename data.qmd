@@ -972,10 +972,56 @@ show_duplicated_assessments <- function(x) {
 #### M-ABC data
 
 ```{r}
+removing_na <- function(f) {
+  function(...) {
+    if (all(map_lgl(list(...), is.na))) return(NA)
+    f(..., na.rm = TRUE)
+  }
+}
+```
+
+```{r}
+list(max3  = max,
+     min2  = min) |> 
+  map(removing_na) |> 
+  list2env(envir = .GlobalEnv)
+```
+
+```{r}
+mean2 <- function(...) {
+  if (all(map_lgl(list(...), is.na))) return(NA)
+  tmp1 <- c(...)
+  tmp2 <- na.exclude(tmp1)
+  if (length(tmp2) < 2) return(tmp2)
+  mean(tmp1, na.rm = TRUE)
+}
+```
+
+```{r}
+zero2NA <- function(x) ifelse(x == 0, NA, x)
+```
+
+```{r}
 ABC <- CRF08RS$ABC |> 
-  select(ParNo, DateTested, ends_with("ISS")) |> 
-  mutate(across(starts_with("Date"), as.Date)) |> 
-  arrange(ParNo, DateTested)
+  mutate(MD1  = map2_dbl(map2_dbl(MD1PreferT1, MD1PreferT2, min2),
+                         map2_dbl(MD1NonT1, MD1NonT2, min2), mean2),
+         MD2  = map2_dbl(zero2NA(MD2T1), zero2NA(MD2T2), min2),
+         MD3  = map2_dbl(zero2NA(MD3T1), zero2NA(MD3T2), min2),
+         AC1  = AC1Trials, 
+         AC2  = AC2Trials,
+         BAL1 = map2_dbl(map2_dbl(BAL1RT1, BAL1RT2, max3),
+                         map2_dbl(BAL1LT1, BAL1LT2, max3), mean2),
+         BAL2 = map2_dbl(BAL2T1, BAL2T2, max3),
+         BAL3 = map2_dbl(BAL3T1, BAL3T2, max3),
+         across(DateTested, as.Date)) |> 
+  select(ParNo, DateTested, MD1, MD2, MD3, AC1, AC2, BAL1, BAL2, BAL3) |>
+  make_time_points() |>
+  arrange(ParNo, time_point, min_delay) |>
+  group_by(ParNo, time_point) |>
+  group_modify(~ head(.x, 1)) |> 
+  ungroup() |> 
+  select(-DateEnrol, -DateDisc, -min_delay, - time_diff, -time1, -time2, -time3) |> 
+  rename(Date_ABC = DateTested)
 ```
 
 Of note, here
@@ -983,32 +1029,6 @@ Of note, here
 * `MD` stands for manual dexterity,
 * `AC` stands for aiming and catching and
 * `BAL` stands for balance.
-
-```{r}
-ABC |> 
-  na.exclude()
-```
-
-Write duplicates to disk:
-
-```{r}
-ABC |>
-  show_duplicated_assessments() |> 
-  writexl::write_xlsx("M-ABC2.xlsx")
-```
-
-Here all the duplicates are complete. We'll simply keep all the earlier ones:
-
-```{r}
-ABC2 <- ABC |> 
-  make_time_points() |>
-  arrange(ParNo, time_point, min_delay) |> 
-  group_by(ParNo, time_point) |> 
-  group_modify(~ head(.x, 1)) |> 
-  ungroup() |> 
-  select(-DateEnrol, -DateDisc, -min_delay, - time_diff, -time1, -time2, -time3) |> 
-  rename(Date_ABC = DateTested)
-```
 
 
 #### Bayley data
