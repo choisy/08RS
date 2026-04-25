@@ -989,23 +989,23 @@ mean2 <- function(...) {
 ```
 
 ```{r}
-zero2NA <- function(x) ifelse(x == 0, NA, x)
-```
-
-```{r}
 ABC <- CRF08RS$ABC |> 
-  mutate(MD1  = map2_dbl(map2_dbl(MD1PreferT1, MD1PreferT2, min2),
-                         map2_dbl(MD1NonT1, MD1NonT2, min2), mean2),
-         MD2  = map2_dbl(zero2NA(MD2T1), zero2NA(MD2T2), min2),
-         MD3  = map2_dbl(zero2NA(MD3T1), zero2NA(MD3T2), min2),
+  mutate(MD1p = map2_dbl(MD1PreferT1, MD1PreferT2, min2),
+         MD1n = map2_dbl(MD1NonT1, MD1NonT2, min2),
+         MD1  = map2_dbl(MD1p, MD1n, mean2),
+         across(c(MD2T1, MD2T2, MD3T1, MD3T2), ~ ifelse(.x == 0, NA, .x)),
+         MD2  = map2_dbl(MD2T1, MD2T2, min2),
+         MD3  = map2_dbl(MD3T1, MD3T2, min2),
          AC1  = AC1Trials, 
          AC2  = AC2Trials,
-         BAL1 = map2_dbl(map2_dbl(BAL1RT1, BAL1RT2, max3),
-                         map2_dbl(BAL1LT1, BAL1LT2, max3), mean2),
-         BAL2 = map2_dbl(BAL2T1, BAL2T2, max3),
+         BAL1l = map2_dbl(BAL1LT1, BAL1LT2, max3),
+         BAL1r = map2_dbl(BAL1RT1, BAL1RT2, max3),
+         BAL1 = map2_dbl(BAL1l, BAL1r, mean2),
+         BAL2 = map2_dbl(BAL2T1, BAL2T2, max3) |> map_dbl(min, 15),
          BAL3 = map2_dbl(BAL3T1, BAL3T2, max3),
          across(DateTested, as.Date)) |> 
-  select(ParNo, DateTested, MD1, MD2, MD3, AC1, AC2, BAL1, BAL2, BAL3) |>
+  select(ParNo, DateTested,
+         MD1p, MD1n, MD1, MD2, MD3, AC1, AC2, BAL1l, BAL1r, BAL1, BAL2, BAL3) |>
   make_time_points() |>
   arrange(ParNo, time_point, min_delay) |>
   group_by(ParNo, time_point) |>
@@ -1014,6 +1014,14 @@ ABC <- CRF08RS$ABC |>
   select(-DateEnrol, -DateDisc, -min_delay, - time_diff, -time1, -time2, -time3) |> 
   rename(Date_ABC = DateTested)
 ```
+
+```{r}
+CRF08RS$ABC |> 
+  select(starts_with("BAL3")) |>
+  mutate(BAL3 = map2_dbl(BAL3T1, BAL3T2, max3)) |> 
+  print(n = Inf)
+```
+
 
 Of note, here
 
@@ -1402,7 +1410,7 @@ hist3 <- function(x, ...) {
 
 ```{r}
 plot_score_distr <- function(df) {
-  opar <- par(mfrow = c(5, 3), cex = 1, plt = c(.2, .95, .3, .94))
+  opar <- par(mfrow = c(6, 3), cex = 1, plt = c(.2, .95, .3, .94))
   df |>
     select(-c(ParNo, time_point, starts_with("Date"))) |> 
     iwalk(~ {
@@ -1416,7 +1424,7 @@ plot_score_distr <- function(df) {
 }
 ```
 
-```{r fig_score_distributions, fig.height = 5 * figh / 3, fig.width = figw}
+```{r fig_score_distributions, fig.height = 6 * figh / 3, fig.width = figw}
 plot_score_distr(followups)
 ```
 
