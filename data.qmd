@@ -1428,7 +1428,7 @@ plot_score_distr <- function(df) {
 plot_score_distr(followups)
 ```
 
-```{r fig_score_distr_timepoints, fig.height = 5 * figh / 3, fig.width = figw}
+```{r fig_score_distr_timepoints, fig.height = 6 * figh / 3, fig.width = figw}
 c("enrollment", "6 months", "18 months") |> 
   walk(~ followups |> 
          filter(time_point == .x) |> 
