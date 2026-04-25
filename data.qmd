@@ -1410,7 +1410,7 @@ hist3 <- function(x, ...) {
 
 ```{r}
 plot_score_distr <- function(df) {
-  opar <- par(mfrow = c(6, 3), cex = 1, plt = c(.2, .95, .3, .94))
+  opar <- par(mfrow = c(6, 3), cex = 1, plt = c(.2, .95, .3, .91))
   df |>
     select(-c(ParNo, time_point, starts_with("Date"))) |> 
     iwalk(~ {
