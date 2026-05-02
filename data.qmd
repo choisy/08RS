@@ -1677,8 +1677,6 @@ abline(v = 12, lwd = 3)
 ```
 
 
-
-
 ## Analysis per time point
 
 ### Propensity scores
@@ -1714,16 +1712,21 @@ any lesions as the controls:
 
 ```{r}
 covariables_MRI <- children |>
-#  filter(group == "HFMD") |> 
   filter_out(is.na(Final)) |> 
   mutate(group = ifelse(Final, "HFMD", "control")) |> 
   select(ParNo, Gender, age, MomEdu, stunting, group)
 ```
 
+The covariates:
+
+```{r}
+covariates <- c("Gender", "age", "MomEdu", "stunting")
+```
+
 The formula:
 
 ```{r}
-ps_formula <- group ~ Gender + age + MomEdu + stunting
+ps_formula <- reformulate(covariates, "group")
 ```
 
 A function that generates a data set for a given response variable at a given time
@@ -1745,15 +1748,8 @@ make_data <- function(data, response, timepoint, covariab = covariables_all) {
 The scores:
 
 ```{r}
-#scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
-#            "BAL3ISS", "CS", "RC", "EC", "FM", "GM")
-
-#scores <- c("MD1ISS", "MD2ISS", "MD3ISS", "AC1ISS", "AC2ISS", "BAL1ISS", "BAL2ISS",
-#            "BAL3ISS", "SCALESCORE_CS", "SCALESCORE_RC", "SCALESCORE_EC",
-#            "SCALESCORE_FM", "SCALESCORE_GM")
-
-scores <- c("MD1", "MD2", "MD3", "AC1", "AC2", "BAL1", "BAL2", "BAL3",
-            "CS", "RC", "EC", "FM", "GM")
+scores <- c("MD1p", "MD1n", "MD1", "MD2", "MD3", "AC1", "AC2", "BAL1l", "BAL1r",
+            "BAL1", "BAL2", "BAL3", "CS", "RC", "EC", "FM", "GM")
 ```
 
 A function that prepares the follow-up data:
@@ -1824,9 +1820,7 @@ tmle2 <- function(data, response, family = "gaussian",
 A function that generates the formula of the model with the response `y`:
 
 ```{r}
-reformulate2 <- function(y) {
-  reformulate(c("Gender", "age", "MomEdu", "stunting", "group"), y)
-}
+reformulate2 <- function(y) reformulate(c(covariates, "group"), y)
 ```
 
 A function that processes the output of a model in the `pipeline()` function that
@@ -1871,6 +1865,264 @@ pipeline <- function(data = followups, min_nb = 4, covariab = covariables_all) {
 #    unnest_wider(tmle)
 }
 ```
+
+```{r}
+compute_ps <- function(df) {
+  df |>
+    mutate(ow = map(dataset, logistic_ps),
+           tw = map(dataset, twang_ps),
+           t2 = map(dataset, twang_ps, n.trees = 5000, interaction.depth = 2))
+}
+```
+
+```{r}
+df <- followups |> 
+  prepare_fu_data(4, covariables_all) |> 
+  mutate(ow = map(dataset, logistic_ps),
+         tw = map(dataset, twang_ps),
+         t2 = map(dataset, twang_ps, n.trees = 5000, interaction.depth = 2),
+         formula1 = map(response, ~ reformulate("group", .x)),
+         formula2 = map(response, ~ reformulate(c(covariates, "group"), .x)))
+```
+
+```{r}
+df2 <- df |> 
+  mutate(model = case_when(str_starts(response, "MD") ~
+                             "1: gamma, log-normal or Weibull",
+                           str_starts(response, "AC") | response == "BAL3" ~
+                             "2: beta_binomial",
+                           response == "BAL1" ~
+                             "3: right-censored gamma, log-normal or Weibull",
+                           .default =
+                             "4: right-censored negative binomial distribution")) |> 
+  group_by(model) |> 
+  group_split()
+```
+
+
+### No correction pipeline
+
+gamma: glm() or survival::survreg() or flexsurv::flexsurvreg()
+log-normal: glm(log(y) ~ ) or survival::survreg() or flexsurv::flexsurvreg()
+Weibull: survival::survreg() or flexsurv::flexsurvreg()
+beta-binomial: glmmTMB::glmmTMB() or VGAM::vglm(). VGAM::vglm() still need to be checked
+
+```{r}
+covariates2 <- c(covariates, "group")
+```
+
+```{r}
+greater_than <- function(x, t) ifelse(x < t, 1, 0)
+```
+
+```{r}
+survreg2 <- function(...) {
+  survival::survreg(..., score = TRUE, control = survreg.control(maxiter = 1000))
+}
+```
+
+```{r}
+compute_Q <- function(x) with(x, t(score) %*% var %*% score)
+```
+
+```{r}
+add_formula_glm <- function(x) {
+  mutate(x, formula = map(response, ~ reformulate(covariates2, .x)))
+}
+```
+
+```{r}
+add_formula_betabinomial <- function(x) {
+  x |>
+    mutate(n = case_when(response == "BAL3" ~ 5, .default = 10),
+           formula =
+             map2(response, n,
+                  ~ reformulate(covariates2,
+                                paste0("cbind(", .x, ",", .y, "-", .x, ")")))) |>
+    select(-n)
+}
+```
+
+```{r}
+add_formula_survival <- function(x) {
+  mutate(x,
+         formula = map(response, ~ reformulate(covariates2, paste0("Surv(", .x, ")"))))
+}
+```
+
+```{r}
+add_formula_survival_censored <- function(x) {
+  x |>
+    mutate(right_value  = case_when(response == "BAL2" ~ 15, .default = 30),
+           response_var = map2(dataset, response, ~ mextract2(.x, .y)),
+           status       = map2(response_var, right_value, greater_than),
+           across(dataset, ~ map2(.x, status,
+                                  \(x, y) bind_cols(x, tibble(status = y)))),
+           formula = map(response,
+                         ~ reformulate(covariates2,
+                                       paste0("Surv(", .x, ", event = status)")))) |>
+    select(-c(right_value, response_var, status))
+}
+```
+
+```{r}
+fit_betabinomial <- function(x) {
+  mutate(x, mod = map2(formula, dataset, ~ glmmTMB(.x, .y, betabinomial)))
+}
+```
+
+```{r}
+fit_gamma <- function(x) {
+  mutate(x, mod = map2(formula, dataset, ~ glm(.x, Gamma(link = "log"), .y)))
+}
+```
+
+```{r}
+fit_survival <- function(x) {
+  x |> mutate(across(dataset,
+                     ~ map(.x,
+                           \(x) mutate(x, across(1, ~ ifelse(.x == 0, 1e-16, .x))))),
+              mod = pmap(list(formula, dataset, distr),
+                         \(x, y, z) survreg2(x, y, dist = z)))
+}
+```
+
+```{r}
+convergence_glmmTMB <- function(x) {
+  mutate(x, converged = map_lgl(mod, ~ .x$fit$convergence < 1))
+}
+```
+
+```{r}
+convergence_glm <- function(x) mutate(x, converged = map_lgl(mod, "converged"))
+```
+
+```{r}
+convergence_survival <- function(x) {
+  mutate(x, converged = map_lgl(mod, ~ compute_Q(.x) < 1e-6))
+}
+```
+
+```{r}
+a <- followups |> 
+  prepare_fu_data(4, covariables_all) |> 
+  mutate(model = case_when(
+           str_starts(response, "AC") | response == "BAL3" ~
+             list("betabinomial"),
+           str_starts(response, "BAL") ~
+             list(c("right_censored_lognormal", "right_censored_weibull")),
+           .default = list(c("gamma", "lognormal", "weibull")))) |> 
+  unnest_longer(model) |> 
+  mutate(censored = str_starts(model, "right"),
+         distr = str_remove(model, "right_censored_"),
+         order = row_number(),
+         group = case_when(distr == "gamma"                      ~ "1",
+                           distr == "betabinomial"               ~ "2",
+                           ! censored                            ~ "3",
+                           .default                              = "4")) |> 
+  group_by(group) |> 
+  group_split() |> 
+  map2(list(add_formula_glm,
+            add_formula_betabinomial,
+            add_formula_survival,
+            add_formula_survival_censored),
+       \(slot, fct) fct(slot)) |> 
+  bind_rows() |> 
+  mutate(across(group, ~ ifelse(.x > 3, 3, .x))) |> 
+  group_by(group) |> 
+  group_split() |> 
+  map2(list(fit_gamma, fit_betabinomial, fit_survival), \(slot, fct) fct(slot)) |> 
+  map2(list(convergence_glmmTMB, convergence_glm, convergence_survival),
+       \(slot, fct) fct(slot)) |> 
+  bind_rows() |> 
+  arrange(order) |> 
+  select(-c(group, order))
+```
+
+
+```{r}
+a <- followups |> 
+  prepare_fu_data(4, covariables_all) |> 
+  mutate(model = case_when(
+           str_starts(response, "AC") | response == "BAL3" ~
+             list("betabinomial"),
+           str_starts(response, "BAL") ~
+             list(c("right_censored_lognormal", "right_censored_weibull")),
+           .default = list(c("gamma", "lognormal", "weibull")))) |> 
+  unnest_longer(model) |> 
+  mutate(censored = str_starts(model, "right"),
+         distr = str_remove(model, "right_censored_"),
+         order = row_number(),
+         group = case_when(distr == "gamma"                      ~ "1",
+                           distr == "betabinomial"               ~ "2",
+                           ! censored                            ~ "3",
+                           .default                              = "4")) |> 
+  group_by(group) |> 
+  group_split() |> 
+  map2(list(
+    function(df) mutate(df, formula = map(response, ~ reformulate(covariates2, .x))),
+    function(df)
+      df |>
+        mutate(n = case_when(response == "BAL3" ~ 5, .default = 10),
+               formula =
+                 map2(response, n,
+                      ~ reformulate(covariates2,
+                                    paste0("cbind(", .x, ",", .y, "-", .x, ")")))) |> 
+        select(-n),
+    function(df) {
+      df |>
+        mutate(formula = map(response,
+                             ~ reformulate(covariates2, paste0("Surv(", .x, ")"))))},
+    function(df) {
+      df |> 
+        mutate(right_value  = case_when(response == "BAL2" ~ 15, .default = 30),
+               response_var = map2(dataset, response, ~ mextract2(.x, .y)),
+               status       = map2(response_var, right_value, greater_than),
+               across(dataset, ~ map2(.x, status,
+                                      \(x, y) bind_cols(x, tibble(status = y)))),
+               formula = map(response,
+                             ~ reformulate(covariates2,
+                                           paste0("Surv(", .x,
+                                                  ", event = status)")))) |> 
+        select(-c(right_value, response_var, status))}), \(slot, fct) fct(slot)) |> 
+  bind_rows() |> 
+  mutate(group = case_when(distr == "betabinomial" ~ "1",
+                           distr == "gamma"        ~ "2",
+                           .default                = "3")) |> 
+  group_by(group) |> 
+  group_split() |> 
+  map2(list(
+         function(df)
+           mutate(df, mod = map2(formula, dataset,
+                                 ~ glmmTMB(.x, .y, betabinomial))),
+         function(df)
+           mutate(df, mod = map2(formula, dataset,
+                                 ~ glm(.x, Gamma(link = "log"), .y))),
+         function(df)
+           mutate(df,
+                  across(dataset,
+                         ~ map(.x,
+                               \(x) mutate(x,
+                                           across(1, ~ ifelse(.x == 0, 1e-16, .x))))),
+                  mod = pmap(list(formula, dataset, distr),
+                             \(x, y, z) survreg2(x, y, dist = z)))),
+       \(slot, fct) fct(slot)) |> 
+  map2(list(
+         function(df) mutate(df, converged = map_lgl(mod, ~ .x$fit$convergence < 1)),
+         function(df) mutate(df, converged = map_lgl(mod, "converged")),
+         function(df) mutate(df, converged = map_lgl(mod, ~ compute_Q(.x) < 1e-6))),
+       \(slot, fct) fct(slot)) |> 
+  bind_rows() |> 
+  arrange(order) |> 
+  select(-c(group, order))
+```
+
+```{r}
+filter_out(a, converged)
+```
+
+
+
 
 ### Diagnostics
 
