@@ -2039,8 +2039,7 @@ estimates_glmmTMB <- function(x) mutate(x, estimate = map(mod, estimates_glmmTMB
 a <- followups |> 
   prepare_fu_data(4, covariables_all) |> 
   mutate(model = case_when(
-           str_starts(response, "AC") | response == "BAL3" ~
-             list("betabinomial"),
+           str_starts(response, "AC") | response == "BAL3" ~ list("betabinomial"),
            str_starts(response, "BAL") ~
              list(c("right_censored_lognormal", "right_censored_weibull")),
            .default = list(c("gamma", "lognormal", "weibull")))) |> 
@@ -2048,17 +2047,16 @@ a <- followups |>
   mutate(censored = str_starts(model, "right"),
          distr = str_remove(model, "right_censored_"),
          order = row_number(),
-         group = case_when(distr == "gamma"                      ~ "1",
-                           distr == "betabinomial"               ~ "2",
-                           ! censored                            ~ "3",
-                           .default                              = "4")) |> 
+         group = case_when(distr == "gamma"        ~ "1",
+                           distr == "betabinomial" ~ "2",
+                           ! censored              ~ "3",
+                           .default                = "4")) |> 
   group_by(group) |> 
   group_split() |> 
   map2(list(add_formula_glm,
             add_formula_betabinomial,
             add_formula_survival,
-            add_formula_survival_censored),
-       \(slot, fct) fct(slot)) |> 
+            add_formula_survival_censored), \(slot, fct) fct(slot)) |> 
   bind_rows() |> 
   mutate(across(group, ~ ifelse(.x > 3, 3, .x))) |> 
   group_by(group) |> 
