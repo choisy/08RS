@@ -2067,7 +2067,6 @@ a <- followups |>
   map2(list(convergence_glm, convergence_glmmTMB, convergence_survival),
        \(slot, fct) fct(slot)) |> 
   bind_rows() |> 
-  filter(converged) |> 
   mutate(across(group, ~ ifelse(.x > 2, 1, .x))) |> 
   group_by(group) |> 
   group_split() |> 
@@ -2078,6 +2077,9 @@ a <- followups |>
   unnest_wider(estimate)
 ```
 
+```{r}
+a |> print(n = Inf)
+```
 
 
 
