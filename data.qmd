@@ -116,13 +116,13 @@ Required packages:
 ```{r}
 required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
               "cobalt", "survey", "tmle", "RColorBrewer", "lubridate", "randomForest",
-              "tibble")
+              "glmmTMB", "survival", "tibble")
 ```
 
 Installing those that are not installed yet:
 
 ```{r}
-to_install <- required[! required %in% installed.packages()[,"Package"]]
+to_install <- required[! required %in% installed.packages()[, "Package"]]
 if (length(to_install)) install.packages(to_install)
 ```
 
@@ -139,6 +139,8 @@ library(survey)
 library(tmle)
 library(lubridate)
 library(randomForest)
+library(glmmTMB)
+library(survival)
 library(tibble)
 ```
 
@@ -2072,16 +2074,54 @@ a <- followups |>
   bind_rows() |> 
   arrange(order) |> 
   select(-c(group, order)) |> 
-  unnest_wider(estimate)
+  unnest_wider(estimate) |> 
+  mutate(across(converged, ~ ifelse(is.nan(`2.5 %`) | is.na(`97.5 %`), FALSE, .x)))
 ```
 
 ```{r}
-a |> print(n = Inf)
+#a |> print(n = Inf)
+```
+
+```{r}
+plot3distr <- function(x, x1 = c(enrollment = 1, "6 months" = 2, "18 months" = 3),
+                       eps = .1, xlim = c(.5, 3.5), cex = 1) {
+  score <- x$response[1]
+  distr_names <- c("gamma", "lognormal", "weibull")
+  x2 <- setNames(c(-eps, 0, eps), distr_names)
+  y <- x |> 
+    select(timepoint, distr, Estimate, contains("%")) |>
+    mutate(x = x1[timepoint] + x2[distr]) |> 
+    left_join(expand_grid(timepoint = names(x1), distr = distr_names), y = _,
+              c("timepoint", "distr"))
+
+  y |>
+    pivot_longer(-c(timepoint, distr, x)) |> 
+    with(plot(x, value, type = "n", xlim = xlim, xaxt = "n",
+              xlab = NA, ylab = paste("effect on", score)))
+  
+  with(y, {
+    arrows(x, `2.5 %`, x, `97.5 %`, .03, 90, 3)
+    points(x, Estimate, pch = 19)
+  })
+  
+  walk2(names(x1), x1, ~ mtext(.x, 1, at = .y, cex = cex))
+  abline(h = 0)
+}
+```
+
+```{r fig0, fig.width = 8.3, fig.height = 4 * 5 * 8.3 / (7 * 3)}
+opar <- par(mfrow = c(4, 3), plt = c(.15, .97, .15, .9))
+a |> 
+  filter(converged) |> 
+  filter_out(str_starts(model, "right") | str_starts(model, "beta")) |> 
+  group_by(response) |>
+  group_split() |>
+  walk(~ plot3distr(.x, cex = 2 / 3))
+par(opar)
 ```
 
 
-
-
+## HERE
 
 
 
