@@ -2075,12 +2075,23 @@ a <- followups |>
   arrange(order) |> 
   select(-c(group, order)) |> 
   unnest_wider(estimate) |> 
-  mutate(across(converged, ~ ifelse(is.nan(`2.5 %`) | is.na(`97.5 %`), FALSE, .x)))
+  mutate(across(converged, ~ ifelse(is.nan(`2.5 %`) | is.na(`97.5 %`), FALSE, .x)),
+         AIC = map_dbl(mod, AIC))
 ```
 
 ```{r}
-#a |> print(n = Inf)
+a |>
+  print(n = Inf)
 ```
+
+```{r}
+AIC(a[[31, "mod"]][[1]])
+```
+
+```{r}
+
+```
+
 
 ```{r}
 plot3distr <- function(x, x1 = c(enrollment = 1, "6 months" = 2, "18 months" = 3),
