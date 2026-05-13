@@ -116,7 +116,7 @@ Required packages:
 ```{r}
 required <- c("readxl", "purrr", "dplyr", "magrittr", "tidyr", "anthro", "twang",
               "cobalt", "survey", "tmle", "RColorBrewer", "lubridate", "randomForest",
-              "glmmTMB", "survival", "tibble")
+              "glmmTMB", "survival", "scales", "furrr", "tibble")
 ```
 
 Installing those that are not installed yet:
@@ -131,6 +131,7 @@ Loading some packages for interactive use:
 ```{r message = FALSE}
 library(dplyr)
 library(purrr)
+library(furrr)
 library(stringr)
 library(tidyr)
 library(twang)
@@ -141,6 +142,7 @@ library(lubridate)
 library(randomForest)
 library(glmmTMB)
 library(survival)
+library(scales)
 library(tibble)
 ```
 
@@ -2084,8 +2086,6 @@ a |>
   print(n = Inf)
 ```
 
-
-
 ```{r}
 plot3distr <- function(x, x1 = c(enrollment = 1, "6 months" = 2, "18 months" = 3),
                        eps = .1, xlim = c(.5, 3.5), cex = 1) {
@@ -2125,9 +2125,277 @@ par(opar)
 ```
 
 
+### TMLE
+
+A wrapper around the `tmle()` that includes (1) rescaling of variables between 0 and 1
+and (2) recoding the variables into numeric values:
+
+```{r}
+tmle2 <- function(x, ...) {
+  rescaler <- diff(range(x[[1]], na.rm = TRUE))
+  
+  x <- x |>
+    rename_with(~ "Y", .cols = 1) |> 
+    mutate(across(Y, ~ rescale(.x, 0:1)),
+           across(group, ~ as.numeric(.x == "HFMD")))
+  
+  list(fit = tmle(x$Y, x$group, select(x, -c(Y, group)), ...), scale = rescaler)
+}
+```
+
+Note that `x` is the data frame that contains the data. The first column of this data
+frame should be the response. Among the other columns, the one named `group` is the one
+that is used as group effect and all the other ones are the covariates. The output is a
+list that contains not only the output of `tmle()` but also the rescaling factor in
+order to rescale the values of the `tmle` estimates onto their original scale.
+
+The following function extracts the ATT estimates together with confidence interval and
+p-value from the output of the `tmle2()` function: 
+
+```{r}
+get_ATT <- function(x) {
+  with(x, fit |> 
+            pluck("estimates", "ATT") |>
+            mextract(c("psi", "CI", "pvalue")) |> 
+            unlist() |> 
+            as_tibble_row() |> 
+            mutate(across(-pvalue, ~ .x * scale)))
+}
+```
+
+The following function extracts the ATT convergence status (for diagnostics) from the
+output of the `tmle2()` function:
+
+```{r}
+get_ATT_convergence <- function(x) {
+  with(x, fit |> 
+            pluck("estimates", "ATT") |>
+            mextract2("converged"))
+}
+```
+
+The following function extracts the ATT Influence Curve value (IC, for diagnostics)
+from the output of the `tmle2()` function:
+
+```{r}
+get_ATT_IC <- function(x) {
+  with(x, fit |> 
+            pluck("estimates", "IC") |>
+            mextract2("IC.ATT") |>
+            mean())
+}
+```
+
+The TMLE pipeline:
+
+```{r}
+tmle_pipeline <- function(x, min_nb, covariab, ...) {
+  x |> 
+    prepare_fu_data(min_nb, covariab) |> 
+    mutate(tmle_fit  = map(dataset, \(x) tmle2(x, ...))) |> 
+    mutate(converged = map_lgl(tmle_fit, get_ATT_convergence),
+           meanIC    = map_dbl(tmle_fit, get_ATT_IC),
+           tmle_est  = map(tmle_fit, get_ATT)) |> 
+    unnest_wider(tmle_est)
+}
+```
+
+A tuning of the `tmle_pipeline()` function:
+
+```{r}
+tmle_pipeline2 <- function(...) tmle_pipeline(followups, 8, covariables_all, ...)
+```
+
+An example use:
+
+```{r eval = FALSE}
+tmle_pipeline2(Q.SL.library = c("SL.mean", "SL.glm"),
+               g.SL.library = c("SL.mean", "SL.glm"),
+               V.Q = 5, V.g = 5, gbound = c(.01, .99))
+```
+
+A function that runs `tmle_pipeline2()` `n` times in parallel using the `future`
+framework and for given values for (1) the base models of the Super Learners, (2) the
+number `k` of samples in the k-fold cross-validation scheme, and (3) the `gbound`
+bounds used to truncate g for ATT estimation:
+
+```{r}
+tmle_pipeline2_multiple_runs <- function(n, SL_lib, k, gbound) {
+  future_map(1:n, ~ tmle_pipeline2(Q.SL.library = SL_lib, g.SL.library = SL_lib,
+                                   V.Q = k, V.g = k, gbound = gbound),
+             .options = furrr_options(seed = TRUE)) |> 
+    bind_rows() |> 
+    select(response, timepoint, converged, meanIC, psi, CI1, CI2, pvalue)
+}
+```
+
+An example use of `tmle_pipeline2_multiple_runs()` with 2 replicates:
+
+```{r eval = FALSE}
+tmle_pipeline2_multiple_runs(2, c("SL.mean", "SL.glm"), 5, c(.01, .99))
+```
+
+A function that plots the outputs of the `tmle_pipeline2_multiple_runs()` function for
+one response only:
+
+```{r}
+plot_replicates_1response <- function(x) {
+  if (all(is.na(x[[1, "psi"]]))) {
+    plot(1, type = "n", axes = FALSE, ann = FALSE)
+  } else {
+    resp <- x[[1, "response"]]
+    tmpt <- x[[1, "timepoint"]]
+    
+    tmp <- x |> 
+      arrange(psi) |> 
+      mutate(x = row_number())
+    
+    tmp |> 
+      select(x, xlim1, xlim2, psi, CI1, CI2) |> 
+      pivot_longer(c(psi, CI1, CI2)) |> 
+      with(plot(value, x, type = "n", yaxt = "n", xlim = c(xlim1[1], xlim2[1]),
+                ylab = NA, xlab = paste("effect on", resp, "at", tmpt)))
+    
+    with(tmp, {
+      arrows(CI1, x, CI2, x, .03, 90, 3)
+      points(psi, x, pch = 19)
+    })
+    
+    abline(v = 0, col = 2, lwd = 3)
+  }
+}
+```
+
+Below is a wrapper around `plot_replicates_1response()` that plots the simulation
+outputs for all the responses. In particular, the function (1) re-orders the responses
+and the time points and (2) computes $x$-axis ranges that are common for some of the
+response, for better comparison:
+
+```{r}
+order2hash <- function(x) setNames(seq_along(x), x)
+```
+
+```{r}
+plot_replicates0 <- function(x) {
+  order_responses <- c("AC1", "AC2", "BAL1l", "BAL1r", "BAL1", "BAL2", "BAL3", "MD1n",
+                       "MD1p", "MD1", "MD2", "MD3", "CS", "EC", "FM", "GM", "RC")
+  order_timepoints <- c("enrollment", "6 months", "18 months")
+  
+  x |>
+    complete(response, timepoint) |> 
+    mutate(response2 = case_when(response %in% c("AC1", "AC2")     ~ "AC",
+                                 response %in% c("BAL1l", "BAL1r") ~ "BAL1",
+                                 response %in% c("MD1n", "MD1p")   ~ "MD1",
+                                 .default                          = response)) |> 
+    group_by(response2) |> 
+    mutate(xlim1 = min(0, min(CI1, na.rm = TRUE)),
+           xlim2 = max(0, max(CI2, na.rm = TRUE))) |> 
+    ungroup() |> 
+    mutate(resp = order2hash(order_responses)[response],
+           tmpt = order2hash(order_timepoints)[timepoint]) |> 
+    group_by(resp, tmpt) |> 
+    group_split() |> 
+    walk(~ plot_replicates_1response(.x))
+}
+```
+
+```{r}
+plot_replicates1 <- function(x) {
+  order_responses <- c("AC1", "AC2", "BAL1l", "BAL1r", "BAL1", "BAL2", "BAL3", "MD1n",
+                       "MD1p", "MD1", "MD2", "MD3", "CS", "EC", "FM", "GM", "RC")
+  order_timepoints <- c("enrollment", "6 months", "18 months")
+  
+  x |>
+    complete(response, timepoint) |> 
+    mutate(response2 = case_when(response %in% c("AC1", "AC2")     ~ "AC",
+                                 response %in% c("BAL1l", "BAL1r") ~ "BAL1",
+                                 response %in% c("MD1n", "MD1p")   ~ "MD1",
+                                 .default                          = response)) |> 
+    mutate(xlim1 = min(0, min(CI1, na.rm = TRUE)),
+           xlim2 = max(0, max(CI2, na.rm = TRUE)), .by = response2) |> 
+    group_split(order2hash(order_responses)[response],
+                order2hash(order_timepoints)[timepoint]) |> 
+    walk(~ plot_replicates_1response(.x))
+}
+```
+
+```{r}
+plot_replicates2 <- function(x) {
+  order_responses <- c("AC1", "AC2", "BAL1l", "BAL1r", "BAL1", "BAL2", "BAL3", "MD1n",
+                       "MD1p", "MD1", "MD2", "MD3", "CS", "EC", "FM", "GM", "RC")
+  order_timepoints <- c("enrollment", "6 months", "18 months")
+  
+  x |>
+    complete(response, timepoint) |> 
+    mutate(xlim1 = min(0, min(CI1, na.rm = TRUE)),
+           xlim2 = max(0, max(CI2, na.rm = TRUE)),
+           .by   = case_when(response %in% c("AC1",   "AC2")   ~ "AC",
+                             response %in% c("BAL1l", "BAL1r") ~ "BAL1",
+                             response %in% c("MD1n",  "MD1p")  ~ "MD1",
+                             .default                          = response)) |> 
+    group_split(order2hash(order_responses)[response],
+                order2hash(order_timepoints)[timepoint]) |> 
+    walk(~ plot_replicates_1response(.x))
+}
+```
+
+Running an experiment plan of 100 replications in parallel across 10 workers, using
+combinations of (1) Super Learners, (2) sub-sample sizes of the k-fold cross-validation
+and (3) g bounds for the ATT estimates:
+
+```{r eval = FALSE}
+SL_lib <- list(c("SL.mean", "SL.glm", "SL.glmnet"), c("SL.mean", "SL.glm"))
+k_val <- c(5, 10)
+gbounds <- list(c(.01, .99), c(.05, .95))
+
+plan(multisession, workers = 10)
+
+experiments_output2 <- expand_grid(SL_lib, k_val, gbounds) |> 
+  mutate(sim_outputs = pmap(unname(pick(everything())),
+                            \(x, y, z) tmle_pipeline2_multiple_runs(100, x, y, z)))
+
+plan(sequential)
+```
+
+```{r}
+experiments_output2 <- readRDS("experiments_output2.rds")
+```
+
+Plotting the replication outputs for all the responses:
+
+```{r essai_fig4, fig.width = 8.3, fig.height = (17 / 3) * 5 * 8.3 / 7}
+opar <- par(mfrow = c(17, 3), plt = c(.15, .97, .29, .9))
+experiments_output2 |> 
+  pull(sim_outputs) |> 
+  walk(plot_replicates1)
+par(opar)
+```
+
+
 ## HERE
 
 
+```{r essai_fig3, fig.width = 8.3, fig.height = (17 / 3) * 5 * 8.3 / 7}
+opar <- par(mfrow = c(17, 3), plt = c(.15, .97, .29, .9))
+experiments_output2[[1, 4]][[1]] |>
+  complete(response, timepoint) |> 
+  mutate(response2 = case_when(response %in% c("AC1", "AC2")     ~ "AC",
+                               response %in% c("BAL1l", "BAL1r") ~ "BAL1",
+                               response %in% c("MD1n", "MD1p")   ~ "MD1",
+                               .default                          = response)) |> 
+  group_by(response2) |> 
+  mutate(xlim1 = min(0, min(CI1, na.rm = TRUE)),
+         xlim2 = max(0, max(CI2, na.rm = TRUE))) |> 
+  ungroup() |> 
+  mutate(resp = setNames(1:17, c("AC1", "AC2", "BAL1l", "BAL1r", "BAL1", "BAL2",
+                                 "BAL3", "MD1n", "MD1p", "MD1", "MD2", "MD3", "CS",
+                                 "EC", "FM", "GM", "RC"))[response],
+         tmpt = c("enrollment" = 1, "6 months" = 2, "18 months" = 3)[timepoint]) |> 
+  group_by(resp, tmpt) |> 
+  group_split() |> 
+  walk(~ plot_replicates_1response(.x))
+par(opar)
+```
 
 
 
